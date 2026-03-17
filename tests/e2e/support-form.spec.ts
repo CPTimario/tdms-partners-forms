@@ -121,10 +121,8 @@ test.describe("Support forms end-to-end", () => {
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
 
     await expect(page.getByText("Signature is required.")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Partner Information Form" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Accountability Form" })).toBeVisible();
-    // Printed name must appear in the accountability preview signature area.
-    await expect(page.locator(".signature-area").getByText("Chris Timario")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Generated PDF Preview" })).toBeVisible();
+    await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
   });
 
   test("triggers export downloads when form is complete", async ({ page }: { page: Page }) => {
@@ -137,12 +135,8 @@ test.describe("Support forms end-to-end", () => {
     await page.getByRole("button", { name: "Review Forms" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
 
-    const pngDownload = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Partner Info PNG" }).click();
-    await expect(await pngDownload).toBeTruthy();
-
     const pdfDownload = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Accountability PDF" }).click();
+    await page.getByRole("button", { name: "Download PDF" }).click();
     await expect(await pdfDownload).toBeTruthy();
   });
 });

@@ -8,8 +8,8 @@ This project provides a client-side, guided form flow that captures:
 
 - Partner information
 - Accountability options
-- Final review preview of both printable forms
-- PNG and PDF export of each form preview
+- Final review preview rendered from the generated PDF itself
+- Single PDF export that matches the review preview
 
 The app starts with membership type selection, then walks through Partner Information and Accountability, and finally unlocks Review once all required data is complete.
 
@@ -20,7 +20,7 @@ The app starts with membership type selection, then walks through Partner Inform
 - TypeScript
 - CSS Modules + global CSS
 - react-signature-canvas for drawn signature capture
-- html2canvas + jsPDF for export
+- pdf-lib for template-based PDF generation
 - Playwright for both unit and end-to-end test suites
 - Just for local command automation
 
@@ -30,7 +30,8 @@ The app starts with membership type selection, then walks through Partner Inform
 - [components/support-form-builder](components/support-form-builder): feature UI for multi-step form and previews
 - [hooks/use-support-form.ts](hooks/use-support-form.ts): form state, step transitions, and actions
 - [lib/support-form.ts](lib/support-form.ts): domain model, copy constants, and validation rules
-- [lib/export-form.ts](lib/export-form.ts): PNG/PDF export utility
+- [lib/pdf-generator.ts](lib/pdf-generator.ts): PDF generation and download helpers
+- [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts): tuned field coordinates for both templates
 - [tests/unit](tests/unit): domain-focused unit tests
 - [tests/e2e](tests/e2e): browser workflow tests
 - [playwright.config.ts](playwright.config.ts): e2e test config
@@ -85,11 +86,10 @@ Available local workflows from [justfile](justfile):
 
 ### Unit Tests
 
-Unit tests live in [tests/unit/support-form.spec.ts](tests/unit/support-form.spec.ts) and focus on domain behavior in [lib/support-form.ts](lib/support-form.ts), including:
+Unit tests live in [tests/unit/support-form.spec.ts](tests/unit/support-form.spec.ts) and [tests/unit/pdf-generator.spec.ts](tests/unit/pdf-generator.spec.ts), and cover:
 
-- Required-field validation
-- Step-level validity
-- Formatting helper behavior
+- Domain behavior in [lib/support-form.ts](lib/support-form.ts), including required-field validation, step-level validity, and formatting helper behavior
+- PDF data-model validation for review/export generation inputs
 
 Run:
 
@@ -99,14 +99,14 @@ just test-unit
 
 ### End-to-End Tests
 
-E2E tests live in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.ts) and cover:
+E2E tests in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.ts) and [tests/e2e/pdf-generation.spec.ts](tests/e2e/pdf-generation.spec.ts) cover:
 
 - Membership gate flow
 - Required-field blocking and recovery
 - Drawn signature requirement enforced before Review
-- Review transition with signature present
-- Printed partner name visible in accountability preview signature area
-- PNG/PDF download triggers
+- Review transition with generated PDF preview present
+- Single download button behavior for PDF-only export
+- PDF download triggers for both membership variants
 
 Run:
 
@@ -155,17 +155,32 @@ The accountability step includes a drawn signature pad powered by `react-signatu
 - Use **Clear Signature** to reset and re-draw at any time.
 - A signature is required before the Review step is available; leaving the canvas blank blocks progression with "Signature is required."
 - Navigating back to the accountability step retains the previously drawn signature.
-- On review, the accountability preview shows the drawn signature image followed by the partner's full name (taken from the Partner Name field filled in step 1) above the rule line, matching the physical form's "PARTNER'S SIGNATURE OVER PRINTED NAME" label. Both elements are present in PNG and PDF exports automatically — no extra steps needed.
-- The printed name is sourced from `partnerName` (always required in step 1), so it is always populated by the time the preview renders. No separate input is needed.
+- On review/export, the generated PDF includes the drawn signature image in the accountability signature area.
 
 ## Export Behavior
 
-Export implementation in [lib/export-form.ts](lib/export-form.ts):
+Export and preview implementation in [lib/pdf-generator.ts](lib/pdf-generator.ts):
 
-- Captures review surfaces with html2canvas at 2× scale
-- Exports PNG via data URL download
-- Exports PDF via jsPDF in A4 portrait format
-- Drawn signature renders as an inline `<img>` inside the accountability preview so html2canvas captures it without any additional configuration
+- Uses static PDF templates from [public/tdms-forms](public/tdms-forms)
+- Fills partner fields on page 1 and accountability/signature fields on page 2
+- Review preview embeds the generated PDF blob (single source of truth)
+- Download action exports the same generated PDF bytes shown in review
+- Output is PDF-only (PNG/image export removed)
+
+## Verified Behavior and Caveats
+
+Verified via focused and regression runs:
+
+- `npx tsc --noEmit`
+- `npm run test:unit -- --reporter=list`
+- `npx playwright test tests/e2e/pdf-generation.spec.ts tests/e2e/support-form.spec.ts --reporter=list`
+- `npm run test:e2e -- --reporter=list`
+
+Current caveats/limitations:
+
+- Coordinates are template-specific; if source PDFs change, update [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts).
+- Review preview uses an embedded PDF frame; browser PDF rendering differences can affect how quickly the preview appears, but download still works from the same generated bytes.
+- Responsiveness applies to form UI only. PDF placement remains fixed to template coordinates by design.
 
 ## Troubleshooting
 
@@ -180,13 +195,13 @@ just test-e2e
 
 - If signature-related e2e tests fail with "Signature is required." despite `drawSignature` being called, the most likely cause is that the canvas was off-screen when pointer events fired. The helper already calls `scrollIntoViewIfNeeded()` — verify it has not been removed if tests are modified.
 
-- If the drawn signature does not appear in exported PDFs or PNGs, confirm the accountability preview is rendering an `<img>` element (not a `<canvas>`) for the signature field. html2canvas can capture `<img>` tags directly; `<canvas>` elements inside iframes or cross-origin contexts may not render.
+- If preview appears blank on a specific browser, use the Download PDF action to verify generation output. The exported file is the source of truth.
 
 - If local artifacts appear in git status, verify [.gitignore](.gitignore) is up to date and remove stale tracked files manually.
 
 ## Contributing
 
-- Keep changes scoped and aligned to existing form and export behavior
+- Keep changes scoped and aligned to existing form and PDF generation behavior
 - Update tests when behavior changes
 - Run local quality checks before opening a PR:
 

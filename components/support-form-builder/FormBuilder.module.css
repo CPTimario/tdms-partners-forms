@@ -379,7 +379,7 @@
 
 .reviewPanes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
 }
@@ -401,6 +401,26 @@
 
 .previewScroll {
   overflow-x: auto;
+}
+
+.pdfPreviewFrame {
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid #d8d3ca;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.previewPlaceholder {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #4a4a4a;
+}
+
+.previewError {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: #9f1f1f;
 }
 
 @media (max-width: 1260px) {

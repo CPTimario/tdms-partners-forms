@@ -1,7 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { exportFormElement } from "@/lib/export-form";
+import { useEffect, useState } from "react";
+import {
+  downloadPDF,
+  generateReviewPDF,
+} from "@/lib/pdf-generator";
 import { useSupportForm } from "@/hooks/use-support-form";
 import type { MembershipType } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
@@ -52,22 +55,88 @@ export function SupportFormBuilder() {
     goToReview,
   } = useSupportForm();
   const [isExporting, setIsExporting] = useState(false);
+  const [isPreparingPreview, setIsPreparingPreview] = useState(false);
+  const [reviewPdfBytes, setReviewPdfBytes] = useState<Uint8Array | null>(null);
+  const [reviewPdfUrl, setReviewPdfUrl] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const partnerInfoRef = useRef<HTMLDivElement>(null);
-  const accountabilityRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let cancelled = false;
 
-  const download = async (
-    element: HTMLDivElement | null,
-    type: "pdf" | "png",
-    filename: string,
-  ) => {
-    if (!element) {
-      return;
+    if (step !== "review") {
+      setReviewPdfBytes(null);
+      setPreviewError(null);
+      setReviewPdfUrl((previous) => {
+        if (previous) {
+          URL.revokeObjectURL(previous);
+        }
+        return null;
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
+    setIsPreparingPreview(true);
+    setPreviewError(null);
+    void (async () => {
+      try {
+        const bytes = await generateReviewPDF(data);
+        if (cancelled) {
+          return;
+        }
+
+        const nextUrl = URL.createObjectURL(
+          new Blob([bytes as any], { type: "application/pdf" }),
+        );
+
+        setReviewPdfBytes(bytes);
+        setReviewPdfUrl((previous) => {
+          if (previous) {
+            URL.revokeObjectURL(previous);
+          }
+          return nextUrl;
+        });
+      } catch {
+        if (!cancelled) {
+          setReviewPdfBytes(null);
+          setReviewPdfUrl((previous) => {
+            if (previous) {
+              URL.revokeObjectURL(previous);
+            }
+            return null;
+          });
+          setPreviewError("Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsPreparingPreview(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, step]);
+
+  useEffect(() => {
+    return () => {
+      if (reviewPdfUrl) {
+        URL.revokeObjectURL(reviewPdfUrl);
+      }
+    };
+  }, [reviewPdfUrl]);
+
+  const downloadReviewPdf = async () => {
     setIsExporting(true);
     try {
-      await exportFormElement(element, type, filename);
+      const bytes = reviewPdfBytes ?? (await generateReviewPDF(data));
+      setReviewPdfBytes(bytes);
+      setPreviewError(null);
+      await downloadPDF(bytes, "tdm-support-forms.pdf");
+    } catch {
+      setPreviewError("Unable to generate PDF. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -102,24 +171,13 @@ export function SupportFormBuilder() {
 
   return (
     <ReviewStep
-      data={data}
       isExporting={isExporting}
-      partnerInfoRef={partnerInfoRef}
-      accountabilityRef={accountabilityRef}
+      isPreparingPreview={isPreparingPreview}
+      previewPdfUrl={reviewPdfUrl}
+      previewError={previewError}
       onEditPartnerInfo={goToPartner}
       onEditAccountability={goToAccountability}
-      onDownloadPartnerInfoPdf={() =>
-        download(partnerInfoRef.current, "pdf", "tdm-partner-information.pdf")
-      }
-      onDownloadPartnerInfoPng={() =>
-        download(partnerInfoRef.current, "png", "tdm-partner-information.png")
-      }
-      onDownloadAccountabilityPdf={() =>
-        download(accountabilityRef.current, "pdf", "tdm-accountability-form.pdf")
-      }
-      onDownloadAccountabilityPng={() =>
-        download(accountabilityRef.current, "png", "tdm-accountability-form.png")
-      }
+      onDownloadPdf={downloadReviewPdf}
     />
   );
 }
