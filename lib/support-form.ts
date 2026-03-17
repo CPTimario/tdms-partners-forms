@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type MembershipType = "victory" | "nonVictory";
 export type UnableToGoChoice = "teamFund" | "generalFund" | null;
 export type ReroutedChoice = "retain" | "generalFund" | null;
@@ -82,6 +84,23 @@ export type RequiredStringField =
   | (typeof partnerRequiredFields)[number]
   | (typeof accountabilityRequiredFields)[number];
 
+export type SupportFormFieldErrorKey =
+  | RequiredStringField
+  | "membershipType"
+  | "consentGiven"
+  | "unableToGoChoice"
+  | "reroutedChoice"
+  | "canceledChoice";
+
+export type SupportFormFieldErrors = Partial<
+  Record<SupportFormFieldErrorKey, string>
+>;
+
+export type StepValidationResult = {
+  fieldErrors: SupportFormFieldErrors;
+  formErrors: string[];
+};
+
 export const fieldLabels: Record<RequiredStringField, string> = {
   partnerName: "Partner Name",
   emailAddress: "Email Address",
@@ -99,6 +118,105 @@ export const stepLabels: Record<EditableFormStep, string> = {
   partner: "Partner Information",
   accountability: "Accountability",
 };
+
+const requiredString = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`);
+
+const partnerStepSchema = z.object({
+  consentGiven: z.boolean().refine((value) => value, {
+    message: "Consent is required.",
+  }),
+  partnerName: requiredString("Partner Name"),
+  emailAddress: requiredString("Email Address").email("Email Address must be a valid email."),
+  mobileNumber: requiredString("Mobile Number").regex(
+    /^[0-9+\-()\s]{7,20}$/,
+    "Mobile Number format is invalid.",
+  ),
+  localChurch: requiredString("Local Church"),
+  missionaryName: requiredString("Missioner Name/Team"),
+  amount: requiredString("Amount")
+    .regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number.")
+    .refine((value) => Number(value) > 0, {
+      message: "Amount must be greater than zero.",
+    }),
+  nation: requiredString("Nation"),
+  travelDate: requiredString("Travel Date").regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    "Travel Date is invalid.",
+  ),
+  sendingChurch: requiredString("Sending Church"),
+});
+
+const accountabilityStepSchema = z.object({
+  membershipType: z
+    .enum(["victory", "nonVictory"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Membership type is required.",
+    }),
+  partnerSignature: requiredString("Signature"),
+  unableToGoChoice: z
+    .enum(["teamFund", "generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message:
+        "Please choose an accountability option for when the missioner is unable to go.",
+    }),
+  reroutedChoice: z
+    .enum(["retain", "generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message:
+        "Please choose an accountability option for when the missioner or team is rerouted.",
+    }),
+  canceledChoice: z
+    .enum(["generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Please confirm the accountability instruction for a canceled trip.",
+    }),
+});
+
+const fullFormSchema = partnerStepSchema.merge(accountabilityStepSchema);
+
+function toStepValidationResult(
+  result:
+    | { success: true }
+    | {
+        success: false;
+        error: z.ZodError;
+      },
+): StepValidationResult {
+  if (result.success) {
+    return {
+      fieldErrors: {},
+      formErrors: [],
+    };
+  }
+  const fieldErrors: SupportFormFieldErrors = {};
+  const formErrors: string[] = [];
+
+  result.error.issues.forEach((issue) => {
+    const firstPath = issue.path[0];
+    if (typeof firstPath === "string") {
+      const key = firstPath as SupportFormFieldErrorKey;
+      if (!fieldErrors[key]) {
+        fieldErrors[key] = issue.message;
+      }
+      return;
+    }
+
+    formErrors.push(issue.message);
+  });
+
+  return {
+    fieldErrors,
+    formErrors,
+  };
+}
 
 const maxLineChars = 55;
 
@@ -163,59 +281,84 @@ export function getAccountabilityTitle(membershipType: SupportFormData["membersh
 }
 
 export function validatePartnerStep(data: SupportFormData) {
-  const errors: string[] = [];
-
-  if (!data.consentGiven) {
-    errors.push("Consent is required.");
-  }
-
-  partnerRequiredFields.forEach((field) => {
-    if (!data[field].trim()) {
-      errors.push(`${fieldLabels[field]} is required.`);
-    }
-  });
-
-  return errors;
+  const result = validatePartnerStepDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
 }
 
 export function validateAccountabilityStep(data: SupportFormData) {
-  const errors: string[] = [];
+  const result = validateAccountabilityStepDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
+}
 
-  if (!data.membershipType) {
-    errors.push("Membership type is required.");
-  }
-
-  accountabilityRequiredFields.forEach((field) => {
-    if (!data[field].trim()) {
-      errors.push(`${fieldLabels[field]} is required.`);
-    }
+export function validatePartnerStepDetailed(data: SupportFormData): StepValidationResult {
+  const result = partnerStepSchema.safeParse({
+    consentGiven: data.consentGiven,
+    partnerName: data.partnerName,
+    emailAddress: data.emailAddress,
+    mobileNumber: data.mobileNumber,
+    localChurch: data.localChurch,
+    missionaryName: data.missionaryName,
+    amount: data.amount,
+    nation: data.nation,
+    travelDate: data.travelDate,
+    sendingChurch: data.sendingChurch,
   });
 
-  if (!data.unableToGoChoice) {
-    errors.push("Please choose an accountability option for when the missioner is unable to go.");
-  }
+  return toStepValidationResult(result);
+}
 
-  if (!data.reroutedChoice) {
-    errors.push("Please choose an accountability option for when the missioner or team is rerouted.");
-  }
+export function validateAccountabilityStepDetailed(
+  data: SupportFormData,
+): StepValidationResult {
+  const result = accountabilityStepSchema.safeParse({
+    membershipType: data.membershipType,
+    partnerSignature: data.partnerSignature,
+    unableToGoChoice: data.unableToGoChoice,
+    reroutedChoice: data.reroutedChoice,
+    canceledChoice: data.canceledChoice,
+  });
 
-  if (!data.canceledChoice) {
-    errors.push("Please confirm the accountability instruction for a canceled trip.");
-  }
+  return toStepValidationResult(result);
+}
 
-  return errors;
+export function validateSupportFormDetailed(data: SupportFormData): StepValidationResult {
+  const result = fullFormSchema.safeParse({
+    membershipType: data.membershipType,
+    consentGiven: data.consentGiven,
+    partnerName: data.partnerName,
+    emailAddress: data.emailAddress,
+    mobileNumber: data.mobileNumber,
+    localChurch: data.localChurch,
+    missionaryName: data.missionaryName,
+    amount: data.amount,
+    nation: data.nation,
+    travelDate: data.travelDate,
+    sendingChurch: data.sendingChurch,
+    unableToGoChoice: data.unableToGoChoice,
+    reroutedChoice: data.reroutedChoice,
+    canceledChoice: data.canceledChoice,
+    partnerSignature: data.partnerSignature,
+  });
+
+  return toStepValidationResult(result);
 }
 
 export function validateSupportForm(data: SupportFormData) {
-  return [...validatePartnerStep(data), ...validateAccountabilityStep(data)];
+  const result = validateSupportFormDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
 }
 
 export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | null {
-  if (validatePartnerStep(data).length > 0) {
+  const partnerResult = validatePartnerStepDetailed(data);
+  if (Object.keys(partnerResult.fieldErrors).length > 0 || partnerResult.formErrors.length > 0) {
     return "partner";
   }
 
-  if (validateAccountabilityStep(data).length > 0) {
+  const accountabilityResult = validateAccountabilityStepDetailed(data);
+  if (
+    Object.keys(accountabilityResult.fieldErrors).length > 0 ||
+    accountabilityResult.formErrors.length > 0
+  ) {
     return "accountability";
   }
 
@@ -223,5 +366,6 @@ export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | n
 }
 
 export function isSupportFormValid(data: SupportFormData) {
-  return validateSupportForm(data).length === 0;
+  const result = validateSupportFormDetailed(data);
+  return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
 }

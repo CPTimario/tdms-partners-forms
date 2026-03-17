@@ -2,24 +2,34 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victory Member") {
   // Scope to the membership gate dialog to avoid ambiguous button match
-  const gate = page.getByRole("dialog", { name: "Select Membership Type" });
+  const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
   await expect(gate).toBeVisible();
-  await gate.getByRole("button", { name: type, exact: true }).click();
+
+  if (type === "Victory Member") {
+    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+    await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
+  } else {
+    await gate.getByRole("button", { name: "No", exact: true }).click();
+  }
+
   // Wait for the gate to disappear before proceeding
   await expect(gate).toBeHidden();
   await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
 }
 
 async function fillPartnerStep(page: Page) {
-  await page.getByRole('textbox', { name: 'Partner Name', exact: true }).fill("Chris Timario");
-  await page.getByRole('textbox', { name: 'Email Address', exact: true }).fill("chris@example.com");
-  await page.getByRole('textbox', { name: 'Mobile Number', exact: true }).fill("09171234567");
-  await page.getByRole('textbox', { name: 'Local Church', exact: true }).fill("Every Nation Makati");
-  await page.getByRole('textbox', { name: 'Missioner Name/Team', exact: true }).fill("Southeast Team");
-  await page.getByRole('textbox', { name: 'Amount', exact: true }).fill("5000");
-  await page.getByRole('textbox', { name: 'Nation', exact: true }).fill("Thailand");
-  await page.getByRole('textbox', { name: 'Travel Date', exact: true }).fill("2026-06-20");
-  await page.getByRole('textbox', { name: 'Sending Church', exact: true }).fill("Every Nation Greenhills");
+  await page.getByRole("textbox", { name: /^Partner Name/ }).fill("Chris Timario");
+  await page.getByRole("textbox", { name: /^Email Address/ }).fill("chris@example.com");
+  await page.getByRole("textbox", { name: /^Mobile Number/ }).fill("09171234567");
+  await page.getByRole("textbox", { name: /^Local Church/ }).fill("Every Nation Makati");
+  await page.getByRole("textbox", { name: /^Missioner Name\/Team/ }).fill("Southeast Team");
+  await page.getByRole("textbox", { name: /^Amount/ }).fill("5000");
+  await page.getByRole("textbox", { name: /^Nation/ }).fill("Thailand");
+  await page.getByRole("textbox", { name: /^Travel Date/ }).fill("2026-06-20");
+  await page.getByRole("textbox", { name: /^Sending Church/ }).fill("Every Nation Greenhills");
 
   await page
     .locator("label")
@@ -72,13 +82,102 @@ async function fillAccountabilityStep(page: Page) {
 }
 
 test.describe("Support forms end-to-end", () => {
+  test("uses navigation semantics for step controls and updates active step", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    const stepNavigation = page.getByRole("navigation", { name: "Support form steps" });
+    await expect(stepNavigation).toBeVisible();
+    await expect(page.getByRole("tab")).toHaveCount(0);
+
+    const activeStep = stepNavigation.locator('button[aria-current="step"]');
+    await expect(activeStep).toHaveCount(1);
+    await expect(activeStep).toContainText("Partner Information");
+
+    await fillPartnerStep(page);
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+    await expect(activeStep).toHaveCount(1);
+    await expect(activeStep).toContainText("Accountability");
+  });
+
+  test("traps keyboard focus within membership dialogs", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+
+    const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
+    await expect(gate).toBeVisible();
+
+    const yesButton = gate.getByRole("button", { name: "Yes", exact: true });
+    const noButton = gate.getByRole("button", { name: "No", exact: true });
+
+    // Initial focus is set by dialog logic.
+    await expect(yesButton).toBeFocused();
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(noButton).toBeFocused();
+
+    await page.keyboard.press("Tab");
+    await expect(yesButton).toBeFocused();
+
+    await yesButton.click();
+
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+
+    const backButton = agreementGate.getByRole("button", { name: "Back", exact: true });
+    const agreeButton = agreementGate.getByRole("button", { name: "I Agree", exact: true });
+
+    await expect(backButton).toBeFocused();
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(agreeButton).toBeFocused();
+
+    await page.keyboard.press("Tab");
+    await expect(backButton).toBeFocused();
+  });
+
+  test("closes agreement dialog on Escape and restores focus to Yes button", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+
+    const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
+    const yesButton = gate.getByRole("button", { name: "Yes", exact: true });
+    await expect(yesButton).toBeVisible();
+
+    await yesButton.click();
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(agreementGate).toBeHidden();
+    await expect(gate).toBeVisible();
+    await expect(yesButton).toBeFocused();
+  });
+
+  test("allows backing out of agreement modal and choosing non-victory flow", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+
+    const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
+    await expect(gate).toBeVisible();
+
+    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+
+    await agreementGate.getByRole("button", { name: "Back", exact: true }).click();
+    await expect(agreementGate).toBeHidden();
+    await expect(gate).toBeVisible();
+
+    await gate.getByRole("button", { name: "No", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+  });
+
   test("requires membership selection and shows correct variant messaging", async ({ page }: { page: Page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Select Membership Type" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Are you a Victory church member?" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Review Forms" })).toHaveCount(0);
 
     await chooseMembership(page, "Victory Member");
+    await fillPartnerStep(page);
     await page.getByRole("button", { name: "Continue to Accountability" }).click();
 
     await expect(
@@ -88,9 +187,10 @@ test.describe("Support forms end-to-end", () => {
     ).toBeVisible();
 
     await page.reload();
-    await expect(page.getByRole("heading", { name: "Select Membership Type" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Are you a Victory church member?" })).toBeVisible();
 
     await chooseMembership(page, "Non-Victory Member");
+    await fillPartnerStep(page);
     await page.getByRole("button", { name: "Continue to Accountability" }).click();
 
     await expect(

@@ -6,9 +6,19 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victory Member") {
-  const gate = page.getByRole("dialog", { name: "Select Membership Type" });
+  const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
   await expect(gate).toBeVisible();
-  await gate.getByRole("button", { name: type, exact: true }).click();
+
+  if (type === "Victory Member") {
+    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+    await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
+  } else {
+    await gate.getByRole("button", { name: "No", exact: true }).click();
+  }
+
   await expect(gate).toBeHidden();
   await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
 }

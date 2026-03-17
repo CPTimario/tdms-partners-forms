@@ -11,7 +11,12 @@ This project provides a client-side, guided form flow that captures:
 - Final review preview rendered from the generated PDF itself
 - Single PDF export that matches the review preview
 
-The app starts with membership type selection, then walks through Partner Information and Accountability, and finally unlocks Review once all required data is complete.
+The app starts with a membership gate: "Are you a Victory church member?".
+
+- `Yes` opens an accountability agreement modal and requires `I Agree` before entering the form.
+- `No` proceeds directly to the form using the non-victory variant.
+
+After the gate, the app walks through Partner Information and Accountability, and finally unlocks Review once all required data is complete.
 
 ## Tech Stack
 
@@ -19,6 +24,7 @@ The app starts with membership type selection, then walks through Partner Inform
 - React
 - TypeScript
 - CSS Modules + global CSS
+- zod for schema-based form validation
 - react-signature-canvas for drawn signature capture
 - pdf-lib for template-based PDF generation
 - Playwright for both unit and end-to-end test suites

@@ -54,6 +54,21 @@ test.describe("support-form domain validation", () => {
     expect(errors).toContain("Sending Church is required.");
   });
 
+  test("partner step validates email, mobile, amount, and date formats", () => {
+    const data = buildValidData();
+    data.emailAddress = "not-an-email";
+    data.mobileNumber = "abc123";
+    data.amount = "0";
+    data.travelDate = "2026/06/20";
+
+    const errors = validatePartnerStep(data);
+
+    expect(errors).toContain("Email Address must be a valid email.");
+    expect(errors).toContain("Mobile Number format is invalid.");
+    expect(errors).toContain("Amount must be greater than zero.");
+    expect(errors).toContain("Travel Date is invalid.");
+  });
+
   test("accountability step requires choices and printed signature", () => {
     const data = buildValidData();
     data.partnerSignature = "";
