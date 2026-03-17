@@ -39,9 +39,36 @@ async function fillAccountabilityStepWithoutSignature(page: Page) {
     .check();
 }
 
+async function drawSignature(page: Page) {
+  const signatureCanvas = page.locator('canvas[aria-label="Partner Signature"]');
+  await expect(signatureCanvas).toBeVisible();
+  // Ensure the canvas is scrolled into the visible viewport before firing
+  // pointer events — coordinates from boundingBox() are viewport-relative and
+  // signature_pad will miss strokes if the element is below the fold.
+  await signatureCanvas.scrollIntoViewIfNeeded();
+
+  const box = await signatureCanvas.boundingBox();
+  if (!box) {
+    throw new Error("Signature canvas bounding box was not found.");
+  }
+
+  const startX = box.x + 24;
+  const startY = box.y + box.height / 2;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  // Use steps so signature_pad receives intermediate pointermove events and
+  // populates its internal stroke data (isEmpty() relies on this).
+  await page.mouse.move(startX + 120, startY - 16, { steps: 10 });
+  await page.mouse.move(startX + 220, startY + 8, { steps: 10 });
+  await page.mouse.up();
+  // Brief settle so React flushes the onEnd state update before the caller
+  // checks derived state (e.g. isAccountabilityStepComplete).
+  await page.waitForTimeout(150);
+}
+
 async function fillAccountabilityStep(page: Page) {
   await fillAccountabilityStepWithoutSignature(page);
-  await page.getByLabel("Printed Name").fill("Christopher Timario");
+  await drawSignature(page);
 }
 
 test.describe("Support forms end-to-end", () => {
@@ -88,7 +115,7 @@ test.describe("Support forms end-to-end", () => {
     await page.getByRole("button", { name: "Review Forms" }).click();
     await expect(page.getByText("Signature is required.")).toBeVisible();
 
-    await page.getByLabel("Printed Name").fill("Christopher Timario");
+    await drawSignature(page);
 
     await page.getByRole("button", { name: "Review Forms" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
@@ -96,6 +123,8 @@ test.describe("Support forms end-to-end", () => {
     await expect(page.getByText("Signature is required.")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Partner Information Form" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Accountability Form" })).toBeVisible();
+    // Printed name must appear in the accountability preview signature area.
+    await expect(page.locator(".signature-area").getByText("Chris Timario")).toBeVisible();
   });
 
   test("triggers export downloads when form is complete", async ({ page }: { page: Page }) => {

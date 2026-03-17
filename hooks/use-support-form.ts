@@ -58,6 +58,10 @@ type SupportFormAction =
       value: FormStep;
     }
   | {
+      type: "set-signature";
+      value: string;
+    }
+  | {
       type: "set-errors";
       value: string[];
     }
@@ -128,6 +132,14 @@ function reducer(
       return {
         ...state,
         step: action.value,
+      };
+    case "set-signature":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          partnerSignature: action.value,
+        },
       };
     case "set-errors":
       return {
@@ -216,6 +228,13 @@ export function useSupportForm() {
     });
   };
 
+  const setPartnerSignature = (value: string) => {
+    dispatch({
+      type: "set-signature",
+      value,
+    });
+  };
+
   const resetForm = () => {
     dispatch({ type: "reset" });
   };
@@ -264,6 +283,7 @@ export function useSupportForm() {
     onUnableToGoChange,
     onReroutedChange,
     onCanceledChange,
+    setPartnerSignature,
     resetForm,
     goToPartner,
     goToAccountability,

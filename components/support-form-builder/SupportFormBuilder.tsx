@@ -45,6 +45,7 @@ export function SupportFormBuilder() {
     onUnableToGoChange,
     onReroutedChange,
     onCanceledChange,
+    setPartnerSignature,
     resetForm,
     goToPartner,
     goToAccountability,
@@ -90,6 +91,7 @@ export function SupportFormBuilder() {
         onUnableToGoChange={onUnableToGoChange}
         onReroutedChange={onReroutedChange}
         onCanceledChange={onCanceledChange}
+        onPartnerSignatureChange={setPartnerSignature}
         onPartnerTab={goToPartner}
         onAccountabilityTab={goToAccountability}
         onReview={goToReview}

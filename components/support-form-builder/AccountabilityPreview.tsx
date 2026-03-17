@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   checkmark,
   displayValue,
@@ -85,7 +86,19 @@ export function AccountabilityPreview({
         </div>
 
         <div className="signature-area">
-          <strong>{displayValue(data.partnerSignature)}</strong>
+          {data.partnerSignature.startsWith("data:image") ? (
+            <Image
+              className="signature-image"
+              src={data.partnerSignature}
+              alt="Partner signature"
+              width={300}
+              height={72}
+              unoptimized
+            />
+          ) : (
+            <strong>{displayValue(data.partnerSignature)}</strong>
+          )}
+          <strong className="signature-printed-name">{displayValue(data.partnerName)}</strong>
           <div className="line" />
           <span>PARTNER&apos;S SIGNATURE OVER PRINTED NAME</span>
         </div>

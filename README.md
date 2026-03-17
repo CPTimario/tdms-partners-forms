@@ -19,6 +19,7 @@ The app starts with membership type selection, then walks through Partner Inform
 - React
 - TypeScript
 - CSS Modules + global CSS
+- react-signature-canvas for drawn signature capture
 - html2canvas + jsPDF for export
 - Playwright for both unit and end-to-end test suites
 - Just for local command automation
@@ -102,7 +103,9 @@ E2E tests live in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.t
 
 - Membership gate flow
 - Required-field blocking and recovery
-- Review transition
+- Drawn signature requirement enforced before Review
+- Review transition with signature present
+- Printed partner name visible in accountability preview signature area
 - PNG/PDF download triggers
 
 Run:
@@ -110,6 +113,10 @@ Run:
 ```bash
 just test-e2e
 ```
+
+**E2E prerequisite:** `just test-e2e` starts the Next.js dev server automatically via `webServer` in [playwright.config.ts](playwright.config.ts). If a different process is already occupying 127.0.0.1:3000, tests will fail immediately at membership-gate assertions because Playwright's `reuseExistingServer: true` will connect to that process instead. Stop the conflicting server before running e2e.
+
+**Signature canvas simulation:** The `drawSignature` helper in the e2e suite calls `scrollIntoViewIfNeeded()` before reading `boundingBox()` and passes `{ steps: 10 }` to `mouse.move()`. Both are required for `signature_pad` to receive intermediate `pointermove` events and record stroke data — if either is omitted the canvas will stay empty and the signature-required error will appear.
 
 For targeted Playwright execution, use project npm scripts directly from [package.json](package.json).
 
@@ -140,23 +147,40 @@ Project automation recipes in [justfile](justfile):
 	- [out](out)
 	- [build](build)
 
+## Signature
+
+The accountability step includes a drawn signature pad powered by `react-signature-canvas`.
+
+- Draw using mouse, touch, or stylus on the canvas area.
+- Use **Clear Signature** to reset and re-draw at any time.
+- A signature is required before the Review step is available; leaving the canvas blank blocks progression with "Signature is required."
+- Navigating back to the accountability step retains the previously drawn signature.
+- On review, the accountability preview shows the drawn signature image followed by the partner's full name (taken from the Partner Name field filled in step 1) above the rule line, matching the physical form's "PARTNER'S SIGNATURE OVER PRINTED NAME" label. Both elements are present in PNG and PDF exports automatically — no extra steps needed.
+- The printed name is sourced from `partnerName` (always required in step 1), so it is always populated by the time the preview renders. No separate input is needed.
+
 ## Export Behavior
 
 Export implementation in [lib/export-form.ts](lib/export-form.ts):
 
-- Captures review surfaces with html2canvas
+- Captures review surfaces with html2canvas at 2× scale
 - Exports PNG via data URL download
 - Exports PDF via jsPDF in A4 portrait format
+- Drawn signature renders as an inline `<img>` inside the accountability preview so html2canvas captures it without any additional configuration
 
 ## Troubleshooting
 
-- If Playwright tests fail before running, rerun end-to-end tests after browser setup:
+- If Playwright tests fail before running, install browsers then rerun:
 
 ```bash
+npx playwright install --with-deps chromium
 just test-e2e
 ```
 
-- If e2e cannot connect to local app, confirm no process is blocking 127.0.0.1:3000 and rerun tests.
+- If e2e tests fail immediately with unexpected page content (e.g. a login prompt) rather than a form assertion, another app is occupying 127.0.0.1:3000. Stop it and rerun.
+
+- If signature-related e2e tests fail with "Signature is required." despite `drawSignature` being called, the most likely cause is that the canvas was off-screen when pointer events fired. The helper already calls `scrollIntoViewIfNeeded()` — verify it has not been removed if tests are modified.
+
+- If the drawn signature does not appear in exported PDFs or PNGs, confirm the accountability preview is rendering an `<img>` element (not a `<canvas>`) for the signature field. html2canvas can capture `<img>` tags directly; `<canvas>` elements inside iframes or cross-origin contexts may not render.
 
 - If local artifacts appear in git status, verify [.gitignore](.gitignore) is up to date and remove stale tracked files manually.
 

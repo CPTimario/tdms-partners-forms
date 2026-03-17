@@ -1,4 +1,5 @@
-import type { ChangeEventHandler } from "react";
+import { useEffect, useRef, type ChangeEventHandler } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import styles from "./FormBuilder.module.css";
 import {
   consentCopy,
@@ -19,16 +20,99 @@ type FillStepProps = {
   isFormValid: boolean;
   isPartnerStepComplete: boolean;
   isAccountabilityStepComplete: boolean;
-  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerSignature">) => ChangeEventHandler<HTMLInputElement>;
+  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch">) => ChangeEventHandler<HTMLInputElement>;
   onCheckboxChange: (field: "consentGiven") => ChangeEventHandler<HTMLInputElement>;
   onUnableToGoChange: ChangeEventHandler<HTMLInputElement>;
   onReroutedChange: ChangeEventHandler<HTMLInputElement>;
   onCanceledChange: ChangeEventHandler<HTMLInputElement>;
+  onPartnerSignatureChange: (value: string) => void;
   onPartnerTab: () => void;
   onAccountabilityTab: () => void;
   onReview: () => void;
   onReset: () => void;
 };
+
+type SignaturePadProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function SignaturePad({ value, onChange }: SignaturePadProps) {
+  const signatureRef = useRef<SignatureCanvas | null>(null);
+  const loadedValueRef = useRef("");
+
+  useEffect(() => {
+    const canvas = signatureRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    if (!value) {
+      if (!canvas.isEmpty()) {
+        canvas.clear();
+      }
+      loadedValueRef.current = "";
+      return;
+    }
+
+    if (value !== loadedValueRef.current) {
+      canvas.fromDataURL(value);
+      loadedValueRef.current = value;
+    }
+  }, [value]);
+
+  const handleEnd = () => {
+    const canvas = signatureRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    if (canvas.isEmpty()) {
+      loadedValueRef.current = "";
+      onChange("");
+      return;
+    }
+
+    const nextValue = canvas.toDataURL("image/png");
+    loadedValueRef.current = nextValue;
+    onChange(nextValue);
+  };
+
+  const handleClear = () => {
+    const canvas = signatureRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    canvas.clear();
+    loadedValueRef.current = "";
+    onChange("");
+  };
+
+  return (
+    <div className={styles.signaturePadWrap}>
+      <SignatureCanvas
+        ref={(instance) => {
+          signatureRef.current = instance;
+        }}
+        onEnd={handleEnd}
+        penColor="#111111"
+        minWidth={1}
+        maxWidth={2}
+        canvasProps={{
+          className: styles.signaturePad,
+          "aria-label": "Partner Signature",
+        }}
+      />
+      <div className={styles.signaturePadActions}>
+        <p className={styles.helperText}>Sign using mouse, touch, or stylus.</p>
+        <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={handleClear}>
+          Clear Signature
+        </button>
+      </div>
+    </div>
+  );
+}
 
 type TabButtonProps = {
   step: "partner" | "accountability" | "review";
@@ -70,6 +154,7 @@ export function FillStep({
   onUnableToGoChange,
   onReroutedChange,
   onCanceledChange,
+  onPartnerSignatureChange,
   onPartnerTab,
   onAccountabilityTab,
   onReview,
@@ -289,15 +374,7 @@ export function FillStep({
 
             <fieldset className={styles.fieldBlock}>
               <legend>Signature</legend>
-              <label className={styles.fieldLabel}>
-                Printed Name
-                <input
-                  className={styles.textInput}
-                  value={data.partnerSignature}
-                  onChange={onTextChange("partnerSignature")}
-                  placeholder="Full name"
-                />
-              </label>
+              <SignaturePad value={data.partnerSignature} onChange={onPartnerSignatureChange} />
             </fieldset>
           </section>
         )}
