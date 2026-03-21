@@ -23,6 +23,7 @@ export type SupportFormData = {
   reroutedChoice: ReroutedChoice;
   canceledChoice: CanceledChoice;
   partnerSignature: string;
+  partnerPrintedName: string;
 };
 
 export const initialSupportFormData: SupportFormData = {
@@ -41,6 +42,7 @@ export const initialSupportFormData: SupportFormData = {
   reroutedChoice: null,
   canceledChoice: null,
   partnerSignature: "",
+  partnerPrintedName: "",
 };
 
 export const consentCopy =
@@ -78,7 +80,10 @@ export const partnerRequiredFields = [
   "sendingChurch",
 ] as const;
 
-export const accountabilityRequiredFields = ["partnerSignature"] as const;
+export const accountabilityRequiredFields = [
+  "partnerSignature",
+  "partnerPrintedName",
+] as const;
 
 export type RequiredStringField =
   | (typeof partnerRequiredFields)[number]
@@ -112,6 +117,7 @@ export const fieldLabels: Record<RequiredStringField, string> = {
   travelDate: "Travel Date",
   sendingChurch: "Sending Church",
   partnerSignature: "Signature",
+  partnerPrintedName: "Partner Full Name",
 };
 
 export const stepLabels: Record<EditableFormStep, string> = {
@@ -158,6 +164,7 @@ const accountabilityStepSchema = z.object({
       message: "Membership type is required.",
     }),
   partnerSignature: requiredString("Signature"),
+  partnerPrintedName: requiredString("Partner Full Name"),
   unableToGoChoice: z
     .enum(["teamFund", "generalFund"])
     .nullable()
@@ -313,6 +320,7 @@ export function validateAccountabilityStepDetailed(
   const result = accountabilityStepSchema.safeParse({
     membershipType: data.membershipType,
     partnerSignature: data.partnerSignature,
+    partnerPrintedName: data.partnerPrintedName,
     unableToGoChoice: data.unableToGoChoice,
     reroutedChoice: data.reroutedChoice,
     canceledChoice: data.canceledChoice,
@@ -338,6 +346,7 @@ export function validateSupportFormDetailed(data: SupportFormData): StepValidati
     reroutedChoice: data.reroutedChoice,
     canceledChoice: data.canceledChoice,
     partnerSignature: data.partnerSignature,
+    partnerPrintedName: data.partnerPrintedName,
   });
 
   return toStepValidationResult(result);

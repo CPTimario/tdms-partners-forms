@@ -38,7 +38,10 @@ async function fillPartnerStep(page: Page) {
     .check();
 }
 
-async function fillAccountabilityStepWithoutSignature(page: Page) {
+async function fillAccountabilityStepWithoutSignature(
+  page: Page,
+  options?: { fillPrintedName?: boolean },
+) {
   await page.getByRole("button", { name: "Continue to Accountability" }).click();
   await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
 
@@ -47,6 +50,10 @@ async function fillAccountabilityStepWithoutSignature(page: Page) {
   await page
     .locator('input[name="canceled"][value="generalFund"]')
     .check();
+
+  if (options?.fillPrintedName ?? true) {
+    await page.getByRole("textbox", { name: "Partner Full Name (Printed)" }).fill("Chris Timario");
+  }
 }
 
 async function drawSignature(page: Page) {
@@ -214,6 +221,7 @@ test.describe("Support forms end-to-end", () => {
 
     await page.getByRole("button", { name: "Review Forms" }).click();
     await expect(page.getByText("Signature is required.")).toBeVisible();
+    await expect(page.getByText("Partner Full Name is required.")).toHaveCount(0);
 
     await drawSignature(page);
 
@@ -223,6 +231,21 @@ test.describe("Support forms end-to-end", () => {
     await expect(page.getByText("Signature is required.")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Generated PDF Preview" })).toBeVisible();
     await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
+  });
+
+  test("requires printed full name even when a signature is drawn", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    await fillPartnerStep(page);
+    await fillAccountabilityStepWithoutSignature(page, { fillPrintedName: false });
+    await drawSignature(page);
+
+    await page.getByRole("button", { name: "Review Forms" }).click();
+
+    await expect(page.getByText("Partner Full Name is required.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Review Your Forms" })).toHaveCount(0);
   });
 
   test("triggers export downloads when form is complete", async ({ page }: { page: Page }) => {

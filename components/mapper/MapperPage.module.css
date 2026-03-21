@@ -1,0 +1,190 @@
+.shell {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: #f4f4f7;
+  color: #171717;
+}
+
+.card {
+  margin: 0 auto;
+  max-width: 1200px;
+  background: #ffffff;
+  border: 1px solid #d6d6dc;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.08);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: #4a4a57;
+}
+
+.controls {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.select,
+.range,
+.output {
+  width: 100%;
+}
+
+.layout {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.canvasWrap {
+  border: 1px solid #d6d6dc;
+  border-radius: 10px;
+  overflow: auto;
+  background: #fafafa;
+  padding: 0.75rem;
+}
+
+.canvas {
+  position: relative;
+  margin: 0 auto;
+  border: 1px solid #a9a9b5;
+  cursor: crosshair;
+  background: #ffffff;
+  outline: none;
+}
+
+.fieldBox {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 2px solid rgba(204, 47, 47, 0.95);
+  background: rgba(204, 47, 47, 0.18);
+  color: #3b1010;
+  cursor: grab;
+  overflow: hidden;
+  padding: 0.1rem 0.15rem;
+}
+
+.fieldBox:active {
+  cursor: grabbing;
+}
+
+.fieldBoxSelected {
+  border-color: rgba(21, 78, 193, 1);
+  background: rgba(21, 78, 193, 0.18);
+  color: #0f295f;
+  box-shadow: 0 0 0 2px rgba(21, 78, 193, 0.16);
+}
+
+.fieldBoxLabel {
+  font-size: 0.65rem;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  cursor: nwse-resize;
+}
+
+.panel {
+  border: 1px solid #d6d6dc;
+  border-radius: 10px;
+  background: #fbfbfd;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.listButton {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d4d4de;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.listButtonActive {
+  border-color: #154ec1;
+  background: #edf3ff;
+}
+
+.button {
+  border: 1px solid #154ec1;
+  background: #154ec1;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.metricGrid {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.metricLabel {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.metricInput {
+  width: 100%;
+  border: 1px solid #c7c7d2;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}

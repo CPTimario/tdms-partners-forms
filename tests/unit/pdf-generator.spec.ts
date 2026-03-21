@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, PDFPage, StandardFonts } from "pdf-lib";
 import { initialSupportFormData } from "@/lib/support-form";
 import type { SupportFormData } from "@/lib/support-form";
 import { generateReviewPDF } from "@/lib/pdf-generator";
+import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
 
 const VALID_SIGNATURE_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wn7qE0AAAAASUVORK5CYII=";
@@ -68,11 +69,38 @@ function buildValidFormData(overrides?: Partial<SupportFormData>): SupportFormDa
     travelDate: "2026-06-20",
     sendingChurch: "Every Nation Greenhills",
     partnerSignature: VALID_SIGNATURE_DATA_URL,
+    partnerPrintedName: "Chris Timario",
     unableToGoChoice: "teamFund",
     reroutedChoice: "retain",
     canceledChoice: "generalFund",
     ...overrides,
   };
+}
+
+async function captureDrawnText<T>(action: () => Promise<T>) {
+  const originalDrawText = PDFPage.prototype.drawText;
+  const drawnText: string[] = [];
+  const drawCalls: Array<{ text: string; options: any }> = [];
+
+  (PDFPage.prototype as any).drawText = function patchedDrawText(
+    text: string,
+    options: unknown,
+  ) {
+    drawnText.push(text);
+    drawCalls.push({ text, options });
+    return originalDrawText.call(this, text, options as any);
+  };
+
+  try {
+    const result = await action();
+    return {
+      result,
+      drawnText,
+      drawCalls,
+    };
+  } finally {
+    (PDFPage.prototype as any).drawText = originalDrawText;
+  }
 }
 
 test.describe("PDF Generator - Data Validation", () => {
@@ -102,6 +130,7 @@ test.describe("PDF Generator - Data Validation", () => {
     expect(data.travelDate).toBeTruthy();
     expect(data.sendingChurch).toBeTruthy();
     expect(data.partnerSignature).toBeTruthy();
+    expect(data.partnerPrintedName).toBeTruthy();
   });
 
   test("validates accountability choice values", () => {
@@ -126,12 +155,14 @@ test.describe("PDF Generator - Data Validation", () => {
       reroutedChoice: null,
       canceledChoice: null,
       partnerSignature: "",
+      partnerPrintedName: "",
     });
 
     expect(data.unableToGoChoice).toBeNull();
     expect(data.reroutedChoice).toBeNull();
     expect(data.canceledChoice).toBeNull();
     expect(data.partnerSignature).toBe("");
+    expect(data.partnerPrintedName).toBe("");
   });
 
   test("handles all membership type variants", () => {
@@ -168,6 +199,7 @@ test.describe("PDF Generator - Data Validation", () => {
     expect(data).toHaveProperty("unableToGoChoice");
     expect(data).toHaveProperty("reroutedChoice");
     expect(data).toHaveProperty("partnerSignature");
+    expect(data).toHaveProperty("partnerPrintedName");
   });
 });
 
@@ -193,6 +225,68 @@ test.describe("PDF Generator - Runtime Behavior", () => {
       const parsed = await PDFDocument.load(generated);
       expect(parsed.getPageCount()).toBe(2);
       expect(fetchMock.requestedUrls.some((url) => url.includes("/tdms-forms/pic-saf-victory.pdf"))).toBeTruthy();
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("draws travel date as mm/dd/yy and includes printed name text", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        travelDate: "2026-06-20",
+        partnerPrintedName: "Chris Timario",
+      });
+
+      const { drawnText } = await captureDrawnText(() => generateReviewPDF(data));
+
+      expect(drawnText).toContain("06/20/26");
+      expect(drawnText).toContain("Chris Timario");
+      expect(drawnText).not.toContain("2026-06-20");
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("centers partner name text within mapped field dimensions", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        partnerName: "ABCD",
+      });
+
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const partnerNameCall = drawCalls.find((entry) => entry.text === "ABCD");
+      expect(partnerNameCall).toBeTruthy();
+
+      const coordinates = getTemplateCoordinates("victory").partnerName;
+      expect(coordinates.width).toBeTruthy();
+      expect(coordinates.height).toBeTruthy();
+
+      const testDoc = await PDFDocument.create();
+      const testFont = await testDoc.embedFont(StandardFonts.Helvetica);
+      const fontSize = coordinates.fontSize ?? 10;
+      const mmToPt = 2.834645669;
+      const boxX = coordinates.x * mmToPt;
+      const boxY = coordinates.y * mmToPt;
+      const boxWidth = (coordinates.width ?? 0) * mmToPt;
+      const boxHeight = (coordinates.height ?? 0) * mmToPt;
+      const textWidth = testFont.widthOfTextAtSize("ABCD", fontSize);
+      const expectedX = boxX + Math.max((boxWidth - textWidth) / 2, 0);
+      const expectedY = boxY + Math.max((boxHeight - fontSize) / 2 + fontSize * 0.2, 0);
+
+      expect(partnerNameCall?.options?.x).toBeCloseTo(expectedX, 1);
+      expect(partnerNameCall?.options?.y).toBeCloseTo(expectedY, 1);
     } finally {
       fetchMock.restore();
     }

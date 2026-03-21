@@ -51,6 +51,7 @@ async function fillCompleteForm(page: Page) {
   await page
     .locator('input[name="canceled"][value="generalFund"]')
     .check();
+  await page.getByRole("textbox", { name: "Partner Full Name (Printed)" }).fill("Chris Timario");
 
   // Draw signature
   const signatureCanvas = page.locator('canvas[aria-label="Partner Signature"]');

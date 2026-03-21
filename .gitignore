@@ -25,6 +25,9 @@
 # production
 /build
 
+# generated files (copied at build time)
+/public/pdf.worker.mjs
+
 # misc
 .DS_Store
 *.pem

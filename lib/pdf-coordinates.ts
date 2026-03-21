@@ -12,114 +12,147 @@ import type { TemplateCoordinates } from "@/types/pdf-form";
  * Adjust these based on your actual PDF layout
  */
 export const victoryCourseCoordinates: TemplateCoordinates = {
-  // Partner Information Section (page 1)
-  partnerName: {
-    x: 40,
-    y: 58,
+  partnerName:   {
+    x: 10.03,
+    y: 59.17,
+    width: 75,
+    height: 4.76,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  emailAddress: {
-    x: 40,
-    y: 44,
+  emailAddress:   {
+    x: 9.5,
+    y: 44.75,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  mobileNumber: {
-    x: 40,
-    y: 29,
+  mobileNumber:   {
+    x: 9.5,
+    y: 30.31,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  localChurch: {
-    x: 40,
-    y: 15,
+  localChurch:   {
+    x: 9.5,
+    y: 16.06,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  missionaryName: {
-    x: 139,
-    y: 58,
+  missionaryName:   {
+    x: 95,
+    y: 59.09,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  amount: {
-    x: 147,
-    y: 44,
+  amount:   {
+    x: 95,
+    y: 44.69,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  nation: {
-    x: 139,
-    y: 29,
+  nation:   {
+    x: 111.31,
+    y: 30.31,
+    width: 61.76,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  travelDate: {
-    x: 188,
-    y: 29,
+  travelDate:   {
+    x: 180.33,
+    y: 30.16,
+    width: 25.88,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  sendingChurch: {
-    x: 142,
-    y: 15,
+  sendingChurch:   {
+    x: 95.18,
+    y: 15.7,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  consentCheckbox: {
-    x: 7,
-    y: 79,
+  consentCheckbox:   {
+    x: 5.8,
+    y: 76.27,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-
-  // Accountability Section (page 2 - victory variant)
-  unableToGoTeamFund: {
-    x: 7,
-    y: 30,
+  unableToGoTeamFund:   {
+    x: 6.19,
+    y: 26.58,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  unableToGoGeneralFund: {
-    x: 7,
-    y: 21,
+  unableToGoGeneralFund:   {
+    x: 6.01,
+    y: 21.11,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  reroutedRetain: {
-    x: 74,
-    y: 34,
+  reroutedRetain:   {
+    x: 73.74,
+    y: 30.53,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  reroutedGeneralFund: {
-    x: 74,
-    y: 24,
+  reroutedGeneralFund:   {
+    x: 73.74,
+    y: 24.99,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  canceledGeneralFund: {
-    x: 143,
-    y: 30,
+  canceledGeneralFund:   {
+    x: 143.07,
+    y: 30.46,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-
-  // Signature (page 2, right panel)
-  partnerSignature: {
-    x: 155,
-    y: 12,
-    width: 40,
-    height: 10,
+  partnerSignature:   {
+    x: 147.68,
+    y: 13,
+    width: 59.01,
+    height: 12.17,
     maxWidth: 40,
     maxHeight: 10,
+  },
+  partnerSignaturePrintedName:   {
+    x: 145.46,
+    y: 9.34,
+    width: 63.4,
+    height: 6,
+    fontSize: 9,
+    fontName: "Helvetica",
   },
 };
 
@@ -128,114 +161,147 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
  * Adjust these based on your actual PDF layout
  */
 export const nonVictoryCoordinates: TemplateCoordinates = {
-  // Partner Information Section (page 1)
-  partnerName: {
-    x: 40,
-    y: 58,
+  partnerName:   {
+    x: 10.03,
+    y: 59.17,
+    width: 75,
+    height: 4.76,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  emailAddress: {
-    x: 40,
-    y: 44,
+  emailAddress:   {
+    x: 9.5,
+    y: 44.75,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  mobileNumber: {
-    x: 40,
-    y: 29,
+  mobileNumber:   {
+    x: 9.5,
+    y: 30.31,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  localChurch: {
-    x: 40,
-    y: 15,
+  localChurch:   {
+    x: 9.5,
+    y: 16.06,
+    width: 75,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  missionaryName: {
-    x: 139,
-    y: 58,
+  missionaryName:   {
+    x: 95,
+    y: 59.09,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  amount: {
-    x: 147,
-    y: 44,
+  amount:   {
+    x: 95,
+    y: 44.69,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  nation: {
-    x: 139,
-    y: 29,
+  nation:   {
+    x: 111.31,
+    y: 30.31,
+    width: 61.76,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  travelDate: {
-    x: 188,
-    y: 29,
+  travelDate:   {
+    x: 180.33,
+    y: 30.16,
+    width: 25.88,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  sendingChurch: {
-    x: 142,
-    y: 15,
+  sendingChurch:   {
+    x: 95.18,
+    y: 15.7,
+    width: 112,
+    height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
-  consentCheckbox: {
-    x: 7,
-    y: 79,
+  consentCheckbox:   {
+    x: 5.8,
+    y: 76.27,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-
-  // Accountability Section (page 2 - non-victory variant)
-  unableToGoTeamFund: {
-    x: 7,
-    y: 39,
+  unableToGoTeamFund:   {
+    x: 6.26,
+    y: 35.4,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  unableToGoGeneralFund: {
-    x: 7,
-    y: 29,
+  unableToGoGeneralFund:   {
+    x: 6.26,
+    y: 29.93,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  reroutedRetain: {
-    x: 74,
-    y: 42,
+  reroutedRetain:   {
+    x: 73.74,
+    y: 39.28,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  reroutedGeneralFund: {
-    x: 74,
-    y: 33,
+  reroutedGeneralFund:   {
+    x: 73.74,
+    y: 33.74,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-  canceledGeneralFund: {
-    x: 143,
-    y: 39,
+  canceledGeneralFund:   {
+    x: 143.07,
+    y: 39.21,
+    width: 3,
+    height: 3,
     checkSymbol: "X",
     fontSize: 10,
     fontName: "Helvetica",
   },
-
-  // Signature (page 2, right panel)
-  partnerSignature: {
-    x: 155,
-    y: 12,
-    width: 40,
-    height: 10,
+  partnerSignature:   {
+    x: 147.68,
+    y: 13,
+    width: 59.01,
+    height: 12.17,
     maxWidth: 40,
     maxHeight: 10,
+  },
+  partnerSignaturePrintedName:   {
+    x: 145.46,
+    y: 9.34,
+    width: 63.4,
+    height: 6,
+    fontSize: 9,
+    fontName: "Helvetica",
   },
 };
 

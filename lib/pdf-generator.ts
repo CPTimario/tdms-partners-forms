@@ -9,9 +9,12 @@ import {
   StandardFonts,
   rgb,
 } from "pdf-lib";
-import type { SupportFormData } from "@/lib/support-form";
+import { formatDisplayDate, type SupportFormData } from "@/lib/support-form";
 import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
 import type { TextFieldConfig } from "@/types/pdf-form";
+
+const MM_TO_POINTS = 2.834645669;
+const TEXT_BASELINE_NUDGE_MM = 1.2;
 
 /**
  * Generates a full review PDF containing partner info (page 1)
@@ -62,7 +65,7 @@ function drawPartnerInfo(
   drawTextField(page, font, coordinates.missionaryName, data.missionaryName);
   drawTextField(page, font, coordinates.amount, data.amount);
   drawTextField(page, font, coordinates.nation, data.nation);
-  drawTextField(page, font, coordinates.travelDate, data.travelDate);
+  drawTextField(page, font, coordinates.travelDate, formatDisplayDate(data.travelDate));
   drawTextField(page, font, coordinates.sendingChurch, data.sendingChurch);
 
   if (data.consentGiven && coordinates.consentCheckbox) {
@@ -111,10 +114,20 @@ async function drawAccountability(
     );
   }
 
+  drawTextField(
+    page,
+    font,
+    coordinates.partnerSignaturePrintedName,
+    data.partnerPrintedName
+  );
+
 }
 
 /**
- * Draws text at a specific position on the PDF page
+ * Draws text in a mapped field.
+ *
+ * If both width and height are configured, text is centered within that box.
+ * Otherwise, text is drawn at x/y with a baseline nudge for legacy mappings.
  */
 function drawTextField(
   page: PDFPage,
@@ -126,11 +139,27 @@ function drawTextField(
     return;
   }
 
-  const { x, y, fontSize = 10 } = fieldConfig;
+  const { x, y, width, height, fontSize = 10 } = fieldConfig;
 
   // Convert mm to points (1mm ≈ 2.834645669 points)
-  const xPoints = x * 2.834645669;
-  const yPoints = y * 2.834645669;
+  const boxXPoints = x * MM_TO_POINTS;
+  const boxYPoints = y * MM_TO_POINTS;
+
+  let xPoints = boxXPoints;
+  let yPoints = (y + TEXT_BASELINE_NUDGE_MM) * MM_TO_POINTS;
+
+  if (typeof width === "number" && typeof height === "number") {
+    const boxWidthPoints = width * MM_TO_POINTS;
+    const boxHeightPoints = height * MM_TO_POINTS;
+    const textWidthPoints = font.widthOfTextAtSize(text, fontSize);
+
+    // Approximate cap-height to place text visually centered in the mapped box.
+    const textHeightPoints = fontSize;
+    const verticalOffset = (boxHeightPoints - textHeightPoints) / 2 + fontSize * 0.2;
+
+    xPoints = boxXPoints + Math.max((boxWidthPoints - textWidthPoints) / 2, 0);
+    yPoints = boxYPoints + Math.max(verticalOffset, 0);
+  }
 
   page.drawText(text, {
     x: xPoints,
@@ -153,8 +182,8 @@ function drawCheckbox(page: PDFPage, font: any, checkboxConfig: any): void {
   } = checkboxConfig;
 
   // Convert mm to points
-  const xPoints = x * 2.834645669;
-  const yPoints = y * 2.834645669;
+  const xPoints = x * MM_TO_POINTS;
+  const yPoints = y * MM_TO_POINTS;
 
   page.drawText(checkSymbol, {
     x: xPoints,
@@ -201,14 +230,14 @@ async function drawSignature(
   const scaledHeight = height * scale;
 
   // Convert mm to points
-  const xPoints = x * 2.834645669;
-  const yPoints = y * 2.834645669;
+  const xPoints = x * MM_TO_POINTS;
+  const yPoints = y * MM_TO_POINTS;
 
   page.drawImage(image, {
     x: xPoints,
     y: yPoints,
-    width: scaledWidth * 2.834645669,
-    height: scaledHeight * 2.834645669,
+    width: scaledWidth * MM_TO_POINTS,
+    height: scaledHeight * MM_TO_POINTS,
   });
 }
 

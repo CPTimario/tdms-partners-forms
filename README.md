@@ -33,6 +33,8 @@ After the gate, the app walks through Partner Information and Accountability, an
 ## Project Structure
 
 - [app](app): Next.js app entrypoints, layout, and global styles
+- [app/api/mapper/coordinates](app/api/mapper/coordinates): development-only API route that persists mapper coordinates to source
+- [components/mapper](components/mapper): development mapper UI for visual coordinate tuning
 - [components/support-form-builder](components/support-form-builder): feature UI for multi-step form and previews
 - [hooks/use-support-form.ts](hooks/use-support-form.ts): form state, step transitions, and actions
 - [lib/support-form.ts](lib/support-form.ts): domain model, copy constants, and validation rules
@@ -47,7 +49,7 @@ After the gate, the app walks through Partner Information and Accountability, an
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm 9+
 
 ## Setup
@@ -92,10 +94,11 @@ Available local workflows from [justfile](justfile):
 
 ### Unit Tests
 
-Unit tests live in [tests/unit/support-form.spec.ts](tests/unit/support-form.spec.ts) and [tests/unit/pdf-generator.spec.ts](tests/unit/pdf-generator.spec.ts), and cover:
+Unit tests live in [tests/unit/support-form.spec.ts](tests/unit/support-form.spec.ts), [tests/unit/pdf-generator.spec.ts](tests/unit/pdf-generator.spec.ts), and [tests/unit/pdf-renderer.spec.ts](tests/unit/pdf-renderer.spec.ts), and cover:
 
 - Domain behavior in [lib/support-form.ts](lib/support-form.ts), including required-field validation, step-level validity, and formatting helper behavior
 - PDF data-model validation for review/export generation inputs
+- Mapper/PDF renderer configuration constraints (template path, page selection, zoom bounds)
 
 Run:
 
@@ -105,14 +108,16 @@ just test-unit
 
 ### End-to-End Tests
 
-E2E tests in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.ts) and [tests/e2e/pdf-generation.spec.ts](tests/e2e/pdf-generation.spec.ts) cover:
+E2E tests in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.ts), [tests/e2e/pdf-generation.spec.ts](tests/e2e/pdf-generation.spec.ts), [tests/e2e/mapper.spec.ts](tests/e2e/mapper.spec.ts), and [tests/e2e/pdf-rendering.spec.ts](tests/e2e/pdf-rendering.spec.ts) cover:
 
 - Membership gate flow
 - Required-field blocking and recovery
-- Drawn signature requirement enforced before Review
+- Accountability requirements enforced before Review (drawn signature and Partner Full Name)
 - Review transition with generated PDF preview present
 - Single download button behavior for PDF-only export
 - PDF download triggers for both membership variants
+- Mapper interactions: click-to-place, drag, keyboard nudge, resize, and save status behavior
+- PDF.js mapper rendering behavior: non-victory template asset loads without 404, rapid template/page switching stability, and canvas overlay interaction behavior
 
 Run:
 
@@ -159,7 +164,8 @@ The accountability step includes a drawn signature pad powered by `react-signatu
 
 - Draw using mouse, touch, or stylus on the canvas area.
 - Use **Clear Signature** to reset and re-draw at any time.
-- A signature is required before the Review step is available; leaving the canvas blank blocks progression with "Signature is required."
+- Review requires both a drawn signature and **Partner Full Name (Printed)** in the accountability section.
+- Leaving the signature canvas blank blocks progression with "Signature is required." Leaving printed name blank blocks progression with "Partner Full Name is required."
 - Navigating back to the accountability step retains the previously drawn signature.
 - On review/export, the generated PDF includes the drawn signature image in the accountability signature area.
 
@@ -169,9 +175,48 @@ Export and preview implementation in [lib/pdf-generator.ts](lib/pdf-generator.ts
 
 - Uses static PDF templates from [public/tdms-forms](public/tdms-forms)
 - Fills partner fields on page 1 and accountability/signature fields on page 2
+- Centers text in mapped field boxes when text fields define both `width` and `height`
 - Review preview embeds the generated PDF blob (single source of truth)
 - Download action exports the same generated PDF bytes shown in review
 - Output is PDF-only (PNG/image export removed)
+
+## Development Mapper
+
+A non-production mapper route is available at [app/mapper/page.tsx](app/mapper/page.tsx).
+
+- Route: `/mapper`
+- Availability: any non-production environment (`NODE_ENV !== "production"`)
+- Production behavior: resolves to not found
+- Purpose: inspect/copy coordinate snippets while tuning [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts)
+
+Mapper capabilities:
+
+- Switch between Victory and Non-Victory templates
+- Switch between page 1 and page 2 field groups
+- Position field boxes directly on the rendered template page
+- Click the template to place the selected field
+- Drag boxes to move them and use arrow keys for fine nudging
+- Resize selected fields using the corner resize handle
+- Edit x/y/width/height values in mm and copy field snippets
+- Persist draft coordinates with **Save to app file**
+
+Mapper save API:
+
+- Endpoint: `POST /api/mapper/coordinates`
+- Handler: [app/api/mapper/coordinates/route.ts](app/api/mapper/coordinates/route.ts)
+- Availability: any non-production environment (`NODE_ENV !== "production"`); returns 404 in production
+- Request body: `{ "coordinates": { "victory": TemplateCoordinates, "nonVictory": TemplateCoordinates } }`
+- Validation: zod payload validation before file write
+- Success: `200 { "ok": true }`
+- Failures:
+	- `400 { "error": "Invalid payload", "details": ... }`
+	- `500 { "error": "Failed to save coordinates" }`
+
+Coordinate configuration notes:
+
+- Text centering is opt-in via `width` and `height` on text fields in [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts).
+- If either dimension is missing, text rendering falls back to x/y placement with baseline nudge.
+- Template asset mapping is explicit by membership type (`victory` -> `pic-saf-victory.pdf`, `nonVictory` -> `pic-saf-non-victory.pdf`) to avoid filename mismatch.
 
 ## Verified Behavior and Caveats
 
@@ -179,12 +224,15 @@ Verified via focused and regression runs:
 
 - `npx tsc --noEmit`
 - `npm run test:unit -- --reporter=list`
+- `npx playwright test tests/e2e/mapper.spec.ts tests/e2e/pdf-rendering.spec.ts --reporter=list`
 - `npx playwright test tests/e2e/pdf-generation.spec.ts tests/e2e/support-form.spec.ts --reporter=list`
 - `npm run test:e2e -- --reporter=list`
 
 Current caveats/limitations:
 
 - Coordinates are template-specific; if source PDFs change, update [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts).
+- Saving from `/mapper` rewrites [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts) using deterministic serialization and may replace manual formatting/comments in that file.
+- Mapper template rendering depends on the generated worker asset at `/public/pdf.worker.mjs`; if the worker copy step fails, mapper PDF rendering will show a "PDF Render Error" state.
 - Review preview uses an embedded PDF frame; browser PDF rendering differences can affect how quickly the preview appears, but download still works from the same generated bytes.
 - Responsiveness applies to form UI only. PDF placement remains fixed to template coordinates by design.
 
@@ -200,6 +248,8 @@ just test-e2e
 - If e2e tests fail immediately with unexpected page content (e.g. a login prompt) rather than a form assertion, another app is occupying 127.0.0.1:3000. Stop it and rerun.
 
 - If signature-related e2e tests fail with "Signature is required." despite `drawSignature` being called, the most likely cause is that the canvas was off-screen when pointer events fired. The helper already calls `scrollIntoViewIfNeeded()` — verify it has not been removed if tests are modified.
+
+- If progression is blocked with "Partner Full Name is required.", fill **Partner Full Name (Printed)** in the accountability section before clicking Review Forms.
 
 - If preview appears blank on a specific browser, use the Download PDF action to verify generation output. The exported file is the source of truth.
 

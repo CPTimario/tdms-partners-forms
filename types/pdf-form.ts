@@ -7,11 +7,13 @@
 export interface FieldPosition {
   x: number;
   y: number;
+  // Optional field box dimensions in mm. Used by mapper overlays.
   width?: number;
   height?: number;
 }
 
 export interface TextFieldConfig extends FieldPosition {
+  // When both width and height are provided, PDF text is centered in this box.
   fontSize?: number;
   fontName?: string;
 }
@@ -51,4 +53,5 @@ export interface TemplateCoordinates {
 
   // Signature
   partnerSignature: SignatureConfig;
+  partnerSignaturePrintedName: TextFieldConfig;
 }

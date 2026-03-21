@@ -22,7 +22,7 @@ type FillStepProps = {
   isFormValid: boolean;
   isPartnerStepComplete: boolean;
   isAccountabilityStepComplete: boolean;
-  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch">) => ChangeEventHandler<HTMLInputElement>;
+  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
   onCheckboxChange: (field: "consentGiven") => ChangeEventHandler<HTMLInputElement>;
   onUnableToGoChange: ChangeEventHandler<HTMLInputElement>;
   onReroutedChange: ChangeEventHandler<HTMLInputElement>;
@@ -477,6 +477,18 @@ export function FillStep({
                 ariaDescribedBy={hasFieldError("partnerSignature") ? errorId("partnerSignature") : undefined}
               />
               {renderFieldError("partnerSignature")}
+
+              <label className={styles.fieldLabel}>
+                Partner Full Name (Printed)
+                <input
+                  className={`${styles.textInput} ${hasFieldError("partnerPrintedName") ? styles.textInputError : ""}`}
+                  value={data.partnerPrintedName}
+                  onChange={onTextChange("partnerPrintedName")}
+                  aria-invalid={hasFieldError("partnerPrintedName")}
+                  aria-describedby={hasFieldError("partnerPrintedName") ? errorId("partnerPrintedName") : undefined}
+                />
+                {renderFieldError("partnerPrintedName")}
+              </label>
             </fieldset>
           </section>
         )}
