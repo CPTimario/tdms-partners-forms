@@ -5,13 +5,18 @@
 
 import {
   PDFDocument,
+  PDFFont,
   PDFPage,
   StandardFonts,
   rgb,
 } from "pdf-lib";
 import { formatDisplayDate, type SupportFormData } from "@/lib/support-form";
 import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
-import type { TextFieldConfig } from "@/types/pdf-form";
+import type {
+  CheckboxConfig,
+  SignatureConfig,
+  TextFieldConfig,
+} from "@/types/pdf-form";
 
 const MM_TO_POINTS = 2.834645669;
 const TEXT_BASELINE_NUDGE_MM = 1.2;
@@ -54,7 +59,7 @@ export async function generateReviewPDF(
 
 function drawPartnerInfo(
   page: PDFPage,
-  font: any,
+  font: PDFFont,
   data: SupportFormData,
   coordinates: ReturnType<typeof getTemplateCoordinates>
 ) {
@@ -75,7 +80,7 @@ function drawPartnerInfo(
 
 async function drawAccountability(
   page: PDFPage,
-  font: any,
+  font: PDFFont,
   pdfDoc: PDFDocument,
   data: SupportFormData,
   coordinates: ReturnType<typeof getTemplateCoordinates>
@@ -131,7 +136,7 @@ async function drawAccountability(
  */
 function drawTextField(
   page: PDFPage,
-  font: any,
+  font: PDFFont,
   fieldConfig: TextFieldConfig,
   text: string
 ): void {
@@ -173,7 +178,7 @@ function drawTextField(
 /**
  * Draws a checkbox (simple "X" character) at a specific position
  */
-function drawCheckbox(page: PDFPage, font: any, checkboxConfig: any): void {
+function drawCheckbox(page: PDFPage, font: PDFFont, checkboxConfig: CheckboxConfig): void {
   const {
     x,
     y,
@@ -200,11 +205,17 @@ function drawCheckbox(page: PDFPage, font: any, checkboxConfig: any): void {
 async function drawSignature(
   pdfDoc: PDFDocument,
   page: PDFPage,
-  signatureConfig: any,
+  signatureConfig: SignatureConfig,
   base64ImageData: string
 ): Promise<void> {
-  if (!base64ImageData || !base64ImageData.startsWith("data:image")) {
+  const mimeMatch = base64ImageData.match(/^data:(image\/[a-z]+);base64,/);
+  if (!mimeMatch) {
     throw new Error("Invalid signature image data");
+  }
+
+  const mimeType = mimeMatch[1];
+  if (mimeType !== "image/png" && mimeType !== "image/jpeg") {
+    throw new Error(`Unsupported signature image format: ${mimeType}`);
   }
 
   // Remove data URI prefix
@@ -218,26 +229,30 @@ async function drawSignature(
     c.charCodeAt(0)
   );
 
-  // Embed the image (pdf-lib detects image format)
-  const image = await pdfDoc.embedPng(imageBytes);
+  // Embed the image using the format declared in the data URI
+  const image = mimeType === "image/jpeg"
+    ? await pdfDoc.embedJpg(imageBytes)
+    : await pdfDoc.embedPng(imageBytes);
 
-  const { x, y, width, height, maxWidth = width, maxHeight = height } =
-    signatureConfig;
+  const { x, y, width, height } = signatureConfig;
 
-  // Calculate scaling to fit within max dimensions
-  const scale = Math.min(maxWidth / width, maxHeight / height, 1);
-  const scaledWidth = width * scale;
-  const scaledHeight = height * scale;
+  const fieldWidthPt = width * MM_TO_POINTS;
+  const fieldHeightPt = height * MM_TO_POINTS;
 
-  // Convert mm to points
-  const xPoints = x * MM_TO_POINTS;
-  const yPoints = y * MM_TO_POINTS;
+  // Scale image to fit within field while preserving aspect ratio
+  const scale = Math.min(fieldWidthPt / image.width, fieldHeightPt / image.height);
+  const scaledWidthPt = image.width * scale;
+  const scaledHeightPt = image.height * scale;
+
+  // Center within the field box
+  const xPoints = x * MM_TO_POINTS + (fieldWidthPt - scaledWidthPt) / 2;
+  const yPoints = y * MM_TO_POINTS + (fieldHeightPt - scaledHeightPt) / 2;
 
   page.drawImage(image, {
     x: xPoints,
     y: yPoints,
-    width: scaledWidth * MM_TO_POINTS,
-    height: scaledHeight * MM_TO_POINTS,
+    width: scaledWidthPt,
+    height: scaledHeightPt,
   });
 }
 
@@ -248,7 +263,7 @@ export async function downloadPDF(
   pdfBytes: Uint8Array,
   filename: string
 ): Promise<void> {
-  const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

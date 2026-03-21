@@ -106,7 +106,7 @@ test.describe("PDFRenderer - Mapper Integration Props", () => {
       nonVictory: "/tdms-forms/pic-saf-non-victory.pdf",
     };
 
-    for (const [name, path] of Object.entries(templates)) {
+    for (const [, path] of Object.entries(templates)) {
       expect(path).toMatch(/pic-saf-(victory|non-victory)\.pdf$/);
     }
   });

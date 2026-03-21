@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   downloadPDF,
   generateReviewPDF,
@@ -14,30 +15,12 @@ import { FillStep } from "@/components/support-form-builder/FillStep";
 import styles from "./FormBuilder.module.css";
 import { ReviewStep } from "./ReviewStep";
 
-type MembershipGateProps = {
-  onSelect: (membershipType: MembershipType) => void;
-};
-
-function MembershipGate({ onSelect }: MembershipGateProps) {
-  const [showAgreement, setShowAgreement] = useState(false);
-  const gateDialogRef = useRef<HTMLDivElement | null>(null);
-  const agreementDialogRef = useRef<HTMLDivElement | null>(null);
-  const yesButtonRef = useRef<HTMLButtonElement | null>(null);
-  const noButtonRef = useRef<HTMLButtonElement | null>(null);
-  const restoreFocusRef = useRef<"yes" | "no" | null>(null);
+function MembershipGate() {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (showAgreement || !restoreFocusRef.current) {
-      return;
-    }
-
-    const target = restoreFocusRef.current === "yes" ? yesButtonRef.current : noButtonRef.current;
-    target?.focus();
-    restoreFocusRef.current = null;
-  }, [showAgreement]);
-
-  useEffect(() => {
-    const dialog = showAgreement ? agreementDialogRef.current : gateDialogRef.current;
+    const dialog = dialogRef.current;
     if (!dialog) {
       return;
     }
@@ -50,13 +33,6 @@ function MembershipGate({ onSelect }: MembershipGateProps) {
     firstElement?.focus();
 
     const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && showAgreement) {
-        event.preventDefault();
-        restoreFocusRef.current = "yes";
-        setShowAgreement(false);
-        return;
-      }
-
       if (event.key !== "Tab" || focusableElements.length === 0) {
         return;
       }
@@ -78,46 +54,12 @@ function MembershipGate({ onSelect }: MembershipGateProps) {
     return () => {
       dialog.removeEventListener("keydown", handleTabTrap);
     };
-  }, [showAgreement]);
-
-  if (showAgreement) {
-    return (
-      <main className={styles.gateShell}>
-        <div
-          ref={agreementDialogRef}
-          className={styles.gateCard}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="membership-agreement-title"
-        >
-          <h1 className={styles.gateTitle} id="membership-agreement-title">
-            Accountability Agreement
-          </h1>
-          <p className={styles.gateText}>{getAccountabilityAffirmationCopy("victory")}</p>
-          <div className={styles.gateActions}>
-            <button
-              className={`${styles.button} ${styles.secondaryButton}`}
-              type="button"
-              onClick={() => {
-                restoreFocusRef.current = "yes";
-                setShowAgreement(false);
-              }}
-            >
-              Back
-            </button>
-            <button className={styles.button} type="button" onClick={() => onSelect("victory")}>
-              I Agree
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  }, []);
 
   return (
     <main className={styles.gateShell}>
       <div
-        ref={gateDialogRef}
+        ref={dialogRef}
         className={styles.gateCard}
         role="dialog"
         aria-modal="true"
@@ -129,18 +71,16 @@ function MembershipGate({ onSelect }: MembershipGateProps) {
         <p className={styles.gateText}>Choose Yes or No to continue.</p>
         <div className={styles.gateActions}>
           <button
-            ref={yesButtonRef}
             className={styles.button}
             type="button"
-            onClick={() => setShowAgreement(true)}
+            onClick={() => router.push("/victory")}
           >
             Yes
           </button>
           <button
-            ref={noButtonRef}
             className={styles.button}
             type="button"
-            onClick={() => onSelect("nonVictory")}
+            onClick={() => router.push("/non-victory")}
           >
             No
           </button>
@@ -150,7 +90,78 @@ function MembershipGate({ onSelect }: MembershipGateProps) {
   );
 }
 
-export function SupportFormBuilder() {
+type VictoryAgreementGateProps = {
+  onAgree: () => void;
+};
+
+function VictoryAgreementGate({ onAgree }: VictoryAgreementGateProps) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+
+    const focusableElements = dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    firstElement?.focus();
+
+    const handleTabTrap = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || focusableElements.length === 0) {
+        return;
+      }
+
+      const activeElement = document.activeElement as HTMLElement | null;
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault();
+        lastElement?.focus();
+        return;
+      }
+
+      if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement?.focus();
+      }
+    };
+
+    dialog.addEventListener("keydown", handleTabTrap);
+    return () => {
+      dialog.removeEventListener("keydown", handleTabTrap);
+    };
+  }, []);
+
+  return (
+    <main className={styles.gateShell}>
+      <div
+        ref={dialogRef}
+        className={styles.gateCard}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="membership-agreement-title"
+      >
+        <h1 className={styles.gateTitle} id="membership-agreement-title">
+          Accountability Agreement
+        </h1>
+        <p className={styles.gateText}>{getAccountabilityAffirmationCopy("victory")}</p>
+        <div className={styles.gateActions}>
+          <button className={styles.button} type="button" onClick={onAgree}>
+            I Agree
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+type SupportFormBuilderProps = {
+  membershipType?: MembershipType;
+};
+
+export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps = {}) {
   const {
     data,
     step,
@@ -170,7 +181,7 @@ export function SupportFormBuilder() {
     goToPartner,
     goToAccountability,
     goToReview,
-  } = useSupportForm();
+  } = useSupportForm(membershipType);
   const [isExporting, setIsExporting] = useState(false);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [reviewPdfBytes, setReviewPdfBytes] = useState<Uint8Array | null>(null);
@@ -204,7 +215,7 @@ export function SupportFormBuilder() {
         }
 
         const nextUrl = URL.createObjectURL(
-          new Blob([bytes as any], { type: "application/pdf" }),
+          new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
         );
 
         setReviewPdfBytes(bytes);
@@ -260,7 +271,10 @@ export function SupportFormBuilder() {
   };
 
   if (!data.membershipType) {
-    return <MembershipGate onSelect={setMembership} />;
+    if (membershipType === "victory") {
+      return <VictoryAgreementGate onAgree={() => setMembership("victory")} />;
+    }
+    return <MembershipGate />;
   }
 
   if (step !== "review") {

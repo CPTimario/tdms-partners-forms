@@ -192,8 +192,16 @@ function reducer(
   }
 }
 
-export function useSupportForm() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+export function useSupportForm(initialMembershipType?: MembershipType) {
+  const [state, dispatch] = useReducer(reducer, initialMembershipType, (membership): SupportFormState => {
+    if (membership === "nonVictory") {
+      return {
+        ...initialState,
+        data: { ...initialSupportFormData, membershipType: "nonVictory" },
+      };
+    }
+    return initialState;
+  });
   const latestDataRef = useRef(state.data);
 
   useEffect(() => {

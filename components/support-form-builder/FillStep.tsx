@@ -77,7 +77,7 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
       return;
     }
 
-    const nextValue = canvas.toDataURL("image/png");
+    const nextValue = canvas.getTrimmedCanvas().toDataURL("image/png");
     loadedValueRef.current = nextValue;
     onChange(nextValue);
   };
@@ -393,7 +393,6 @@ export function FillStep({
                     value="teamFund"
                     checked={data.unableToGoChoice === "teamFund"}
                     onChange={onUnableToGoChange}
-                    aria-invalid={hasFieldError("unableToGoChoice")}
                     aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
                   />
                   Redirect my support to the team fund
@@ -408,7 +407,6 @@ export function FillStep({
                     value="generalFund"
                     checked={data.unableToGoChoice === "generalFund"}
                     onChange={onUnableToGoChange}
-                    aria-invalid={hasFieldError("unableToGoChoice")}
                     aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund
@@ -426,7 +424,6 @@ export function FillStep({
                     value="retain"
                     checked={data.reroutedChoice === "retain"}
                     onChange={onReroutedChange}
-                    aria-invalid={hasFieldError("reroutedChoice")}
                     aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
                   />
                   Retain my support
@@ -441,7 +438,6 @@ export function FillStep({
                     value="generalFund"
                     checked={data.reroutedChoice === "generalFund"}
                     onChange={onReroutedChange}
-                    aria-invalid={hasFieldError("reroutedChoice")}
                     aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund
@@ -459,7 +455,6 @@ export function FillStep({
                     value="generalFund"
                     checked={data.canceledChoice === "generalFund"}
                     onChange={onCanceledChange}
-                    aria-invalid={hasFieldError("canceledChoice")}
                     aria-describedby={hasFieldError("canceledChoice") ? errorId("canceledChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund

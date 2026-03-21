@@ -36,7 +36,7 @@ export function PDFRenderer({
 
   useEffect(() => {
     let cancelled = false;
-    let loadingTask: { promise: Promise<any>; destroy?: () => void } | null = null;
+    let loadingTask: ReturnType<typeof pdfjsLib.getDocument> | null = null;
     let renderTask: { promise: Promise<void>; cancel?: () => void } | null = null;
 
     const renderPDF = async () => {

@@ -80,16 +80,17 @@ function buildValidFormData(overrides?: Partial<SupportFormData>): SupportFormDa
 async function captureDrawnText<T>(action: () => Promise<T>) {
   const originalDrawText = PDFPage.prototype.drawText;
   const drawnText: string[] = [];
-  const drawCalls: Array<{ text: string; options: any }> = [];
+  const drawCalls: Array<{ text: string; options: Record<string, unknown> }> = [];
 
-  (PDFPage.prototype as any).drawText = function patchedDrawText(
+  (PDFPage.prototype as unknown as { drawText: unknown }).drawText = function patchedDrawText(
+    this: PDFPage,
     text: string,
     options: unknown,
   ) {
     drawnText.push(text);
-    drawCalls.push({ text, options });
-    return originalDrawText.call(this, text, options as any);
-  };
+    drawCalls.push({ text, options: (options as Record<string, unknown>) ?? {} });
+    return (originalDrawText as unknown as (...args: unknown[]) => unknown).call(this, text, options);
+  } as unknown as PDFPage["drawText"];
 
   try {
     const result = await action();
@@ -99,7 +100,32 @@ async function captureDrawnText<T>(action: () => Promise<T>) {
       drawCalls,
     };
   } finally {
-    (PDFPage.prototype as any).drawText = originalDrawText;
+    (PDFPage.prototype as unknown as { drawText: unknown }).drawText = originalDrawText;
+  }
+}
+
+async function captureDrawnImages<T>(action: () => Promise<T>) {
+  const originalDrawImage = PDFPage.prototype.drawImage;
+  const drawImageCalls: Array<Record<string, unknown>> = [];
+
+  (PDFPage.prototype as unknown as { drawImage: unknown }).drawImage = function patchedDrawImage(
+    this: PDFPage,
+    image: unknown,
+    options: unknown,
+  ) {
+    void image;
+    drawImageCalls.push((options as Record<string, unknown>) ?? {});
+    return (originalDrawImage as unknown as (...args: unknown[]) => unknown).call(this, image, options);
+  } as unknown as PDFPage["drawImage"];
+
+  try {
+    const result = await action();
+    return {
+      result,
+      drawImageCalls,
+    };
+  } finally {
+    (PDFPage.prototype as unknown as { drawImage: unknown }).drawImage = originalDrawImage;
   }
 }
 
@@ -192,7 +218,7 @@ test.describe("PDF Generator - Data Validation", () => {
 
     partnerFields.forEach((field) => {
       expect(data).toHaveProperty(field);
-      expect((data as any)[field]).toBeTruthy();
+      expect((data as Record<string, unknown>)[field]).toBeTruthy();
     });
 
     // Accountability fields
@@ -248,6 +274,41 @@ test.describe("PDF Generator - Runtime Behavior", () => {
       expect(drawnText).toContain("06/20/26");
       expect(drawnText).toContain("Chris Timario");
       expect(drawnText).not.toContain("2026-06-20");
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("centers the signature image inside the mapped signature field", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        partnerSignature: VALID_SIGNATURE_DATA_URL,
+      });
+
+      const { drawImageCalls } = await captureDrawnImages(() => generateReviewPDF(data));
+      expect(drawImageCalls.length).toBeGreaterThan(0);
+
+      const signatureDrawCall = drawImageCalls[0];
+      const coordinates = getTemplateCoordinates("victory").partnerSignature;
+      const mmToPt = 2.834645669;
+      const fieldWidthPt = coordinates.width * mmToPt;
+      const fieldHeightPt = coordinates.height * mmToPt;
+
+      // VALID_SIGNATURE_DATA_URL is a 1x1 image, so scale-to-fit yields a square.
+      const expectedSizePt = Math.min(fieldWidthPt, fieldHeightPt);
+      const expectedX = coordinates.x * mmToPt + (fieldWidthPt - expectedSizePt) / 2;
+      const expectedY = coordinates.y * mmToPt + (fieldHeightPt - expectedSizePt) / 2;
+
+      expect(Number(signatureDrawCall.x)).toBeCloseTo(expectedX, 1);
+      expect(Number(signatureDrawCall.y)).toBeCloseTo(expectedY, 1);
+      expect(Number(signatureDrawCall.width)).toBeCloseTo(expectedSizePt, 1);
+      expect(Number(signatureDrawCall.height)).toBeCloseTo(expectedSizePt, 1);
     } finally {
       fetchMock.restore();
     }
@@ -349,6 +410,52 @@ test.describe("PDF Generator - Runtime Behavior", () => {
     try {
       const data = buildValidFormData({ partnerSignature: "not-a-data-uri" });
       await expect(generateReviewPDF(data)).rejects.toThrow("Invalid signature image data");
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("rejects an unsupported signature image format", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      // Valid data URI structure but a MIME type that is neither png nor jpeg
+      const data = buildValidFormData({
+        partnerSignature: "data:image/webp;base64,AAAA",
+      });
+      await expect(generateReviewPDF(data)).rejects.toThrow(
+        "Unsupported signature image format: image/webp",
+      );
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("embeds a JPEG signature and produces a valid PDF", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      // Minimal 1×1 JFIF JPEG: SOI + APP0 + SOF0 + EOI (35 bytes)
+      // pdf-lib only needs the SOF0 to extract dimensions; the absence of
+      // actual scan data does not prevent embedding.
+      const jpegBase64 = Buffer.from(
+        "ffd8ffe000104a46494600010100000100010000" +
+        "ffc0000b080001000101011100ffd9",
+        "hex",
+      ).toString("base64");
+      const jpegDataUrl = `data:image/jpeg;base64,${jpegBase64}`;
+
+      const data = buildValidFormData({ partnerSignature: jpegDataUrl });
+      const generated = await generateReviewPDF(data);
+
+      const header = new TextDecoder().decode(generated.slice(0, 5));
+      expect(header).toBe("%PDF-");
     } finally {
       fetchMock.restore();
     }

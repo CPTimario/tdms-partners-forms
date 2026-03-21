@@ -7,12 +7,14 @@ async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victor
 
   if (type === "Victory Member") {
     await gate.getByRole("button", { name: "Yes", exact: true }).click();
+    await expect(page).toHaveURL(/\/victory$/);
 
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
     await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
   } else {
     await gate.getByRole("button", { name: "No", exact: true }).click();
+    await expect(page).toHaveURL(/\/non-victory$/);
   }
 
   // Wait for the gate to disappear before proceeding
@@ -126,55 +128,144 @@ test.describe("Support forms end-to-end", () => {
     await expect(yesButton).toBeFocused();
 
     await yesButton.click();
+    await expect(page).toHaveURL(/\/victory$/);
 
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
 
-    const backButton = agreementGate.getByRole("button", { name: "Back", exact: true });
     const agreeButton = agreementGate.getByRole("button", { name: "I Agree", exact: true });
 
-    await expect(backButton).toBeFocused();
+    await expect(agreeButton).toBeFocused();
 
     await page.keyboard.press("Shift+Tab");
     await expect(agreeButton).toBeFocused();
 
     await page.keyboard.press("Tab");
-    await expect(backButton).toBeFocused();
+    await expect(agreeButton).toBeFocused();
   });
 
-  test("closes agreement dialog on Escape and restores focus to Yes button", async ({ page }: { page: Page }) => {
-    await page.goto("/");
+  test("keeps the victory agreement gate visible when Escape is pressed", async ({ page }: { page: Page }) => {
+    await page.goto("/victory");
 
-    const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
-    const yesButton = gate.getByRole("button", { name: "Yes", exact: true });
-    await expect(yesButton).toBeVisible();
-
-    await yesButton.click();
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
 
     await page.keyboard.press("Escape");
-    await expect(agreementGate).toBeHidden();
-    await expect(gate).toBeVisible();
-    await expect(yesButton).toBeFocused();
+    await expect(agreementGate).toBeVisible();
+    await expect(page).toHaveURL(/\/victory$/);
   });
 
-  test("allows backing out of agreement modal and choosing non-victory flow", async ({ page }: { page: Page }) => {
+  test("redirects to non-victory route and skips agreement gate", async ({ page }: { page: Page }) => {
     await page.goto("/");
 
     const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
     await expect(gate).toBeVisible();
 
-    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+    await gate.getByRole("button", { name: "No", exact: true }).click();
+    await expect(page).toHaveURL(/\/non-victory$/);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+  });
+
+  test("supports direct victory route with agreement gate", async ({ page }: { page: Page }) => {
+    await page.goto("/victory");
+
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
+    await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
 
-    await agreementGate.getByRole("button", { name: "Back", exact: true }).click();
-    await expect(agreementGate).toBeHidden();
-    await expect(gate).toBeVisible();
-
-    await gate.getByRole("button", { name: "No", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+  });
+
+  test("supports direct non-victory route without membership gate", async ({ page }: { page: Page }) => {
+    await page.goto("/non-victory");
+
+    await expect(page.getByRole("dialog", { name: "Are you a Victory church member?" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+  });
+
+  test("keeps route context on reload for victory and non-victory entry points", async ({ page }: { page: Page }) => {
+    await page.goto("/victory");
+    await expect(page).toHaveURL(/\/victory$/);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toBeVisible();
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/victory$/);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toBeVisible();
+
+    await page.goto("/non-victory");
+    await expect(page).toHaveURL(/\/non-victory$/);
+    await expect(page.getByRole("dialog", { name: "Are you a Victory church member?" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/non-victory$/);
+    await expect(page.getByRole("dialog", { name: "Are you a Victory church member?" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
+  });
+
+  test("reload on victory route resets form data but keeps route context", async ({ page }: { page: Page }) => {
+    await page.goto("/victory");
+
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+    await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
+
+    const partnerName = page.getByRole("textbox", { name: /^Partner Name/ });
+    await partnerName.fill("Chris Timario");
+    await expect(partnerName).toHaveValue("Chris Timario");
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/\/victory$/);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toHaveCount(0);
+
+    await page.getByRole("dialog", { name: "Accountability Agreement" })
+      .getByRole("button", { name: "I Agree", exact: true })
+      .click();
+    await expect(page.getByRole("textbox", { name: /^Partner Name/ })).toHaveValue("");
+  });
+
+  test("reload on non-victory route resets form data and stays on non-victory", async ({ page }: { page: Page }) => {
+    await page.goto("/non-victory");
+
+    const partnerName = page.getByRole("textbox", { name: /^Partner Name/ });
+    await partnerName.fill("Chris Timario");
+    await expect(partnerName).toHaveValue("Chris Timario");
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/\/non-victory$/);
+    await expect(page.getByRole("dialog", { name: "Are you a Victory church member?" })).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: /^Partner Name/ })).toHaveValue("");
+  });
+
+  test("returns to root membership gate when navigating back from /victory", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+
+    const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
+    await expect(gate).toBeVisible();
+    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/victory$/);
+    await expect(page.getByRole("dialog", { name: "Accountability Agreement" })).toBeVisible();
+
+    await page.goBack();
+
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("dialog", { name: "Are you a Victory church member?" })).toBeVisible();
+  });
+
+  test("exposes only the I Agree action on the victory agreement gate", async ({ page }: { page: Page }) => {
+    await page.goto("/victory");
+
+    const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
+    await expect(agreementGate).toBeVisible();
+    await expect(agreementGate.getByRole("button")).toHaveCount(1);
+    await expect(agreementGate.getByRole("button", { name: "I Agree", exact: true })).toBeVisible();
+    await expect(agreementGate.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
   });
 
   test("requires membership selection and shows correct variant messaging", async ({ page }: { page: Page }) => {
@@ -193,7 +284,7 @@ test.describe("Support forms end-to-end", () => {
       }),
     ).toBeVisible();
 
-    await page.reload();
+    await page.goto("/");
     await expect(page.getByRole("heading", { name: "Are you a Victory church member?" })).toBeVisible();
 
     await chooseMembership(page, "Non-Victory Member");

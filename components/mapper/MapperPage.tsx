@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -148,12 +149,9 @@ export function MapperPage() {
   const templateCoordinates = draftCoordinates[membershipType];
 
   const currentFieldKeys = pageNumber === 1 ? PAGE_1_FIELDS : PAGE_2_FIELDS;
-
-  useEffect(() => {
-    if (!currentFieldKeys.includes(selectedField)) {
-      setSelectedField(currentFieldKeys[0]);
-    }
-  }, [currentFieldKeys, selectedField]);
+  const activeSelectedField = currentFieldKeys.includes(selectedField)
+    ? selectedField
+    : currentFieldKeys[0];
 
   const mappedFields = useMemo<Array<{ key: keyof TemplateCoordinates; config: EditableFieldConfig }>>(
     () =>
@@ -170,20 +168,20 @@ export function MapperPage() {
     [currentFieldKeys, templateCoordinates],
   );
 
-  const selectedConfig = templateCoordinates[selectedField];
+  const selectedConfig = templateCoordinates[activeSelectedField];
   const canvasWidth = PAGE_WIDTH_PT * zoom;
   const canvasHeight = PAGE_HEIGHT_PT * zoom;
 
-  const getFieldDimensions = (field: keyof TemplateCoordinates, config: EditableFieldConfig) => {
+  const getFieldDimensions = useCallback((field: keyof TemplateCoordinates, config: EditableFieldConfig) => {
     const fallback = DEFAULT_FIELD_BOX_DIMENSIONS[field] ?? { width: 24, height: 6 };
 
     return {
       width: config.width ?? fallback.width,
       height: config.height ?? fallback.height,
     };
-  };
+  }, []);
 
-  const updateFieldConfig = (
+  const updateFieldConfig = useCallback((
     field: keyof TemplateCoordinates,
     updater: (config: EditableFieldConfig) => EditableFieldConfig,
     nextMembershipType: MembershipType = membershipType,
@@ -202,9 +200,9 @@ export function MapperPage() {
         },
       };
     });
-  };
+  }, [membershipType]);
 
-  const updateFieldDimensions = (
+  const updateFieldDimensions = useCallback((
     field: keyof TemplateCoordinates,
     widthMm: number,
     heightMm: number,
@@ -229,9 +227,9 @@ export function MapperPage() {
       }),
       nextMembershipType,
     );
-  };
+  }, [membershipType, updateFieldConfig]);
 
-  const setFieldPosition = (
+  const setFieldPosition = useCallback((
     field: keyof TemplateCoordinates,
     xMm: number,
     yMm: number,
@@ -252,16 +250,16 @@ export function MapperPage() {
       }),
       nextMembershipType,
     );
-  };
+  }, [getFieldDimensions, membershipType, updateFieldConfig]);
 
-  const moveSelectedFieldBy = (deltaX: number, deltaY: number) => {
-    const config = templateCoordinates[selectedField];
+  const moveSelectedFieldBy = useCallback((deltaX: number, deltaY: number) => {
+    const config = templateCoordinates[activeSelectedField];
     if (!isEditableFieldConfig(config)) {
       return;
     }
 
-    setFieldPosition(selectedField, config.x + deltaX, config.y + deltaY);
-  };
+    setFieldPosition(activeSelectedField, config.x + deltaX, config.y + deltaY);
+  }, [activeSelectedField, setFieldPosition, templateCoordinates]);
 
   const getPointFromEvent = (clientX: number, clientY: number) => {
     const rect = surfaceRef.current?.getBoundingClientRect();
@@ -278,18 +276,18 @@ export function MapperPage() {
     };
   };
 
-  const placeSelectedFieldAtPoint = (xPt: number, yPtFromBottom: number) => {
-    const config = templateCoordinates[selectedField];
+  const placeSelectedFieldAtPoint = useCallback((xPt: number, yPtFromBottom: number) => {
+    const config = templateCoordinates[activeSelectedField];
     if (!isEditableFieldConfig(config)) {
       return;
     }
 
-    const dimensions = getFieldDimensions(selectedField, config);
+    const dimensions = getFieldDimensions(activeSelectedField, config);
     const xMm = xPt / MM_TO_POINTS - dimensions.width / 2;
     const yMm = yPtFromBottom / MM_TO_POINTS - dimensions.height / 2;
 
-    setFieldPosition(selectedField, xMm, yMm);
-  };
+    setFieldPosition(activeSelectedField, xMm, yMm);
+  }, [activeSelectedField, getFieldDimensions, setFieldPosition, templateCoordinates]);
 
   const handleCanvasClick: MouseEventHandler<HTMLDivElement> = (event) => {
     if (dragMovedRef.current) {
@@ -353,7 +351,7 @@ export function MapperPage() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [canvasHeight, dragState, zoom]);
+  }, [dragState, getFieldDimensions, setFieldPosition, zoom]);
 
   useEffect(() => {
     if (!resizeState) {
@@ -390,7 +388,7 @@ export function MapperPage() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [resizeState, zoom]);
+  }, [resizeState, updateFieldDimensions, zoom]);
 
   const handleSaveCoordinates = async () => {
     try {
@@ -451,7 +449,7 @@ export function MapperPage() {
 
   const selectedDimensions =
     isEditableFieldConfig(selectedConfig)
-      ? getFieldDimensions(selectedField, selectedConfig)
+      ? getFieldDimensions(activeSelectedField, selectedConfig)
       : { width: 0, height: 0 };
 
   return (
@@ -534,7 +532,7 @@ export function MapperPage() {
                   <button
                     key={key}
                     type="button"
-                    className={`${styles.fieldBox} ${selectedField === key ? styles.fieldBoxSelected : ""}`}
+                    className={`${styles.fieldBox} ${activeSelectedField === key ? styles.fieldBoxSelected : ""}`}
                     data-testid={`mapper-box-${key}`}
                     style={{
                       left: x,
@@ -565,7 +563,7 @@ export function MapperPage() {
                     }}
                   >
                     <span className={styles.fieldBoxLabel}>{key}</span>
-                    {selectedField === key ? (
+                    {activeSelectedField === key ? (
                       <span
                         className={styles.resizeHandle}
                         data-testid={`mapper-resize-${key}`}
@@ -609,7 +607,7 @@ export function MapperPage() {
                   <li key={key}>
                     <button
                       type="button"
-                      className={`${styles.listButton} ${selectedField === key ? styles.listButtonActive : ""}`}
+                      className={`${styles.listButton} ${activeSelectedField === key ? styles.listButtonActive : ""}`}
                       onClick={() => {
                         setSelectedField(key);
                         surfaceRef.current?.focus();
@@ -635,7 +633,7 @@ export function MapperPage() {
                       step="0.1"
                       value={selectedConfig.x}
                       onChange={(event) => {
-                        setFieldPosition(selectedField, Number(event.target.value), selectedConfig.y);
+                        setFieldPosition(activeSelectedField, Number(event.target.value), selectedConfig.y);
                       }}
                     />
                   </label>
@@ -648,7 +646,7 @@ export function MapperPage() {
                       step="0.1"
                       value={selectedConfig.y}
                       onChange={(event) => {
-                        setFieldPosition(selectedField, selectedConfig.x, Number(event.target.value));
+                        setFieldPosition(activeSelectedField, selectedConfig.x, Number(event.target.value));
                       }}
                     />
                   </label>
@@ -662,7 +660,7 @@ export function MapperPage() {
                       value={selectedConfig.width ?? selectedDimensions.width}
                       onChange={(event) => {
                         updateFieldDimensions(
-                          selectedField,
+                          activeSelectedField,
                           Number(event.target.value),
                           selectedConfig.height ?? selectedDimensions.height,
                         );
@@ -679,7 +677,7 @@ export function MapperPage() {
                       value={selectedConfig.height ?? selectedDimensions.height}
                       onChange={(event) => {
                         updateFieldDimensions(
-                          selectedField,
+                          activeSelectedField,
                           selectedConfig.width ?? selectedDimensions.width,
                           Number(event.target.value),
                         );
@@ -692,18 +690,18 @@ export function MapperPage() {
 
             <div>
               <strong>Selected field snippet</strong>
-              <p data-testid="mapper-selected-field">{selectedField}</p>
+              <p data-testid="mapper-selected-field">{activeSelectedField}</p>
               <textarea
                 className={styles.output}
                 readOnly
                 rows={6}
-                value={toSnippet(selectedField, selectedConfig)}
+                value={toSnippet(activeSelectedField, selectedConfig)}
               />
               <button
                 className={styles.button}
                 type="button"
                 onClick={async () => {
-                  await navigator.clipboard.writeText(toSnippet(selectedField, selectedConfig));
+                  await navigator.clipboard.writeText(toSnippet(activeSelectedField, selectedConfig));
                 }}
               >
                 Copy selected snippet

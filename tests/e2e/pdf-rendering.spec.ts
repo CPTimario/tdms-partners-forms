@@ -298,7 +298,7 @@ test.describe("PDF.js Rendering - Error Recovery", () => {
 
     // Check that pdf.worker.mjs is loaded
     const hasWorker = await page.evaluate(() => {
-      return (window as any).pdfjsWorkerLoaded !== false;
+      return (window as Window & { pdfjsWorkerLoaded?: boolean }).pdfjsWorkerLoaded !== false;
     });
 
     expect(hasWorker).toBeTruthy();
