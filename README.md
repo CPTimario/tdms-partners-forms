@@ -21,6 +21,12 @@ Theme behavior:
 - Theme precedence is: SSR cookie value first, then client-side sync/persistence on mount.
 - If no explicit theme cookie is set, the UI uses an initial CSS fallback to system color scheme preference, then the client resolves and persists the theme after mount.
 
+## Icons Source of Truth
+
+- Browser and Apple icon metadata is configured in [app/layout.tsx](app/layout.tsx).
+- Source-of-truth icon assets are in [app/icon.svg](app/icon.svg) and [public/apple-icon.svg](public/apple-icon.svg).
+- Keep [public/apple-icon.svg](public/apple-icon.svg) as the canonical Apple touch icon file for the `/apple-icon.svg` metadata path.
+
 The app starts with a membership gate at `/`: "Are you a Victory church member?".
 
 - `Yes` redirects to `/victory`, shows an accountability agreement gate, and requires `I Agree` before entering the form.
