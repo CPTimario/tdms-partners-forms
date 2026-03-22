@@ -1,34 +1,27 @@
-import type { RefObject } from "react";
 import styles from "./FormBuilder.module.css";
-import type { SupportFormData } from "@/lib/support-form";
-import { AccountabilityPreview } from "./AccountabilityPreview";
-import { PartnerInfoPreview } from "./PartnerInfoPreview";
+import { Download, FilePenLine, ListChecks } from "lucide-react";
 
 type ReviewStepProps = {
-  data: SupportFormData;
   isExporting: boolean;
-  partnerInfoRef: RefObject<HTMLDivElement | null>;
-  accountabilityRef: RefObject<HTMLDivElement | null>;
+  isPreparingPreview: boolean;
+  previewPdfUrl: string | null;
+  previewError: string | null;
   onEditPartnerInfo: () => void;
   onEditAccountability: () => void;
-  onDownloadPartnerInfoPdf: () => void;
-  onDownloadPartnerInfoPng: () => void;
-  onDownloadAccountabilityPdf: () => void;
-  onDownloadAccountabilityPng: () => void;
+  onDownloadPdf: () => void | Promise<void>;
 };
 
 export function ReviewStep({
-  data,
   isExporting,
-  partnerInfoRef,
-  accountabilityRef,
+  isPreparingPreview,
+  previewPdfUrl,
+  previewError,
   onEditPartnerInfo,
   onEditAccountability,
-  onDownloadPartnerInfoPdf,
-  onDownloadPartnerInfoPng,
-  onDownloadAccountabilityPdf,
-  onDownloadAccountabilityPng,
+  onDownloadPdf,
 }: ReviewStepProps) {
+  const isBusy = isExporting || isPreparingPreview;
+
   return (
     <main className={`${styles.shell} ${styles.reviewShell}`}>
       <div className={styles.reviewHeader}>
@@ -42,42 +35,53 @@ export function ReviewStep({
             type="button"
             onClick={onEditPartnerInfo}
           >
-            Edit Partner Information
+            <span className={styles.buttonContent}>
+              <FilePenLine size={16} aria-hidden="true" />
+              Edit Partner Details
+            </span>
           </button>
           <button
             className={`${styles.button} ${styles.secondaryButton}`}
             type="button"
             onClick={onEditAccountability}
           >
-            Edit Accountability
+            <span className={styles.buttonContent}>
+              <ListChecks size={16} aria-hidden="true" />
+              Edit Accountability Choices
+            </span>
           </button>
-          <button className={styles.button} type="button" onClick={onDownloadPartnerInfoPdf} disabled={isExporting}>
-            {isExporting ? "Exporting..." : "Partner Info PDF"}
-          </button>
-          <button className={styles.button} type="button" onClick={onDownloadPartnerInfoPng} disabled={isExporting}>
-            Partner Info PNG
-          </button>
-          <button className={styles.button} type="button" onClick={onDownloadAccountabilityPdf} disabled={isExporting}>
-            Accountability PDF
-          </button>
-          <button className={styles.button} type="button" onClick={onDownloadAccountabilityPng} disabled={isExporting}>
-            Accountability PNG
+          <button
+            className={styles.button}
+            type="button"
+            onClick={() => {
+              void onDownloadPdf();
+            }}
+            disabled={isBusy}
+          >
+            <span className={styles.buttonContent}>
+              <Download size={16} aria-hidden="true" />
+              {isBusy ? "Preparing PDF..." : "Download Final PDF"}
+            </span>
           </button>
         </div>
       </div>
 
       <div className={styles.reviewPanes}>
         <div className={styles.reviewCard}>
-          <h2 className={styles.reviewCardTitle}>Partner Information Form</h2>
+          <h2 className={styles.reviewCardTitle}>Generated PDF Preview</h2>
           <div className={styles.previewScroll}>
-            <PartnerInfoPreview data={data} previewRef={partnerInfoRef} />
-          </div>
-        </div>
-
-        <div className={styles.reviewCard}>
-          <h2 className={styles.reviewCardTitle}>Accountability Form</h2>
-          <div className={styles.previewScroll}>
-            <AccountabilityPreview data={data} previewRef={accountabilityRef} />
+            {previewPdfUrl ? (
+              <iframe
+                className={styles.pdfPreviewFrame}
+                src={previewPdfUrl}
+                title="Generated Support Forms PDF Preview"
+              />
+            ) : (
+              <p className={styles.previewPlaceholder}>Preparing preview...</p>
+            )}
+            {previewError ? (
+              <p className={styles.previewError}>{previewError}</p>
+            ) : null}
           </div>
         </div>
       </div>

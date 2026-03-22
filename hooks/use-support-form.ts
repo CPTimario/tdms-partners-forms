@@ -2,7 +2,9 @@
 
 import { ChangeEvent, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  type CurrencyCode,
   type CanceledChoice,
+  formatAmountInputForField,
   getFirstInvalidStep,
   initialSupportFormData,
   isSupportFormValid,
@@ -11,11 +13,13 @@ import {
   type MembershipType,
   type RequiredStringField,
   type ReroutedChoice,
+  type StepValidationResult,
   type SupportFormData,
+  type SupportFormFieldErrors,
   type UnableToGoChoice,
-  validateAccountabilityStep,
-  validatePartnerStep,
-  validateSupportForm,
+  validateAccountabilityStepDetailed,
+  validatePartnerStepDetailed,
+  validateSupportFormDetailed,
 } from "@/lib/support-form";
 
 type CheckboxField = "consentGiven";
@@ -23,7 +27,8 @@ type CheckboxField = "consentGiven";
 type SupportFormState = {
   data: SupportFormData;
   step: FormStep;
-  validationErrors: string[];
+  fieldErrors: SupportFormFieldErrors;
+  formErrors: string[];
 };
 
 type SupportFormAction =
@@ -36,6 +41,10 @@ type SupportFormAction =
       type: "set-checkbox";
       field: CheckboxField;
       value: boolean;
+    }
+  | {
+      type: "set-currency";
+      value: CurrencyCode;
     }
   | {
       type: "set-membership";
@@ -58,8 +67,15 @@ type SupportFormAction =
       value: FormStep;
     }
   | {
-      type: "set-errors";
-      value: string[];
+      type: "set-signature";
+      value: string;
+    }
+  | {
+      type: "set-validation";
+      value: StepValidationResult;
+    }
+  | {
+      type: "clear-validation";
     }
   | {
       type: "reset";
@@ -68,8 +84,22 @@ type SupportFormAction =
 const initialState: SupportFormState = {
   data: initialSupportFormData,
   step: "partner",
-  validationErrors: [],
+  fieldErrors: {},
+  formErrors: [],
 };
+
+function withoutFieldError(
+  errors: SupportFormFieldErrors,
+  field: keyof SupportFormFieldErrors,
+) {
+  if (!errors[field]) {
+    return errors;
+  }
+
+  const nextErrors = { ...errors };
+  delete nextErrors[field];
+  return nextErrors;
+}
 
 function reducer(
   state: SupportFormState,
@@ -83,6 +113,7 @@ function reducer(
           ...state.data,
           [action.field]: action.value,
         },
+        fieldErrors: withoutFieldError(state.fieldErrors, action.field),
       };
     case "set-checkbox":
       return {
@@ -91,6 +122,16 @@ function reducer(
           ...state.data,
           [action.field]: action.value,
         },
+        fieldErrors: withoutFieldError(state.fieldErrors, action.field),
+      };
+    case "set-currency":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          currency: action.value,
+        },
+        fieldErrors: withoutFieldError(state.fieldErrors, "currency"),
       };
     case "set-membership":
       return {
@@ -107,6 +148,7 @@ function reducer(
           ...state.data,
           canceledChoice: action.value,
         },
+        fieldErrors: withoutFieldError(state.fieldErrors, "canceledChoice"),
       };
     case "set-unable-to-go":
       return {
@@ -115,6 +157,7 @@ function reducer(
           ...state.data,
           unableToGoChoice: action.value,
         },
+        fieldErrors: withoutFieldError(state.fieldErrors, "unableToGoChoice"),
       };
     case "set-rerouted":
       return {
@@ -123,16 +166,33 @@ function reducer(
           ...state.data,
           reroutedChoice: action.value,
         },
+        fieldErrors: withoutFieldError(state.fieldErrors, "reroutedChoice"),
       };
     case "set-step":
       return {
         ...state,
         step: action.value,
       };
-    case "set-errors":
+    case "set-signature":
       return {
         ...state,
-        validationErrors: action.value,
+        data: {
+          ...state.data,
+          partnerSignature: action.value,
+        },
+        fieldErrors: withoutFieldError(state.fieldErrors, "partnerSignature"),
+      };
+    case "set-validation":
+      return {
+        ...state,
+        fieldErrors: action.value.fieldErrors,
+        formErrors: action.value.formErrors,
+      };
+    case "clear-validation":
+      return {
+        ...state,
+        fieldErrors: {},
+        formErrors: [],
       };
     case "reset":
       return {
@@ -147,8 +207,16 @@ function reducer(
   }
 }
 
-export function useSupportForm() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+export function useSupportForm(initialMembershipType?: MembershipType) {
+  const [state, dispatch] = useReducer(reducer, initialMembershipType, (membership): SupportFormState => {
+    if (membership === "nonVictory") {
+      return {
+        ...initialState,
+        data: { ...initialSupportFormData, membershipType: "nonVictory" },
+      };
+    }
+    return initialState;
+  });
   const latestDataRef = useRef(state.data);
 
   useEffect(() => {
@@ -157,20 +225,30 @@ export function useSupportForm() {
 
   const isFormValid = useMemo(() => isSupportFormValid(state.data), [state.data]);
   const isPartnerStepComplete = useMemo(
-    () => validatePartnerStep(state.data).length === 0,
+    () => {
+      const result = validatePartnerStepDetailed(state.data);
+      return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
+    },
     [state.data],
   );
   const isAccountabilityStepComplete = useMemo(
-    () => validateAccountabilityStep(state.data).length === 0,
+    () => {
+      const result = validateAccountabilityStepDetailed(state.data);
+      return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
+    },
     [state.data],
   );
 
   const onTextChange =
     (field: RequiredStringField) => (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = field === "amount"
+        ? formatAmountInputForField(event.target.value)
+        : event.target.value;
+
       dispatch({
         type: "set-text",
         field,
-        value: event.target.value,
+        value: nextValue,
       });
     };
 
@@ -182,6 +260,13 @@ export function useSupportForm() {
         value: event.target.checked,
       });
     };
+
+  const onCurrencyChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    dispatch({
+      type: "set-currency",
+      value: event.target.value as CurrencyCode,
+    });
+  };
 
   const setMembership = (value: MembershipType) => {
     latestDataRef.current = {
@@ -216,12 +301,19 @@ export function useSupportForm() {
     });
   };
 
+  const setPartnerSignature = (value: string) => {
+    dispatch({
+      type: "set-signature",
+      value,
+    });
+  };
+
   const resetForm = () => {
     dispatch({ type: "reset" });
   };
 
   const goToStep = (value: EditableFormStep) => {
-    dispatch({ type: "set-errors", value: [] });
+    dispatch({ type: "clear-validation" });
     dispatch({ type: "set-step", value });
   };
 
@@ -229,41 +321,59 @@ export function useSupportForm() {
     goToStep("partner");
   };
 
-  const goToAccountability = () => {
-    goToStep("accountability");
+  const goToAccountability = (): boolean => {
+    const currentData = {
+      ...state.data,
+      ...latestDataRef.current,
+    };
+    const validationResult = validatePartnerStepDetailed(currentData);
+    dispatch({ type: "set-validation", value: validationResult });
+
+    if (Object.keys(validationResult.fieldErrors).length > 0 || validationResult.formErrors.length > 0) {
+      dispatch({ type: "set-step", value: "partner" });
+      return false;
+    }
+
+    dispatch({ type: "clear-validation" });
+    dispatch({ type: "set-step", value: "accountability" });
+    return true;
   };
 
-  const goToReview = () => {
+  const goToReview = (): boolean => {
     const currentData = {
       ...state.data,
       ...latestDataRef.current,
     };
 
-    const errors = validateSupportForm(currentData);
-    dispatch({ type: "set-errors", value: errors });
+    const validationResult = validateSupportFormDetailed(currentData);
+    dispatch({ type: "set-validation", value: validationResult });
 
-    if (errors.length === 0) {
+    if (Object.keys(validationResult.fieldErrors).length === 0 && validationResult.formErrors.length === 0) {
       dispatch({ type: "set-step", value: "review" });
-      return;
+      return true;
     }
 
     const firstInvalidStep = getFirstInvalidStep(currentData);
     dispatch({ type: "set-step", value: firstInvalidStep ?? "partner" });
+    return false;
   };
 
   return {
     data: state.data,
     step: state.step,
-    validationErrors: state.validationErrors,
+    fieldErrors: state.fieldErrors,
+    formErrors: state.formErrors,
     isFormValid,
     isPartnerStepComplete,
     isAccountabilityStepComplete,
     onTextChange,
+    onCurrencyChange,
     onCheckboxChange,
     setMembership,
     onUnableToGoChange,
     onReroutedChange,
     onCanceledChange,
+    setPartnerSignature,
     resetForm,
     goToPartner,
     goToAccountability,

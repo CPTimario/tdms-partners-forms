@@ -1,4 +1,7 @@
+import { z } from "zod";
+
 export type MembershipType = "victory" | "nonVictory";
+export type CurrencyCode = "PHP" | "USD";
 export type UnableToGoChoice = "teamFund" | "generalFund" | null;
 export type ReroutedChoice = "retain" | "generalFund" | null;
 export type CanceledChoice = "generalFund" | null;
@@ -13,6 +16,7 @@ export type SupportFormData = {
   mobileNumber: string;
   localChurch: string;
   missionaryName: string;
+  currency: CurrencyCode;
   amount: string;
   nation: string;
   travelDate: string;
@@ -21,6 +25,7 @@ export type SupportFormData = {
   reroutedChoice: ReroutedChoice;
   canceledChoice: CanceledChoice;
   partnerSignature: string;
+  partnerPrintedName: string;
 };
 
 export const initialSupportFormData: SupportFormData = {
@@ -31,6 +36,7 @@ export const initialSupportFormData: SupportFormData = {
   mobileNumber: "",
   localChurch: "",
   missionaryName: "",
+  currency: "PHP",
   amount: "",
   nation: "",
   travelDate: "",
@@ -39,6 +45,7 @@ export const initialSupportFormData: SupportFormData = {
   reroutedChoice: null,
   canceledChoice: null,
   partnerSignature: "",
+  partnerPrintedName: "",
 };
 
 export const consentCopy =
@@ -49,8 +56,6 @@ export const partnerFormIntroCopy =
 
 export const privacyCopy =
   "The information you provide will be treated with utmost respect and confidentiality. Every Nation follows general principles and rules of data privacy protection in the Philippines. For more information, visit everynation.org.ph/privacy.";
-
-export const updatedCopy = "Updated as of October 21, 2025.";
 
 export const accountabilityIntroCopy =
   "Choose how your support should be handled for each accountability scenario, then provide your digital signature exactly as you want it printed on the form.";
@@ -70,17 +75,38 @@ export const partnerRequiredFields = [
   "mobileNumber",
   "localChurch",
   "missionaryName",
+  "currency",
   "amount",
   "nation",
   "travelDate",
   "sendingChurch",
 ] as const;
 
-export const accountabilityRequiredFields = ["partnerSignature"] as const;
+export const accountabilityRequiredFields = [
+  "partnerSignature",
+  "partnerPrintedName",
+] as const;
 
 export type RequiredStringField =
   | (typeof partnerRequiredFields)[number]
   | (typeof accountabilityRequiredFields)[number];
+
+export type SupportFormFieldErrorKey =
+  | RequiredStringField
+  | "membershipType"
+  | "consentGiven"
+  | "unableToGoChoice"
+  | "reroutedChoice"
+  | "canceledChoice";
+
+export type SupportFormFieldErrors = Partial<
+  Record<SupportFormFieldErrorKey, string>
+>;
+
+export type StepValidationResult = {
+  fieldErrors: SupportFormFieldErrors;
+  formErrors: string[];
+};
 
 export const fieldLabels: Record<RequiredStringField, string> = {
   partnerName: "Partner Name",
@@ -88,17 +114,151 @@ export const fieldLabels: Record<RequiredStringField, string> = {
   mobileNumber: "Mobile Number",
   localChurch: "Local Church",
   missionaryName: "Missioner Name/Team",
+  currency: "Currency",
   amount: "Amount",
   nation: "Nation",
   travelDate: "Travel Date",
   sendingChurch: "Sending Church",
   partnerSignature: "Signature",
+  partnerPrintedName: "Partner Full Name",
 };
 
 export const stepLabels: Record<EditableFormStep, string> = {
   partner: "Partner Information",
   accountability: "Accountability",
 };
+
+const requiredString = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required.`);
+
+const currencySchema = z.enum(["PHP", "USD"]);
+
+export function normalizeAmountInput(value: string) {
+  return value.replace(/,/g, "").trim();
+}
+
+export function formatAmountInputForField(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  if (!cleaned) {
+    return "";
+  }
+
+  const firstDotIndex = cleaned.indexOf(".");
+  const hasDot = firstDotIndex !== -1;
+  const integerRaw = hasDot ? cleaned.slice(0, firstDotIndex) : cleaned;
+  const decimalRaw = hasDot ? cleaned.slice(firstDotIndex + 1).replace(/\./g, "") : "";
+
+  const integerNoLeadingZeros = integerRaw.replace(/^0+(\d)/, "$1");
+  const integerPortion = integerNoLeadingZeros || "0";
+  const groupedInteger = integerPortion.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const decimalPortion = decimalRaw.slice(0, 2);
+
+  if (hasDot) {
+    return `${groupedInteger}.${decimalPortion}`;
+  }
+
+  return groupedInteger;
+}
+
+const partnerStepSchema = z.object({
+  consentGiven: z.boolean().refine((value) => value, {
+    message: "Consent is required.",
+  }),
+  partnerName: requiredString("Partner Name"),
+  emailAddress: requiredString("Email Address").email("Email Address must be a valid email."),
+  mobileNumber: requiredString("Mobile Number").regex(
+    /^[0-9+\-()\s]{7,20}$/,
+    "Mobile Number format is invalid.",
+  ),
+  localChurch: requiredString("Local Church"),
+  missionaryName: requiredString("Missioner Name/Team"),
+  currency: currencySchema,
+  amount: requiredString("Amount")
+    .refine((value) => /^\d+(\.\d{1,2})?$/.test(normalizeAmountInput(value)), {
+      message: "Amount must be a valid number.",
+    })
+    .refine((value) => Number(normalizeAmountInput(value)) > 0, {
+      message: "Amount must be greater than zero.",
+    }),
+  nation: requiredString("Nation"),
+  travelDate: requiredString("Travel Date").regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+    "Travel Date is invalid.",
+  ),
+  sendingChurch: requiredString("Sending Church"),
+});
+
+const accountabilityStepSchema = z.object({
+  membershipType: z
+    .enum(["victory", "nonVictory"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Membership type is required.",
+    }),
+  partnerSignature: requiredString("Signature"),
+  partnerPrintedName: requiredString("Partner Full Name"),
+  unableToGoChoice: z
+    .enum(["teamFund", "generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message:
+        "Please choose an accountability option for when the missioner is unable to go.",
+    }),
+  reroutedChoice: z
+    .enum(["retain", "generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message:
+        "Please choose an accountability option for when the missioner or team is rerouted.",
+    }),
+  canceledChoice: z
+    .enum(["generalFund"])
+    .nullable()
+    .refine((value) => value !== null, {
+      message: "Please confirm the accountability instruction for a canceled trip.",
+    }),
+});
+
+const fullFormSchema = partnerStepSchema.merge(accountabilityStepSchema);
+
+function toStepValidationResult(
+  result:
+    | { success: true }
+    | {
+        success: false;
+        error: z.ZodError;
+      },
+): StepValidationResult {
+  if (result.success) {
+    return {
+      fieldErrors: {},
+      formErrors: [],
+    };
+  }
+  const fieldErrors: SupportFormFieldErrors = {};
+  const formErrors: string[] = [];
+
+  result.error.issues.forEach((issue) => {
+    const firstPath = issue.path[0];
+    if (typeof firstPath === "string") {
+      const key = firstPath as SupportFormFieldErrorKey;
+      if (!fieldErrors[key]) {
+        fieldErrors[key] = issue.message;
+      }
+      return;
+    }
+
+    formErrors.push(issue.message);
+  });
+
+  return {
+    fieldErrors,
+    formErrors,
+  };
+}
 
 const maxLineChars = 55;
 
@@ -134,6 +294,35 @@ export function formatDisplayDate(value: string) {
   return trimmed;
 }
 
+export function formatCurrencyAmount(amount: string, currency: CurrencyCode) {
+  const normalizedAmount = normalizeAmountInput(amount);
+  if (!normalizedAmount) {
+    return "";
+  }
+
+  const numericAmount = Number(normalizedAmount);
+  if (Number.isNaN(numericAmount)) {
+    return `${currency} ${normalizedAmount}`;
+  }
+
+  // pdf-lib's standard WinAnsi fonts cannot encode the peso symbol (₱),
+  // so PHP values are rendered with currency code to remain PDF-safe.
+  if (currency === "PHP") {
+    const amountWithSeparators = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericAmount);
+    return `PHP ${amountWithSeparators}`;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numericAmount);
+}
+
 export function getAccountabilityAffirmationCopy(
   membershipType: SupportFormData["membershipType"],
 ) {
@@ -163,59 +352,88 @@ export function getAccountabilityTitle(membershipType: SupportFormData["membersh
 }
 
 export function validatePartnerStep(data: SupportFormData) {
-  const errors: string[] = [];
-
-  if (!data.consentGiven) {
-    errors.push("Consent is required.");
-  }
-
-  partnerRequiredFields.forEach((field) => {
-    if (!data[field].trim()) {
-      errors.push(`${fieldLabels[field]} is required.`);
-    }
-  });
-
-  return errors;
+  const result = validatePartnerStepDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
 }
 
 export function validateAccountabilityStep(data: SupportFormData) {
-  const errors: string[] = [];
+  const result = validateAccountabilityStepDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
+}
 
-  if (!data.membershipType) {
-    errors.push("Membership type is required.");
-  }
-
-  accountabilityRequiredFields.forEach((field) => {
-    if (!data[field].trim()) {
-      errors.push(`${fieldLabels[field]} is required.`);
-    }
+export function validatePartnerStepDetailed(data: SupportFormData): StepValidationResult {
+  const result = partnerStepSchema.safeParse({
+    consentGiven: data.consentGiven,
+    partnerName: data.partnerName,
+    emailAddress: data.emailAddress,
+    mobileNumber: data.mobileNumber,
+    localChurch: data.localChurch,
+    missionaryName: data.missionaryName,
+    currency: data.currency,
+    amount: data.amount,
+    nation: data.nation,
+    travelDate: data.travelDate,
+    sendingChurch: data.sendingChurch,
   });
 
-  if (!data.unableToGoChoice) {
-    errors.push("Please choose an accountability option for when the missioner is unable to go.");
-  }
+  return toStepValidationResult(result);
+}
 
-  if (!data.reroutedChoice) {
-    errors.push("Please choose an accountability option for when the missioner or team is rerouted.");
-  }
+export function validateAccountabilityStepDetailed(
+  data: SupportFormData,
+): StepValidationResult {
+  const result = accountabilityStepSchema.safeParse({
+    membershipType: data.membershipType,
+    partnerSignature: data.partnerSignature,
+    partnerPrintedName: data.partnerPrintedName,
+    unableToGoChoice: data.unableToGoChoice,
+    reroutedChoice: data.reroutedChoice,
+    canceledChoice: data.canceledChoice,
+  });
 
-  if (!data.canceledChoice) {
-    errors.push("Please confirm the accountability instruction for a canceled trip.");
-  }
+  return toStepValidationResult(result);
+}
 
-  return errors;
+export function validateSupportFormDetailed(data: SupportFormData): StepValidationResult {
+  const result = fullFormSchema.safeParse({
+    membershipType: data.membershipType,
+    consentGiven: data.consentGiven,
+    partnerName: data.partnerName,
+    emailAddress: data.emailAddress,
+    mobileNumber: data.mobileNumber,
+    localChurch: data.localChurch,
+    missionaryName: data.missionaryName,
+    currency: data.currency,
+    amount: data.amount,
+    nation: data.nation,
+    travelDate: data.travelDate,
+    sendingChurch: data.sendingChurch,
+    unableToGoChoice: data.unableToGoChoice,
+    reroutedChoice: data.reroutedChoice,
+    canceledChoice: data.canceledChoice,
+    partnerSignature: data.partnerSignature,
+    partnerPrintedName: data.partnerPrintedName,
+  });
+
+  return toStepValidationResult(result);
 }
 
 export function validateSupportForm(data: SupportFormData) {
-  return [...validatePartnerStep(data), ...validateAccountabilityStep(data)];
+  const result = validateSupportFormDetailed(data);
+  return [...Object.values(result.fieldErrors), ...result.formErrors];
 }
 
 export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | null {
-  if (validatePartnerStep(data).length > 0) {
+  const partnerResult = validatePartnerStepDetailed(data);
+  if (Object.keys(partnerResult.fieldErrors).length > 0 || partnerResult.formErrors.length > 0) {
     return "partner";
   }
 
-  if (validateAccountabilityStep(data).length > 0) {
+  const accountabilityResult = validateAccountabilityStepDetailed(data);
+  if (
+    Object.keys(accountabilityResult.fieldErrors).length > 0 ||
+    accountabilityResult.formErrors.length > 0
+  ) {
     return "accountability";
   }
 
@@ -223,5 +441,6 @@ export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | n
 }
 
 export function isSupportFormValid(data: SupportFormData) {
-  return validateSupportForm(data).length === 0;
+  const result = validateSupportFormDetailed(data);
+  return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
 }

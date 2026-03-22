@@ -1,0 +1,349 @@
+/**
+ * PDF coordinate mappings for Victory and Non-Victory templates.
+ *
+ * Coordinates are in mm, origin is bottom-left.
+ * Template size is 612 x 252 pt (~215.9 x 88.9 mm), landscape.
+ */
+
+import type { TemplateCoordinates } from "@/types/pdf-form";
+
+/**
+ * Victory Member template coordinates
+ * Adjust these based on your actual PDF layout
+ */
+export const victoryCourseCoordinates: TemplateCoordinates = {
+  partnerName:   {
+    x: 10.03,
+    y: 58.67,
+    width: 75,
+    height: 4.76,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  emailAddress:   {
+    x: 9.5,
+    y: 44.25,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  mobileNumber:   {
+    x: 9.5,
+    y: 29.81,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  localChurch:   {
+    x: 9.5,
+    y: 15.56,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  missionaryName:   {
+    x: 95,
+    y: 58.59,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  amount:   {
+    x: 95,
+    y: 44.19,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  nation:   {
+    x: 111.81,
+    y: 29.81,
+    width: 61.76,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateMonth:   {
+    x: 179.83,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateDay:   {
+    x: 189.95,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateYear:   {
+    x: 200.1,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  sendingChurch:   {
+    x: 95.18,
+    y: 15.45,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  consentCheckbox:   {
+    x: 5.8,
+    y: 76.27,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  unableToGoTeamFund:   {
+    x: 6.19,
+    y: 26.58,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  unableToGoGeneralFund:   {
+    x: 6.01,
+    y: 21.11,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  reroutedRetain:   {
+    x: 73.74,
+    y: 30.53,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  reroutedGeneralFund:   {
+    x: 73.74,
+    y: 24.99,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  canceledGeneralFund:   {
+    x: 143.07,
+    y: 30.46,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  partnerSignature:   {
+    x: 147.68,
+    y: 12.5,
+    width: 59.01,
+    height: 12.17,
+    maxWidth: 40,
+    maxHeight: 10,
+  },
+  partnerSignaturePrintedName:   {
+    x: 145.46,
+    y: 8.59,
+    width: 63.4,
+    height: 6,
+    fontSize: 9,
+    fontName: "Helvetica",
+  },
+};
+
+/**
+ * Non-Victory Member template coordinates
+ * Adjust these based on your actual PDF layout
+ */
+export const nonVictoryCoordinates: TemplateCoordinates = {
+  partnerName:   {
+    x: 10.03,
+    y: 58.67,
+    width: 75,
+    height: 4.76,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  emailAddress:   {
+    x: 9.5,
+    y: 44.25,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  mobileNumber:   {
+    x: 9.5,
+    y: 29.81,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  localChurch:   {
+    x: 9.5,
+    y: 15.56,
+    width: 75,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  missionaryName:   {
+    x: 95,
+    y: 58.59,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  amount:   {
+    x: 95,
+    y: 44.19,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  nation:   {
+    x: 111.81,
+    y: 29.81,
+    width: 61.76,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateMonth:   {
+    x: 179.83,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateDay:   {
+    x: 189.95,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  travelDateYear:   {
+    x: 200.1,
+    y: 29.66,
+    width: 7,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  sendingChurch:   {
+    x: 95.18,
+    y: 15.45,
+    width: 112,
+    height: 6,
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  consentCheckbox:   {
+    x: 5.8,
+    y: 76.27,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  unableToGoTeamFund:   {
+    x: 6.26,
+    y: 35.4,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  unableToGoGeneralFund:   {
+    x: 6.26,
+    y: 29.93,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  reroutedRetain:   {
+    x: 73.74,
+    y: 39.28,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  reroutedGeneralFund:   {
+    x: 73.74,
+    y: 33.74,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  canceledGeneralFund:   {
+    x: 143.07,
+    y: 39.21,
+    width: 3,
+    height: 3,
+    checkSymbol: "X",
+    fontSize: 10,
+    fontName: "Helvetica",
+  },
+  partnerSignature:   {
+    x: 147.68,
+    y: 12.5,
+    width: 59.01,
+    height: 12.17,
+    maxWidth: 40,
+    maxHeight: 10,
+  },
+  partnerSignaturePrintedName:   {
+    x: 145.46,
+    y: 8.59,
+    width: 63.4,
+    height: 6,
+    fontSize: 9,
+    fontName: "Helvetica",
+  },
+};
+
+/**
+ * Get coordinates for the appropriate template
+ */
+export function getTemplateCoordinates(
+  membershipType: "victory" | "nonVictory"
+): TemplateCoordinates {
+  return membershipType === "victory"
+    ? victoryCourseCoordinates
+    : nonVictoryCoordinates;
+}

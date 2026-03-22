@@ -1,0 +1,209 @@
+.shell {
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.card {
+  margin: 0 auto;
+  max-width: 1200px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.08);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+.controls {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.select,
+.range,
+.output {
+  width: 100%;
+}
+
+.layout {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.canvasWrap {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: auto;
+  background: var(--panel-muted);
+  padding: 0.75rem;
+}
+
+.canvas {
+  position: relative;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  cursor: crosshair;
+  background: var(--panel);
+  outline: none;
+}
+
+.fieldBox {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 2px solid rgba(204, 47, 47, 0.95);
+  background: rgba(204, 47, 47, 0.18);
+  color: #3b1010;
+  cursor: grab;
+  overflow: hidden;
+  padding: 0.1rem 0.15rem;
+}
+
+.fieldBox:active {
+  cursor: grabbing;
+}
+
+.fieldBoxSelected {
+  border-color: rgba(21, 78, 193, 1);
+  background: rgba(21, 78, 193, 0.18);
+  color: #0f295f;
+  box-shadow: 0 0 0 2px rgba(21, 78, 193, 0.16);
+}
+
+.fieldBoxLabel {
+  font-size: 0.65rem;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.resizeHandle {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  cursor: nwse-resize;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-muted);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.listButton {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--foreground);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.listButtonActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.buttonContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.inlineIcon {
+  vertical-align: text-bottom;
+  margin-right: 0.25rem;
+}
+
+.button:hover {
+  background: var(--accent-hover);
+}
+
+.metricGrid {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.metricLabel {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.metricInput {
+  width: 100%;
+  border: 1px solid var(--line);
+  color: var(--foreground);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
+}
