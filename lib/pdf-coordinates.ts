@@ -14,7 +14,7 @@ import type { TemplateCoordinates } from "@/types/pdf-form";
 export const victoryCourseCoordinates: TemplateCoordinates = {
   partnerName:   {
     x: 10.03,
-    y: 59.17,
+    y: 58.67,
     width: 75,
     height: 4.76,
     fontSize: 10,
@@ -22,7 +22,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   emailAddress:   {
     x: 9.5,
-    y: 44.75,
+    y: 44.25,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -30,7 +30,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   mobileNumber:   {
     x: 9.5,
-    y: 30.31,
+    y: 29.81,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -38,7 +38,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   localChurch:   {
     x: 9.5,
-    y: 16.06,
+    y: 15.56,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -46,7 +46,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   missionaryName:   {
     x: 95,
-    y: 59.09,
+    y: 58.59,
     width: 112,
     height: 6,
     fontSize: 10,
@@ -54,15 +54,15 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   amount:   {
     x: 95,
-    y: 44.69,
+    y: 44.19,
     width: 112,
     height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
   nation:   {
-    x: 111.31,
-    y: 30.31,
+    x: 111.81,
+    y: 29.81,
     width: 61.76,
     height: 6,
     fontSize: 10,
@@ -70,7 +70,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   travelDate:   {
     x: 180.33,
-    y: 30.16,
+    y: 29.66,
     width: 25.88,
     height: 6,
     fontSize: 10,
@@ -78,7 +78,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   sendingChurch:   {
     x: 95.18,
-    y: 15.7,
+    y: 15.45,
     width: 112,
     height: 6,
     fontSize: 10,
@@ -140,7 +140,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   partnerSignature:   {
     x: 147.68,
-    y: 13,
+    y: 12.5,
     width: 59.01,
     height: 12.17,
     maxWidth: 40,
@@ -148,7 +148,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
   },
   partnerSignaturePrintedName:   {
     x: 145.46,
-    y: 9.34,
+    y: 8.59,
     width: 63.4,
     height: 6,
     fontSize: 9,
@@ -163,7 +163,7 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
 export const nonVictoryCoordinates: TemplateCoordinates = {
   partnerName:   {
     x: 10.03,
-    y: 59.17,
+    y: 58.67,
     width: 75,
     height: 4.76,
     fontSize: 10,
@@ -171,7 +171,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   emailAddress:   {
     x: 9.5,
-    y: 44.75,
+    y: 44.25,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -179,7 +179,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   mobileNumber:   {
     x: 9.5,
-    y: 30.31,
+    y: 29.81,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -187,7 +187,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   localChurch:   {
     x: 9.5,
-    y: 16.06,
+    y: 15.56,
     width: 75,
     height: 6,
     fontSize: 10,
@@ -195,7 +195,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   missionaryName:   {
     x: 95,
-    y: 59.09,
+    y: 58.59,
     width: 112,
     height: 6,
     fontSize: 10,
@@ -203,15 +203,15 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   amount:   {
     x: 95,
-    y: 44.69,
+    y: 44.19,
     width: 112,
     height: 6,
     fontSize: 10,
     fontName: "Helvetica",
   },
   nation:   {
-    x: 111.31,
-    y: 30.31,
+    x: 111.81,
+    y: 29.81,
     width: 61.76,
     height: 6,
     fontSize: 10,
@@ -219,7 +219,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   travelDate:   {
     x: 180.33,
-    y: 30.16,
+    y: 29.66,
     width: 25.88,
     height: 6,
     fontSize: 10,
@@ -227,7 +227,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   sendingChurch:   {
     x: 95.18,
-    y: 15.7,
+    y: 15.45,
     width: 112,
     height: 6,
     fontSize: 10,
@@ -289,7 +289,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   partnerSignature:   {
     x: 147.68,
-    y: 13,
+    y: 12.5,
     width: 59.01,
     height: 12.17,
     maxWidth: 40,
@@ -297,7 +297,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
   },
   partnerSignaturePrintedName:   {
     x: 145.46,
-    y: 9.34,
+    y: 8.59,
     width: 63.4,
     height: 6,
     fontSize: 9,

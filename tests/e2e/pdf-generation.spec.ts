@@ -79,12 +79,12 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
     await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
 
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download PDF" }).click();
+    await page.getByRole("button", { name: "Download Final PDF" }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain(".pdf");
@@ -95,12 +95,12 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Non-Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
     await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
 
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download PDF" }).click();
+    await page.getByRole("button", { name: "Download Final PDF" }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain(".pdf");
@@ -111,10 +111,10 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Download Final PDF" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Partner Info PDF" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Accountability PDF" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Partner Info PNG" })).toHaveCount(0);
@@ -126,11 +126,11 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
     await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Download PDF" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Download Final PDF" })).toBeEnabled();
   });
 
   test("shows preview and download errors when template loading fails", async ({ page }) => {
@@ -146,11 +146,11 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
     await expect(page.getByText("Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Download PDF" }).click();
+    await page.getByRole("button", { name: "Download Final PDF" }).click();
     await expect(page.getByText("Unable to generate PDF. Please try again.")).toBeVisible();
   });
 
@@ -175,15 +175,15 @@ test.describe("PDF Generation E2E - New pdf-lib Integration", () => {
     await chooseMembership(page, "Victory Member");
     await fillCompleteForm(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByText("Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Edit Accountability" }).click();
+    await page.getByRole("button", { name: "Edit Accountability Choices" }).click();
     await expect(
       page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByTitle("Generated Support Forms PDF Preview")).toBeVisible();
     await expect(page.getByText("Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.")).toHaveCount(0);
   });

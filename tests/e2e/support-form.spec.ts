@@ -272,7 +272,7 @@ test.describe("Support forms end-to-end", () => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: "Are you a Victory church member?" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Review Forms" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Review and Generate PDF" })).toHaveCount(0);
 
     await chooseMembership(page, "Victory Member");
     await fillPartnerStep(page);
@@ -302,7 +302,7 @@ test.describe("Support forms end-to-end", () => {
     await page.goto("/");
     await chooseMembership(page, "Victory Member");
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
 
     await expect(page.getByText("Consent is required.")).toBeVisible();
     await expect(page.getByText("Partner Name is required.")).toBeVisible();
@@ -310,13 +310,13 @@ test.describe("Support forms end-to-end", () => {
     await fillPartnerStep(page);
     await fillAccountabilityStepWithoutSignature(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByText("Signature is required.")).toBeVisible();
     await expect(page.getByText("Partner Full Name is required.")).toHaveCount(0);
 
     await drawSignature(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
 
     await expect(page.getByText("Signature is required.")).toHaveCount(0);
@@ -329,10 +329,10 @@ test.describe("Support forms end-to-end", () => {
     await chooseMembership(page, "Victory Member");
 
     await fillPartnerStep(page);
-    await fillAccountabilityStepWithoutSignature(page, { fillPrintedName: false });
-    await drawSignature(page);
+    await fillAccountabilityStep(page);
+    await page.getByRole("textbox", { name: "Partner Full Name (Printed)" }).fill("");
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
 
     await expect(page.getByText("Partner Full Name is required.")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
@@ -346,11 +346,155 @@ test.describe("Support forms end-to-end", () => {
     await fillPartnerStep(page);
     await fillAccountabilityStep(page);
 
-    await page.getByRole("button", { name: "Review Forms" }).click();
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
     await expect(page.getByRole("heading", { name: "Review Your Forms" })).toBeVisible();
 
     const pdfDownload = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Download PDF" }).click();
+    await page.getByRole("button", { name: "Download Final PDF" }).click();
     await expect(await pdfDownload).toBeTruthy();
+  });
+
+  test("toggles theme and persists selection on reload", async ({ page }: { page: Page }) => {
+    await page.goto("/non-victory");
+
+    const toggle = page.getByRole("button", { name: "Toggle light and dark mode" });
+    await expect(toggle).toBeVisible();
+
+    await expect
+      .poll(async () => page.evaluate(() => document.documentElement.dataset.theme))
+      .toMatch(/^(light|dark)$/);
+
+    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    await expect(toggle).toHaveAttribute("aria-pressed", initialTheme === "dark" ? "true" : "false");
+
+    await toggle.click();
+
+    const toggledTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(toggledTheme).not.toBe(initialTheme);
+    await expect(toggle).toHaveAttribute("aria-pressed", toggledTheme === "dark" ? "true" : "false");
+
+    await page.reload();
+
+    await expect
+      .poll(async () => page.evaluate(() => document.documentElement.dataset.theme))
+      .toMatch(/^(light|dark)$/);
+
+    const persistedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(persistedTheme).toBe(toggledTheme);
+    await expect(toggle).toHaveAttribute("aria-pressed", persistedTheme === "dark" ? "true" : "false");
+  });
+
+  test("shows the correct theme icon for the active mode", async ({ page }: { page: Page }) => {
+    await page.goto("/non-victory");
+
+    const toggle = page.getByRole("button", { name: "Toggle light and dark mode" });
+    await expect(toggle).toBeVisible();
+
+    const getIconOpacities = async () => page.evaluate(() => {
+      const lightIcon = document.querySelector<HTMLElement>(".theme-toggle-icon-light");
+      const darkIcon = document.querySelector<HTMLElement>(".theme-toggle-icon-dark");
+
+      return {
+        light: lightIcon ? Number.parseFloat(getComputedStyle(lightIcon).opacity) : -1,
+        dark: darkIcon ? Number.parseFloat(getComputedStyle(darkIcon).opacity) : -1,
+      };
+    });
+
+    const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    const initialOpacities = await getIconOpacities();
+    if (initialTheme === "dark") {
+      expect(initialOpacities.dark).toBeGreaterThan(0.5);
+      expect(initialOpacities.light).toBeLessThan(0.5);
+    } else {
+      expect(initialOpacities.light).toBeGreaterThan(0.5);
+      expect(initialOpacities.dark).toBeLessThan(0.5);
+    }
+
+    await toggle.click();
+
+    const toggledTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    // Poll until the CSS transition settles, then verify each icon's visibility
+    // using thresholds rather than exact values to avoid coupling to the CSS
+    // implementation details of the opacity transition.
+    await expect.poll(async () => {
+      const ops = await getIconOpacities();
+      return toggledTheme === "dark"
+        ? ops.dark > 0.5 && ops.light < 0.5
+        : ops.light > 0.5 && ops.dark < 0.5;
+    }).toBe(true);
+  });
+
+  test("aria-pressed resolves to dark with no cookie when system preference is dark", async ({ page }: { page: Page }) => {
+    await page.context().clearCookies();
+    await page.emulateMedia({ colorScheme: "dark" });
+
+    // Ensure this test exercises the no-cookie path rather than persisted local storage.
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.removeItem("tdm-theme");
+      } catch {
+        // Ignore storage access restrictions in hardened browser contexts.
+      }
+    });
+
+    await page.goto("/non-victory");
+    const toggle = page.getByRole("button", { name: "Toggle light and dark mode" });
+    await expect(toggle).toBeVisible();
+
+    // No explicit cookie is present; the client should resolve dark from system preference,
+    // then persist it into the document theme and toggle state.
+    await expect
+      .poll(async () => page.evaluate(() => document.documentElement.dataset.theme), { timeout: 5000 })
+      .toBe("dark");
+
+    await expect
+      .poll(async () => (await toggle.getAttribute("aria-pressed")), { timeout: 5000 })
+      .toBe("true");
+
+    await expect
+      .poll(async () => page.evaluate(() => document.cookie), { timeout: 5000 })
+      .toContain("tdm-theme=dark");
+  });
+
+  test("aria-pressed is correct after hydration when dark theme is set via cookie", async ({ page }: { page: Page }) => {
+    await page.context().addCookies([{
+      name: "tdm-theme",
+      value: "dark",
+      domain: "127.0.0.1",
+      path: "/",
+    }]);
+
+    await page.goto("/non-victory");
+    const toggle = page.getByRole("button", { name: "Toggle light and dark mode" });
+    await expect(toggle).toBeVisible();
+
+    // data-theme must reflect the cookie after hydration.
+    await expect
+      .poll(async () => page.evaluate(() => document.documentElement.dataset.theme))
+      .toBe("dark");
+
+    // aria-pressed must agree with the applied theme.
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("keeps selected theme while navigating between routes", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+
+    const toggle = page.getByRole("button", { name: "Toggle light and dark mode" });
+    await expect(toggle).toBeVisible();
+
+    const currentTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    const targetTheme = currentTheme === "dark" ? "light" : "dark";
+
+    await toggle.click();
+    await expect.poll(async () => page.evaluate(() => document.documentElement.dataset.theme)).toBe(targetTheme);
+
+    await page.getByRole("dialog", { name: "Are you a Victory church member?" })
+      .getByRole("button", { name: "No", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/non-victory$/);
+
+    const routeTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(routeTheme).toBe(targetTheme);
   });
 });

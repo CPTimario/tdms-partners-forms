@@ -5,7 +5,7 @@ import { PDFDocument, PDFPage, StandardFonts } from "pdf-lib";
 import { initialSupportFormData } from "@/lib/support-form";
 import type { SupportFormData } from "@/lib/support-form";
 import { generateReviewPDF } from "@/lib/pdf-generator";
-import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
+import { getTemplateCoordinates, victoryCourseCoordinates, nonVictoryCoordinates } from "@/lib/pdf-coordinates";
 
 const VALID_SIGNATURE_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wn7qE0AAAAASUVORK5CYII=";
@@ -474,6 +474,255 @@ test.describe("PDF Generator - Runtime Behavior", () => {
     try {
       const data = buildValidFormData({ membershipType: "victory" });
       await expect(generateReviewPDF(data)).rejects.toThrow(/index|page/i);
+    } finally {
+      fetchMock.restore();
+    }
+  });
+});
+
+test.describe("PDF Coordinates - Placement Regression Guard", () => {
+  // These tests pin down the exact field positions after the most recent coordinate
+  // update (−0.5mm Y across text fields, +0.5mm nation.x, −0.75mm printed-name Y).
+  // They will fail if coordinates are accidentally shifted in a future edit.
+
+  test("victory template text field positions match expected coordinates", () => {
+    const c = victoryCourseCoordinates;
+
+    expect(c.partnerName.x).toBeCloseTo(10.03, 2);
+    expect(c.partnerName.y).toBeCloseTo(58.67, 2);
+
+    expect(c.emailAddress.x).toBeCloseTo(9.5, 2);
+    expect(c.emailAddress.y).toBeCloseTo(44.25, 2);
+
+    expect(c.mobileNumber.x).toBeCloseTo(9.5, 2);
+    expect(c.mobileNumber.y).toBeCloseTo(29.81, 2);
+
+    expect(c.localChurch.x).toBeCloseTo(9.5, 2);
+    expect(c.localChurch.y).toBeCloseTo(15.56, 2);
+
+    expect(c.missionaryName.x).toBeCloseTo(95, 2);
+    expect(c.missionaryName.y).toBeCloseTo(58.59, 2);
+
+    expect(c.amount.x).toBeCloseTo(95, 2);
+    expect(c.amount.y).toBeCloseTo(44.19, 2);
+
+    // nation.x shifted +0.5mm in the last coordinate update
+    expect(c.nation.x).toBeCloseTo(111.81, 2);
+    expect(c.nation.y).toBeCloseTo(29.81, 2);
+
+    expect(c.travelDate.y).toBeCloseTo(29.66, 2);
+
+    expect(c.sendingChurch.x).toBeCloseTo(95.18, 2);
+    expect(c.sendingChurch.y).toBeCloseTo(15.45, 2);
+
+    // Printed name Y shifted −0.75mm in the last coordinate update
+    expect(c.partnerSignaturePrintedName.x).toBeCloseTo(145.46, 2);
+    expect(c.partnerSignaturePrintedName.y).toBeCloseTo(8.59, 2);
+  });
+
+  test("non-victory template text field positions match expected coordinates", () => {
+    const c = nonVictoryCoordinates;
+
+    expect(c.partnerName.x).toBeCloseTo(10.03, 2);
+    expect(c.partnerName.y).toBeCloseTo(58.67, 2);
+
+    expect(c.emailAddress.y).toBeCloseTo(44.25, 2);
+    expect(c.mobileNumber.y).toBeCloseTo(29.81, 2);
+    expect(c.localChurch.y).toBeCloseTo(15.56, 2);
+    expect(c.missionaryName.y).toBeCloseTo(58.59, 2);
+    expect(c.amount.y).toBeCloseTo(44.19, 2);
+
+    // nation.x must match the same +0.5mm shift as victory
+    expect(c.nation.x).toBeCloseTo(111.81, 2);
+    expect(c.nation.y).toBeCloseTo(29.81, 2);
+
+    expect(c.sendingChurch.y).toBeCloseTo(15.45, 2);
+    expect(c.partnerSignaturePrintedName.y).toBeCloseTo(8.59, 2);
+  });
+
+  test("getTemplateCoordinates returns the victory coordinate object for 'victory'", () => {
+    expect(getTemplateCoordinates("victory")).toBe(victoryCourseCoordinates);
+  });
+
+  test("getTemplateCoordinates returns the non-victory coordinate object for 'nonVictory'", () => {
+    expect(getTemplateCoordinates("nonVictory")).toBe(nonVictoryCoordinates);
+  });
+
+  test("victory PDF draws text fields within their registered coordinate bounds", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        emailAddress: "victory@example.com",
+        nation: "Myanmar",
+        partnerPrintedName: "Victory Partner",
+      });
+
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const mmToPt = 2.834645669;
+
+      const fieldAssertions: Array<{ text: string; coordKey: keyof typeof victoryCourseCoordinates }> = [
+        { text: "Chris Timario", coordKey: "partnerName" },
+        { text: "victory@example.com", coordKey: "emailAddress" },
+        { text: "Southeast Team", coordKey: "missionaryName" },
+        { text: "Myanmar", coordKey: "nation" },
+        { text: "06/20/26", coordKey: "travelDate" },
+        { text: "Victory Partner", coordKey: "partnerSignaturePrintedName" },
+      ];
+
+      for (const { text, coordKey } of fieldAssertions) {
+        const call = drawCalls.find((c) => c.text === text);
+        expect(call, `Expected draw call for "${text}"`).toBeTruthy();
+
+        const coord = victoryCourseCoordinates[coordKey] as { x: number; y: number; height?: number };
+        const fieldBottomPt = coord.y * mmToPt;
+        const fieldTopPt = (coord.y + (coord.height ?? 6)) * mmToPt;
+
+        expect(
+          Number(call?.options?.y),
+          `Y for "${text}" should be within field bounds [${fieldBottomPt.toFixed(1)}, ${fieldTopPt.toFixed(1)}]`,
+        ).toBeGreaterThanOrEqual(fieldBottomPt);
+        expect(
+          Number(call?.options?.y),
+          `Y for "${text}" should not exceed field top`,
+        ).toBeLessThanOrEqual(fieldTopPt);
+        expect(
+          Number(call?.options?.x),
+          `X for "${text}" should be at or right of field left edge`,
+        ).toBeGreaterThanOrEqual(coord.x * mmToPt);
+      }
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("non-victory PDF draws text fields within their registered coordinate bounds", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+    try {
+      const data = buildValidFormData({
+        membershipType: "nonVictory",
+        emailAddress: "nonvictory@example.com",
+        nation: "Philippines",
+        partnerPrintedName: "NonVictory Partner",
+      });
+
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const mmToPt = 2.834645669;
+
+      const fieldAssertions: Array<{ text: string; coordKey: keyof typeof nonVictoryCoordinates }> = [
+        { text: "Chris Timario", coordKey: "partnerName" },
+        { text: "nonvictory@example.com", coordKey: "emailAddress" },
+        { text: "Southeast Team", coordKey: "missionaryName" },
+        { text: "Philippines", coordKey: "nation" },
+        { text: "06/20/26", coordKey: "travelDate" },
+        { text: "NonVictory Partner", coordKey: "partnerSignaturePrintedName" },
+      ];
+
+      for (const { text, coordKey } of fieldAssertions) {
+        const call = drawCalls.find((c) => c.text === text);
+        expect(call, `Expected draw call for "${text}"`).toBeTruthy();
+
+        const coord = nonVictoryCoordinates[coordKey] as { x: number; y: number; height?: number };
+        const fieldBottomPt = coord.y * mmToPt;
+        const fieldTopPt = (coord.y + (coord.height ?? 6)) * mmToPt;
+
+        expect(
+          Number(call?.options?.y),
+          `Y for "${text}" should be within field bounds [${fieldBottomPt.toFixed(1)}, ${fieldTopPt.toFixed(1)}]`,
+        ).toBeGreaterThanOrEqual(fieldBottomPt);
+        expect(
+          Number(call?.options?.y),
+          `Y for "${text}" should not exceed field top`,
+        ).toBeLessThanOrEqual(fieldTopPt);
+        expect(
+          Number(call?.options?.x),
+          `X for "${text}" should be at or right of field left edge`,
+        ).toBeGreaterThanOrEqual(coord.x * mmToPt);
+      }
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("victory PDF draws consent and accountability checkboxes at mapped coordinates", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        consentGiven: true,
+        unableToGoChoice: "teamFund",
+        reroutedChoice: "retain",
+        canceledChoice: "generalFund",
+      });
+
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const mmToPt = 2.834645669;
+      const xCalls = drawCalls.filter((call) => call.text === "X");
+
+      const checkboxAssertions = [
+        victoryCourseCoordinates.consentCheckbox,
+        victoryCourseCoordinates.unableToGoTeamFund,
+        victoryCourseCoordinates.reroutedRetain,
+        victoryCourseCoordinates.canceledGeneralFund,
+      ];
+
+      for (const checkbox of checkboxAssertions) {
+        expect(checkbox).toBeTruthy();
+        expect(
+          xCalls.some((call) =>
+            Number(call.options.x).toFixed(1) === (checkbox!.x * mmToPt).toFixed(1)
+            && Number(call.options.y).toFixed(1) === (checkbox!.y * mmToPt).toFixed(1),
+          ),
+        ).toBe(true);
+      }
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("non-victory PDF draws consent and accountability checkboxes at mapped coordinates", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+    try {
+      const data = buildValidFormData({
+        membershipType: "nonVictory",
+        consentGiven: true,
+        unableToGoChoice: "teamFund",
+        reroutedChoice: "retain",
+        canceledChoice: "generalFund",
+      });
+
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const mmToPt = 2.834645669;
+      const xCalls = drawCalls.filter((call) => call.text === "X");
+
+      const checkboxAssertions = [
+        nonVictoryCoordinates.consentCheckbox,
+        nonVictoryCoordinates.unableToGoTeamFund,
+        nonVictoryCoordinates.reroutedRetain,
+        nonVictoryCoordinates.canceledGeneralFund,
+      ];
+
+      for (const checkbox of checkboxAssertions) {
+        expect(checkbox).toBeTruthy();
+        expect(
+          xCalls.some((call) =>
+            Number(call.options.x).toFixed(1) === (checkbox!.x * mmToPt).toFixed(1)
+            && Number(call.options.y).toFixed(1) === (checkbox!.y * mmToPt).toFixed(1),
+          ),
+        ).toBe(true);
+      }
     } finally {
       fetchMock.restore();
     }

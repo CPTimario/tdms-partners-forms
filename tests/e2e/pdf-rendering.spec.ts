@@ -132,12 +132,10 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
     await page.goto("/mapper");
 
     const canvas = page.getByTestId("mapper-pdf-canvas");
-    const canvasStyle = await canvas.evaluate((el) => {
-      return window.getComputedStyle(el);
-    });
+    const pointerEvents = await canvas.evaluate((el) => window.getComputedStyle(el).pointerEvents);
 
     // Canvas should have pointer-events: none so it doesn't block interactions
-    expect(canvasStyle.pointerEvents).toBe("none");
+    expect(pointerEvents).toBe("none");
   });
 
   test("mapper operations preserve PDF visibility", async ({ page }) => {

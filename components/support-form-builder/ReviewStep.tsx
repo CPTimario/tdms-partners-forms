@@ -1,4 +1,5 @@
 import styles from "./FormBuilder.module.css";
+import { Download, FilePenLine, ListChecks } from "lucide-react";
 
 type ReviewStepProps = {
   isExporting: boolean;
@@ -34,14 +35,20 @@ export function ReviewStep({
             type="button"
             onClick={onEditPartnerInfo}
           >
-            Edit Partner Information
+            <span className={styles.buttonContent}>
+              <FilePenLine size={16} aria-hidden="true" />
+              Edit Partner Details
+            </span>
           </button>
           <button
             className={`${styles.button} ${styles.secondaryButton}`}
             type="button"
             onClick={onEditAccountability}
           >
-            Edit Accountability
+            <span className={styles.buttonContent}>
+              <ListChecks size={16} aria-hidden="true" />
+              Edit Accountability Choices
+            </span>
           </button>
           <button
             className={styles.button}
@@ -51,7 +58,10 @@ export function ReviewStep({
             }}
             disabled={isBusy}
           >
-            {isBusy ? "Preparing PDF..." : "Download PDF"}
+            <span className={styles.buttonContent}>
+              <Download size={16} aria-hidden="true" />
+              {isBusy ? "Preparing PDF..." : "Download Final PDF"}
+            </span>
           </button>
         </div>
       </div>

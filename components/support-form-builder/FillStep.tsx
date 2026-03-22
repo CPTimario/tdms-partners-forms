@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ChangeEventHandler } from "react";
 import SignatureCanvas from "react-signature-canvas";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
 import styles from "./FormBuilder.module.css";
 import {
   consentCopy,
@@ -114,7 +115,10 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
       <div className={styles.signaturePadActions}>
         <p className={styles.helperText}>Sign using mouse, touch, or stylus.</p>
         <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={handleClear}>
-          Clear Signature
+          <span className={styles.buttonContent}>
+            <RotateCcw size={16} aria-hidden="true" />
+            Clear Signature
+          </span>
         </button>
       </div>
     </div>
@@ -142,7 +146,12 @@ function TabButton({ step, label, status, active, onClick }: TabButtonProps) {
       </span>
       <span className={styles.tabMeta}>
         <span className={styles.tabLabel}>{label}</span>
-        <span className={styles.tabStatus}>{status}</span>
+        <span className={styles.tabStatus}>
+          {status === "Complete" ? <CheckCircle2 size={14} aria-hidden="true" /> : null}
+          {status === "Needs details" ? <AlertTriangle size={14} aria-hidden="true" /> : null}
+          {status === "Locked" ? <Lock size={14} aria-hidden="true" /> : null}
+          {status}
+        </span>
       </span>
     </button>
   );
@@ -194,21 +203,21 @@ export function FillStep({
           <TabButton
             step="partner"
             label={stepLabels.partner}
-            status={isPartnerStepComplete ? "Ready for review" : "Incomplete"}
+            status={isPartnerStepComplete ? "Complete" : "Needs details"}
             active={step === "partner"}
             onClick={onPartnerTab}
           />
           <TabButton
             step="accountability"
             label={stepLabels.accountability}
-            status={isAccountabilityStepComplete ? "Ready for review" : "Incomplete"}
+            status={isAccountabilityStepComplete ? "Complete" : "Needs details"}
             active={step === "accountability"}
             onClick={onAccountabilityTab}
           />
           <TabButton
             step="review"
             label="Review"
-            status={isFormValid ? "Available" : "Locked until complete"}
+            status={isFormValid ? "Ready" : "Locked"}
             active={false}
             onClick={onReview}
           />
@@ -490,21 +499,33 @@ export function FillStep({
 
         <div className={`${styles.actions} ${styles.stepActions}`}>
           <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={onReset}>
-            Clear Form
+            <span className={styles.buttonContent}>
+              <RotateCcw size={16} aria-hidden="true" />
+              Reset Form
+            </span>
           </button>
 
           {isPartnerTab ? (
             <button className={styles.button} type="button" onClick={onAccountabilityTab}>
-              Continue to Accountability
+              <span className={styles.buttonContent}>
+                Continue to Accountability
+                <ArrowRight size={16} aria-hidden="true" />
+              </span>
             </button>
           ) : (
             <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={onPartnerTab}>
-              Back to Partner Information
+              <span className={styles.buttonContent}>
+                <ArrowLeft size={16} aria-hidden="true" />
+                Back to Partner Information
+              </span>
             </button>
           )}
 
           <button className={styles.button} type="button" onClick={onReview}>
-            Review Forms
+            <span className={styles.buttonContent}>
+              <Signature size={16} aria-hidden="true" />
+              Review and Generate PDF
+            </span>
           </button>
         </div>
       </div>

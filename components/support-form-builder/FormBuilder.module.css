@@ -13,11 +13,12 @@
 .gateCard {
   width: min(560px, 100%);
   background: var(--panel);
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 1.1rem;
+  padding: 1.2rem;
   display: grid;
   gap: 0.9rem;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
 }
 
 .gateTitle {
@@ -27,7 +28,7 @@
 
 .gateText {
   margin: 0;
-  color: #4a4a4a;
+  color: var(--muted);
   font-size: 0.95rem;
 }
 
@@ -50,12 +51,13 @@
 
 .card {
   background: var(--panel);
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 1rem;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
 }
 
 .headerBlock {
@@ -76,10 +78,10 @@
 }
 
 .tabButton {
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 0.85rem 0.95rem;
-  background: #f8f6f0;
+  background: var(--panel-muted);
   color: var(--foreground);
   cursor: pointer;
   display: flex;
@@ -90,8 +92,8 @@
 
 .tabButtonActive {
   border-color: var(--accent);
-  background: #eef3f8;
-  box-shadow: inset 0 0 0 1px rgba(31, 63, 102, 0.18);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .tabNumber {
@@ -121,7 +123,10 @@
 
 .tabStatus {
   font-size: 0.76rem;
-  color: #6a655d;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .stepSection {
@@ -130,9 +135,9 @@
 }
 
 .stepIntroCard {
-  border: 1px solid #d6d2c9;
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: linear-gradient(180deg, #faf8f3 0%, #f5f1e8 100%);
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-muted) 100%);
   padding: 0.95rem 1rem;
   display: grid;
   gap: 0.3rem;
@@ -153,10 +158,10 @@
 }
 
 .statementCard {
-  border: 2px solid #1f3f66;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
   border-radius: 14px;
   padding: 0.9rem 1rem;
-  background: #f4f8fc;
+  background: var(--accent-soft);
   display: grid;
   gap: 0.55rem;
 }
@@ -164,7 +169,7 @@
 .statementTitle {
   margin: 0;
   font-size: 1rem;
-  color: #102a4a;
+  color: var(--accent);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -173,7 +178,7 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.55;
-  color: #1d1d1d;
+  color: var(--foreground);
 }
 
 .stepText,
@@ -187,13 +192,13 @@
 .stepText {
   font-size: 0.92rem;
   line-height: 1.5;
-  color: #2f2f2f;
+  color: var(--foreground);
 }
 
 .stepTextMuted {
   font-size: 0.86rem;
   line-height: 1.5;
-  color: #5c584f;
+  color: var(--muted);
 }
 
 .formColumns {
@@ -216,11 +221,12 @@
 }
 
 .fieldBlock {
-  border: 1px solid #d6d2c9;
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0.8rem;
   display: grid;
   gap: 0.5rem;
+  background: var(--panel);
 }
 
 .fieldBlock legend {
@@ -233,32 +239,37 @@
 
 .fieldLabel {
   font-size: 0.88rem;
-  color: #2f2f2f;
+  color: var(--foreground);
   display: grid;
   gap: 0.35rem;
 }
 
 .textInput {
-  border: 1px solid #c9c6bd;
+  border: 1px solid var(--line);
   border-radius: 8px;
   min-height: 38px;
   padding: 0 0.65rem;
   font-size: 0.92rem;
-  background: #fff;
+  color: var(--foreground);
+  background: var(--panel);
   width: 100%;
   min-width: 0;
 }
 
+.textInput:focus-visible {
+  border-color: var(--accent);
+}
+
 .textInputError {
-  border-color: #b22727;
-  box-shadow: inset 0 0 0 1px rgba(178, 39, 39, 0.2);
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
 .fieldError {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.35;
-  color: #8b1b1b;
+  color: var(--danger);
 }
 
 .dateFieldLabel {
@@ -277,9 +288,9 @@
 .signaturePad {
   width: 100%;
   height: 150px;
-  border: 1px dashed #a9a59d;
+  border: 1px dashed var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
 }
 
 .signaturePadActions {
@@ -310,18 +321,18 @@
 .helperText {
   font-size: 0.82rem;
   line-height: 1.45;
-  color: #635e56;
+  color: var(--muted);
 }
 
 .longText {
   font-size: 0.8rem;
   line-height: 1.55;
-  color: #444;
+  color: var(--muted);
 }
 
 .mutedCaption {
   font-size: 0.76rem;
-  color: #6a655d;
+  color: var(--muted);
 }
 
 .actions {
@@ -344,8 +355,19 @@
   cursor: pointer;
 }
 
+.buttonContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.button:hover {
+  background: var(--accent-hover);
+}
+
 .secondaryButton {
-  background: #8a857c;
+  background: color-mix(in srgb, var(--foreground) 42%, var(--panel));
 }
 
 .button:disabled {
@@ -356,10 +378,10 @@
 .errorList {
   margin: 0;
   padding: 0.7rem 0.9rem 0.7rem 1.4rem;
-  border: 1px solid #efd6d6;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--line));
   border-radius: 12px;
-  background: #fff5f5;
-  color: #8b1b1b;
+  background: var(--danger-soft);
+  color: var(--danger);
   display: grid;
   gap: 0.25rem;
   font-size: 0.82rem;
@@ -367,9 +389,10 @@
 
 .reviewHeader {
   background: var(--panel);
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 0.9rem 1.1rem;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 .reviewHeaderTitle {
@@ -380,7 +403,7 @@
 .reviewHeaderText {
   margin: 0 0 0.65rem;
   font-size: 0.92rem;
-  color: #4a4a4a;
+  color: var(--muted);
 }
 
 .reviewActions {
@@ -398,7 +421,7 @@
 
 .reviewCard {
   background: var(--panel);
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 1rem;
   overflow: hidden;
@@ -418,21 +441,32 @@
 .pdfPreviewFrame {
   width: 100%;
   min-height: 70vh;
-  border: 1px solid #d8d3ca;
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--panel);
 }
 
 .previewPlaceholder {
   margin: 0;
   font-size: 0.92rem;
-  color: #4a4a4a;
+  color: var(--muted);
 }
 
 .previewError {
   margin: 0.6rem 0 0;
   font-size: 0.9rem;
-  color: #9f1f1f;
+  color: var(--danger);
+}
+
+.stepActions {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 10;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.65rem;
+  backdrop-filter: blur(4px);
 }
 
 @media (max-width: 1260px) {

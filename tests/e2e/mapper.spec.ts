@@ -87,7 +87,7 @@ test.describe("Development mapper", () => {
     const widthAfterResize = Number(await page.getByTestId("mapper-width-input").inputValue());
     expect(widthAfterResize).toBeGreaterThan(widthBeforeResize);
 
-    await page.getByRole("button", { name: "Save to app file" }).click();
+    await page.getByRole("button", { name: "Save Coordinates to Source" }).click();
 
     await expect
       .poll(async () => page.getByTestId("mapper-save-status").innerText(), { timeout: 15000 })

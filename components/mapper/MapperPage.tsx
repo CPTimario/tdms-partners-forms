@@ -10,6 +10,7 @@ import {
   type MouseEventHandler,
   type PointerEvent,
 } from "react";
+import { ClipboardCopy, Copy, Move, Save } from "lucide-react";
 import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
 import type {
   MembershipType,
@@ -129,6 +130,7 @@ export function MapperPage() {
   const [membershipType, setMembershipType] = useState<MembershipType>("victory");
   const [pageNumber, setPageNumber] = useState<1 | 2>(1);
   const [zoom, setZoom] = useState(1);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedField, setSelectedField] = useState<keyof TemplateCoordinates>("partnerName");
   const [lastPoint, setLastPoint] = useState<MapperPoint | null>(null);
   const [draftCoordinates, setDraftCoordinates] = useState<Record<MembershipType, TemplateCoordinates>>(() => ({
@@ -145,6 +147,10 @@ export function MapperPage() {
   useEffect(() => {
     draftCoordinatesRef.current = draftCoordinates;
   }, [draftCoordinates]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const templateCoordinates = draftCoordinates[membershipType];
 
@@ -452,6 +458,17 @@ export function MapperPage() {
       ? getFieldDimensions(activeSelectedField, selectedConfig)
       : { width: 0, height: 0 };
 
+  if (!isHydrated) {
+    return (
+      <main className={styles.shell}>
+        <section className={styles.card}>
+          <h1 className={styles.title}>PDF Mapper (Development Only)</h1>
+          <p className={styles.subtitle}>Loading mapper...</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.shell}>
       <section className={styles.card}>
@@ -467,6 +484,10 @@ export function MapperPage() {
             <select
               className={styles.select}
               value={membershipType}
+              disabled={!isHydrated}
+              onInput={(event) => {
+                setMembershipType((event.target as HTMLSelectElement).value as MembershipType);
+              }}
               onChange={(event) => {
                 setMembershipType(event.target.value as MembershipType);
               }}
@@ -481,6 +502,7 @@ export function MapperPage() {
             <select
               className={styles.select}
               value={pageNumber}
+              disabled={!isHydrated}
               onChange={(event) => {
                 setPageNumber(Number(event.target.value) as 1 | 2);
               }}
@@ -499,6 +521,7 @@ export function MapperPage() {
               max={2}
               step={0.1}
               value={zoom}
+              disabled={!isHydrated}
               onChange={(event) => {
                 setZoom(Number(event.target.value));
               }}
@@ -704,7 +727,10 @@ export function MapperPage() {
                   await navigator.clipboard.writeText(toSnippet(activeSelectedField, selectedConfig));
                 }}
               >
-                Copy selected snippet
+                <span className={styles.buttonContent}>
+                  <Copy size={16} aria-hidden="true" />
+                  Copy Selected Field Snippet
+                </span>
               </button>
             </div>
 
@@ -718,7 +744,10 @@ export function MapperPage() {
                   await navigator.clipboard.writeText(pageSnippet);
                 }}
               >
-                Copy page snippets
+                <span className={styles.buttonContent}>
+                  <ClipboardCopy size={16} aria-hidden="true" />
+                  Copy Page Snippets
+                </span>
               </button>
             </div>
 
@@ -726,7 +755,10 @@ export function MapperPage() {
               <strong>Persist coordinates</strong>
               <p>Save current mapper coordinates directly into app source (development only).</p>
               <button className={styles.button} type="button" onClick={handleSaveCoordinates}>
-                Save to app file
+                <span className={styles.buttonContent}>
+                  <Save size={16} aria-hidden="true" />
+                  Save Coordinates to Source
+                </span>
               </button>
               <p data-testid="mapper-save-status">{saveStatus || "Not saved in this session."}</p>
             </div>
@@ -734,6 +766,7 @@ export function MapperPage() {
             <div>
               <strong>Move controls</strong>
               <p>
+                <Move size={14} aria-hidden="true" className={styles.inlineIcon} />
                 Use drag and drop for coarse movement. Use arrow keys for 0.25mm nudges and Shift + arrow for 1mm.
               </p>
             </div>

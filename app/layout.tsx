@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { isThemeMode, THEME_STORAGE_KEY } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,20 +16,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TDM Partners Forms",
-  description: "Client-only Ten Days Missions support form generator",
+  title: "TDMS Partners Forms",
+  description: "Ten Days Missions Support Partners Forms",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get(THEME_STORAGE_KEY)?.value;
+  const initialTheme = isThemeMode(themeCookie) ? themeCookie : undefined;
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={initialTheme}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ThemeToggle initialTheme={initialTheme} />
         {children}
       </body>
     </html>
