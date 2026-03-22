@@ -64,6 +64,7 @@ function buildValidFormData(overrides?: Partial<SupportFormData>): SupportFormDa
     mobileNumber: "09171234567",
     localChurch: "Every Nation Makati",
     missionaryName: "Southeast Team",
+    currency: "USD",
     amount: "5000",
     nation: "Thailand",
     travelDate: "2026-06-20",
@@ -256,7 +257,7 @@ test.describe("PDF Generator - Runtime Behavior", () => {
     }
   });
 
-  test("draws travel date as mm/dd/yy and includes printed name text", async () => {
+  test("draws split travel date fields and includes printed name text", async () => {
     const fetchMock = mockTemplateFetch({
       "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
       "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
@@ -271,9 +272,37 @@ test.describe("PDF Generator - Runtime Behavior", () => {
 
       const { drawnText } = await captureDrawnText(() => generateReviewPDF(data));
 
-      expect(drawnText).toContain("06/20/26");
+      expect(drawnText).toContain("06");
+      expect(drawnText).toContain("20");
+      expect(drawnText).toContain("26");
       expect(drawnText).toContain("Chris Timario");
       expect(drawnText).not.toContain("2026-06-20");
+    } finally {
+      fetchMock.restore();
+    }
+  });
+
+  test("supports PHP currency formatting in generated PDFs", async () => {
+    const fetchMock = mockTemplateFetch({
+      "/tdms-forms/pic-saf-victory.pdf": readTemplate("pic-saf-victory.pdf"),
+      "/tdms-forms/pic-saf-non-victory.pdf": readTemplate("pic-saf-non-victory.pdf"),
+    });
+
+    try {
+      const data = buildValidFormData({
+        membershipType: "victory",
+        currency: "PHP",
+      });
+
+      const { drawnText } = await captureDrawnText(() => generateReviewPDF(data));
+
+      // Verify PDF was created successfully
+      expect(drawnText.length).toBeGreaterThan(0);
+      
+      // Verify PHP currency formatting appears in rendered output (no peso symbol, uses "PHP" text)
+      const fullText = drawnText.join(" ");
+      expect(fullText).toContain("PHP");
+      expect(fullText).not.toContain("₱");
     } finally {
       fetchMock.restore();
     }
@@ -510,7 +539,12 @@ test.describe("PDF Coordinates - Placement Regression Guard", () => {
     expect(c.nation.x).toBeCloseTo(111.81, 2);
     expect(c.nation.y).toBeCloseTo(29.81, 2);
 
-    expect(c.travelDate.y).toBeCloseTo(29.66, 2);
+    expect(c.travelDateMonth.x).toBeCloseTo(179.83, 2);
+    expect(c.travelDateMonth.y).toBeCloseTo(29.66, 2);
+    expect(c.travelDateDay.x).toBeCloseTo(189.95, 2);
+    expect(c.travelDateDay.y).toBeCloseTo(29.66, 2);
+    expect(c.travelDateYear.x).toBeCloseTo(200.1, 2);
+    expect(c.travelDateYear.y).toBeCloseTo(29.66, 2);
 
     expect(c.sendingChurch.x).toBeCloseTo(95.18, 2);
     expect(c.sendingChurch.y).toBeCloseTo(15.45, 2);
@@ -569,7 +603,9 @@ test.describe("PDF Coordinates - Placement Regression Guard", () => {
         { text: "victory@example.com", coordKey: "emailAddress" },
         { text: "Southeast Team", coordKey: "missionaryName" },
         { text: "Myanmar", coordKey: "nation" },
-        { text: "06/20/26", coordKey: "travelDate" },
+        { text: "06", coordKey: "travelDateMonth" },
+        { text: "20", coordKey: "travelDateDay" },
+        { text: "26", coordKey: "travelDateYear" },
         { text: "Victory Partner", coordKey: "partnerSignaturePrintedName" },
       ];
 
@@ -620,7 +656,9 @@ test.describe("PDF Coordinates - Placement Regression Guard", () => {
         { text: "nonvictory@example.com", coordKey: "emailAddress" },
         { text: "Southeast Team", coordKey: "missionaryName" },
         { text: "Philippines", coordKey: "nation" },
-        { text: "06/20/26", coordKey: "travelDate" },
+        { text: "06", coordKey: "travelDateMonth" },
+        { text: "20", coordKey: "travelDateDay" },
+        { text: "26", coordKey: "travelDateYear" },
         { text: "NonVictory Partner", coordKey: "partnerSignaturePrintedName" },
       ];
 

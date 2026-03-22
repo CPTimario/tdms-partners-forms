@@ -12,7 +12,6 @@ import {
   stepLabels,
   type EditableFormStep,
   type SupportFormData,
-  updatedCopy,
 } from "@/lib/support-form";
 
 type FillStepProps = {
@@ -24,6 +23,7 @@ type FillStepProps = {
   isPartnerStepComplete: boolean;
   isAccountabilityStepComplete: boolean;
   onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
+  onCurrencyChange: ChangeEventHandler<HTMLSelectElement>;
   onCheckboxChange: (field: "consentGiven") => ChangeEventHandler<HTMLInputElement>;
   onUnableToGoChange: ChangeEventHandler<HTMLInputElement>;
   onReroutedChange: ChangeEventHandler<HTMLInputElement>;
@@ -166,6 +166,7 @@ export function FillStep({
   isPartnerStepComplete,
   isAccountabilityStepComplete,
   onTextChange,
+  onCurrencyChange,
   onCheckboxChange,
   onUnableToGoChange,
   onReroutedChange,
@@ -304,13 +305,28 @@ export function FillStep({
                 </label>
                 <label className={styles.fieldLabel}>
                   Amount
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("amount") ? styles.textInputError : ""}`}
-                    value={data.amount}
-                    onChange={onTextChange("amount")}
-                    aria-invalid={hasFieldError("amount")}
-                    aria-describedby={hasFieldError("amount") ? errorId("amount") : undefined}
-                  />
+                  <div className={styles.currencyAmountRow}>
+                    <select
+                      className={`${styles.selectInput} ${hasFieldError("currency") ? styles.textInputError : ""}`}
+                      value={data.currency}
+                      onChange={onCurrencyChange}
+                      aria-invalid={hasFieldError("currency")}
+                      aria-describedby={hasFieldError("currency") ? errorId("currency") : undefined}
+                    >
+                      <option value="PHP">PHP</option>
+                      <option value="USD">USD</option>
+                    </select>
+                    <input
+                      className={`${styles.textInput} ${hasFieldError("amount") ? styles.textInputError : ""}`}
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={data.amount}
+                      onChange={onTextChange("amount")}
+                      aria-invalid={hasFieldError("amount")}
+                      aria-describedby={hasFieldError("amount") ? errorId("amount") : undefined}
+                    />
+                  </div>
+                  {renderFieldError("currency")}
                   {renderFieldError("amount")}
                 </label>
                 <div className={styles.recipientDetailsGrid}>
@@ -369,7 +385,6 @@ export function FillStep({
               </label>
               {renderFieldError("consentGiven")}
               <p className={styles.longText}>{privacyCopy}</p>
-              <p className={styles.mutedCaption}>{updatedCopy}</p>
             </fieldset>
           </section>
         ) : (

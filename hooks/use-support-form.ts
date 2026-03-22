@@ -2,7 +2,9 @@
 
 import { ChangeEvent, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  type CurrencyCode,
   type CanceledChoice,
+  formatAmountInputForField,
   getFirstInvalidStep,
   initialSupportFormData,
   isSupportFormValid,
@@ -39,6 +41,10 @@ type SupportFormAction =
       type: "set-checkbox";
       field: CheckboxField;
       value: boolean;
+    }
+  | {
+      type: "set-currency";
+      value: CurrencyCode;
     }
   | {
       type: "set-membership";
@@ -117,6 +123,15 @@ function reducer(
           [action.field]: action.value,
         },
         fieldErrors: withoutFieldError(state.fieldErrors, action.field),
+      };
+    case "set-currency":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          currency: action.value,
+        },
+        fieldErrors: withoutFieldError(state.fieldErrors, "currency"),
       };
     case "set-membership":
       return {
@@ -226,10 +241,14 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
 
   const onTextChange =
     (field: RequiredStringField) => (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = field === "amount"
+        ? formatAmountInputForField(event.target.value)
+        : event.target.value;
+
       dispatch({
         type: "set-text",
         field,
-        value: event.target.value,
+        value: nextValue,
       });
     };
 
@@ -241,6 +260,13 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
         value: event.target.checked,
       });
     };
+
+  const onCurrencyChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    dispatch({
+      type: "set-currency",
+      value: event.target.value as CurrencyCode,
+    });
+  };
 
   const setMembership = (value: MembershipType) => {
     latestDataRef.current = {
@@ -295,7 +321,7 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     goToStep("partner");
   };
 
-  const goToAccountability = () => {
+  const goToAccountability = (): boolean => {
     const currentData = {
       ...state.data,
       ...latestDataRef.current,
@@ -305,14 +331,15 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
 
     if (Object.keys(validationResult.fieldErrors).length > 0 || validationResult.formErrors.length > 0) {
       dispatch({ type: "set-step", value: "partner" });
-      return;
+      return false;
     }
 
     dispatch({ type: "clear-validation" });
     dispatch({ type: "set-step", value: "accountability" });
+    return true;
   };
 
-  const goToReview = () => {
+  const goToReview = (): boolean => {
     const currentData = {
       ...state.data,
       ...latestDataRef.current,
@@ -323,11 +350,12 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
 
     if (Object.keys(validationResult.fieldErrors).length === 0 && validationResult.formErrors.length === 0) {
       dispatch({ type: "set-step", value: "review" });
-      return;
+      return true;
     }
 
     const firstInvalidStep = getFirstInvalidStep(currentData);
     dispatch({ type: "set-step", value: firstInvalidStep ?? "partner" });
+    return false;
   };
 
   return {
@@ -339,6 +367,7 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     isPartnerStepComplete,
     isAccountabilityStepComplete,
     onTextChange,
+    onCurrencyChange,
     onCheckboxChange,
     setMembership,
     onUnableToGoChange,

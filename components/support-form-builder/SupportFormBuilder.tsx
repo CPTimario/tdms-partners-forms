@@ -12,8 +12,13 @@ import {
   type MembershipType,
 } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
+import { Snackbar } from "@/components/Snackbar";
+import { useSnackbar } from "@/hooks/use-snackbar";
 import styles from "./FormBuilder.module.css";
 import { ReviewStep } from "./ReviewStep";
+
+const VALIDATION_ERROR_MESSAGE =
+  "Some fields need your attention. Please fix the highlighted errors.";
 
 function MembershipGate() {
   const router = useRouter();
@@ -171,6 +176,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     isPartnerStepComplete,
     isAccountabilityStepComplete,
     onTextChange,
+    onCurrencyChange,
     onCheckboxChange,
     setMembership,
     onUnableToGoChange,
@@ -182,6 +188,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     goToAccountability,
     goToReview,
   } = useSupportForm(membershipType);
+  const snackbar = useSnackbar();
   const [isExporting, setIsExporting] = useState(false);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [reviewPdfBytes, setReviewPdfBytes] = useState<Uint8Array | null>(null);
@@ -277,39 +284,58 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     return <MembershipGate />;
   }
 
+  const handleGoToAccountability = () => {
+    if (!goToAccountability()) {
+      snackbar.show(VALIDATION_ERROR_MESSAGE);
+    }
+  };
+
+  const handleGoToReview = () => {
+    if (!goToReview()) {
+      snackbar.show(VALIDATION_ERROR_MESSAGE);
+    }
+  };
+
   if (step !== "review") {
     return (
-      <FillStep
-        data={data}
-        step={step}
-        fieldErrors={fieldErrors}
-        formErrors={formErrors}
-        isFormValid={isFormValid}
-        isPartnerStepComplete={isPartnerStepComplete}
-        isAccountabilityStepComplete={isAccountabilityStepComplete}
-        onTextChange={onTextChange}
-        onCheckboxChange={onCheckboxChange}
-        onUnableToGoChange={onUnableToGoChange}
-        onReroutedChange={onReroutedChange}
-        onCanceledChange={onCanceledChange}
-        onPartnerSignatureChange={setPartnerSignature}
-        onPartnerTab={goToPartner}
-        onAccountabilityTab={goToAccountability}
-        onReview={goToReview}
-        onReset={resetForm}
-      />
+      <>
+        <FillStep
+          data={data}
+          step={step}
+          fieldErrors={fieldErrors}
+          formErrors={formErrors}
+          isFormValid={isFormValid}
+          isPartnerStepComplete={isPartnerStepComplete}
+          isAccountabilityStepComplete={isAccountabilityStepComplete}
+          onTextChange={onTextChange}
+          onCurrencyChange={onCurrencyChange}
+          onCheckboxChange={onCheckboxChange}
+          onUnableToGoChange={onUnableToGoChange}
+          onReroutedChange={onReroutedChange}
+          onCanceledChange={onCanceledChange}
+          onPartnerSignatureChange={setPartnerSignature}
+          onPartnerTab={goToPartner}
+          onAccountabilityTab={handleGoToAccountability}
+          onReview={handleGoToReview}
+          onReset={resetForm}
+        />
+        <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+      </>
     );
   }
 
   return (
-    <ReviewStep
-      isExporting={isExporting}
-      isPreparingPreview={isPreparingPreview}
-      previewPdfUrl={reviewPdfUrl}
-      previewError={previewError}
-      onEditPartnerInfo={goToPartner}
-      onEditAccountability={goToAccountability}
-      onDownloadPdf={downloadReviewPdf}
-    />
+    <>
+      <ReviewStep
+        isExporting={isExporting}
+        isPreparingPreview={isPreparingPreview}
+        previewPdfUrl={reviewPdfUrl}
+        previewError={previewError}
+        onEditPartnerInfo={goToPartner}
+        onEditAccountability={handleGoToAccountability}
+        onDownloadPdf={downloadReviewPdf}
+      />
+      <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+    </>
   );
 }

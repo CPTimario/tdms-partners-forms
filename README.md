@@ -33,7 +33,31 @@ Direct entry routes are also supported:
 
 After the gate, the app walks through Partner Information and Accountability, and finally unlocks Review once all required data is complete.
 
+## Form Fields and Behavior
+
+**Partner Information Step:**
+
+- **Amount:** Supports currency selection (PHP default, or USD) via dropdown. The amount input auto-formats with thousands separators as you type (e.g., `5000` → `5,000`) and preserves up to 2 decimal places when entered (e.g., `5000.5` → `5,000.5`). Required field; must be > 0.
+- **Currency Selector:** Dropdown to choose PHP (default) or USD for the amount field. Selection persists through step navigation.
+- **Travel Date:** Single date picker (HTML `type="date"`). Internally split into month/day/year fields for PDF rendering. Required field; validates YYYY-MM-DD format.
+- Other fields (Partner Name, Email, Mobile, Local Church, Missioner Name, Nation, Sending Church): Standard text inputs with email and phone format validation.
+- **Consent Checkbox:** Required; "By providing my information..." agreement must be checked before progression.
+
+**Accountability Step:**
+
+- **Support Choices:** Three radio button groups for unable-to-go, rerouted, and canceled scenarios. Each group requires a selection.
+- **Signature Canvas:** Drawn signature required before export; use **Clear Signature** to reset.
+- **Partner Full Name (Printed):** Required text field; must be filled alongside the drawn signature.
+
+**Validation Feedback (Snackbar):**
+
+- If a step transition is blocked by validation, the app shows an error snackbar: "Some fields need your attention. Please fix the highlighted errors.".
+- Snackbar appears for blocked progression from Partner -> Accountability and from Accountability -> Review.
+- Snackbar can be dismissed manually using the close button and also auto-dismisses after ~4 seconds.
+- Inline field/form errors remain the source of detailed guidance; snackbar is a high-visibility summary cue.
+
 ## Tech Stack
+
 
 - Next.js (App Router)
 - React
@@ -193,7 +217,9 @@ The accountability step includes a drawn signature pad powered by `react-signatu
 Export and preview implementation in [lib/pdf-generator.ts](lib/pdf-generator.ts):
 
 - Uses static PDF templates from [public/tdms-forms](public/tdms-forms)
-- Fills partner fields on page 1 and accountability/signature fields on page 2
+- Supports currency selection: PHP (default) or USD, configurable via form dropdown
+- Fills partner fields on page 1 (including formatted amount with currency) and accountability/signature fields on page 2
+- Amount formatting: selected currency + auto-formatted number with thousands separator and 2 decimal places
 - Centers text in mapped field boxes when text fields define both `width` and `height`
 - Trims signature whitespace at capture time and centers the embedded signature image in the configured signature box
 - Review preview embeds the generated PDF blob (single source of truth)
@@ -244,6 +270,8 @@ Primary validation commands used for focused and regression checks:
 
 - `npx tsc --noEmit`
 - `npm run test:unit -- --reporter=list`
+- `npx playwright test -c playwright.unit.config.ts --grep "Snackbar" --reporter=line`
+- `npx playwright test tests/e2e/support-form.spec.ts --grep "snackbar" --reporter=line`
 - `npx playwright test tests/e2e/support-form.spec.ts -g "theme" --reporter=list`
 - `npx playwright test tests/e2e/support-form.spec.ts tests/e2e/pdf-generation.spec.ts tests/e2e/mapper.spec.ts --reporter=list`
 - `npx playwright test tests/e2e/mapper.spec.ts tests/e2e/pdf-rendering.spec.ts --reporter=list`
@@ -252,6 +280,8 @@ Primary validation commands used for focused and regression checks:
 
 Current caveats/limitations:
 
+- **PHP Currency Formatting:** The form supports both PHP and USD currencies via a selector dropdown. PHP is the default. In the generated PDF, PHP amounts are rendered as "PHP 5,000.00" (code-formatted) instead of the peso symbol (₱) to maintain compatibility with pdf-lib's WinAnsi font encoding. USD amounts render with the locale-appropriate symbol (e.g., "$5,000.00"). This formatting discrepancy is intentional for PDF portability.
+- Snackbar unit tests are currently lightweight/structural. Runtime snackbar behavior is verified by end-to-end tests in [tests/e2e/support-form.spec.ts](tests/e2e/support-form.spec.ts), including trigger paths, manual dismiss, auto-dismiss timeout, timeout-reset behavior when retriggered, and no-false-positive paths.
 - Coordinates are template-specific; if source PDFs change, update [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts).
 - Saving from `/mapper` rewrites [lib/pdf-coordinates.ts](lib/pdf-coordinates.ts) using deterministic serialization and may replace manual formatting/comments in that file.
 - Mapper template rendering depends on the generated worker asset at `/public/pdf.worker.mjs`; if the worker copy step fails, mapper PDF rendering will show a "PDF Render Error" state.

@@ -10,7 +10,7 @@ import {
   StandardFonts,
   rgb,
 } from "pdf-lib";
-import { formatDisplayDate, type SupportFormData } from "@/lib/support-form";
+import { formatCurrencyAmount, type SupportFormData } from "@/lib/support-form";
 import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
 import type {
   CheckboxConfig,
@@ -20,6 +20,25 @@ import type {
 
 const MM_TO_POINTS = 2.834645669;
 const TEXT_BASELINE_NUDGE_MM = 1.2;
+
+function splitTravelDateParts(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return {
+      month: "",
+      day: "",
+      year: "",
+    };
+  }
+
+  const [, year, month, day] = match;
+  return {
+    month,
+    day,
+    year: year.slice(-2),
+  };
+}
 
 /**
  * Generates a full review PDF containing partner info (page 1)
@@ -63,14 +82,18 @@ function drawPartnerInfo(
   data: SupportFormData,
   coordinates: ReturnType<typeof getTemplateCoordinates>
 ) {
+  const travelDateParts = splitTravelDateParts(data.travelDate);
+
   drawTextField(page, font, coordinates.partnerName, data.partnerName);
   drawTextField(page, font, coordinates.emailAddress, data.emailAddress);
   drawTextField(page, font, coordinates.mobileNumber, data.mobileNumber);
   drawTextField(page, font, coordinates.localChurch, data.localChurch);
   drawTextField(page, font, coordinates.missionaryName, data.missionaryName);
-  drawTextField(page, font, coordinates.amount, data.amount);
+  drawTextField(page, font, coordinates.amount, formatCurrencyAmount(data.amount, data.currency));
   drawTextField(page, font, coordinates.nation, data.nation);
-  drawTextField(page, font, coordinates.travelDate, formatDisplayDate(data.travelDate));
+  drawTextField(page, font, coordinates.travelDateMonth, travelDateParts.month);
+  drawTextField(page, font, coordinates.travelDateDay, travelDateParts.day);
+  drawTextField(page, font, coordinates.travelDateYear, travelDateParts.year);
   drawTextField(page, font, coordinates.sendingChurch, data.sendingChurch);
 
   if (data.consentGiven && coordinates.consentCheckbox) {

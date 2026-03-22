@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export type MembershipType = "victory" | "nonVictory";
+export type CurrencyCode = "PHP" | "USD";
 export type UnableToGoChoice = "teamFund" | "generalFund" | null;
 export type ReroutedChoice = "retain" | "generalFund" | null;
 export type CanceledChoice = "generalFund" | null;
@@ -15,6 +16,7 @@ export type SupportFormData = {
   mobileNumber: string;
   localChurch: string;
   missionaryName: string;
+  currency: CurrencyCode;
   amount: string;
   nation: string;
   travelDate: string;
@@ -34,6 +36,7 @@ export const initialSupportFormData: SupportFormData = {
   mobileNumber: "",
   localChurch: "",
   missionaryName: "",
+  currency: "PHP",
   amount: "",
   nation: "",
   travelDate: "",
@@ -54,8 +57,6 @@ export const partnerFormIntroCopy =
 export const privacyCopy =
   "The information you provide will be treated with utmost respect and confidentiality. Every Nation follows general principles and rules of data privacy protection in the Philippines. For more information, visit everynation.org.ph/privacy.";
 
-export const updatedCopy = "Updated as of October 21, 2025.";
-
 export const accountabilityIntroCopy =
   "Choose how your support should be handled for each accountability scenario, then provide your digital signature exactly as you want it printed on the form.";
 
@@ -74,6 +75,7 @@ export const partnerRequiredFields = [
   "mobileNumber",
   "localChurch",
   "missionaryName",
+  "currency",
   "amount",
   "nation",
   "travelDate",
@@ -112,6 +114,7 @@ export const fieldLabels: Record<RequiredStringField, string> = {
   mobileNumber: "Mobile Number",
   localChurch: "Local Church",
   missionaryName: "Missioner Name/Team",
+  currency: "Currency",
   amount: "Amount",
   nation: "Nation",
   travelDate: "Travel Date",
@@ -131,6 +134,35 @@ const requiredString = (label: string) =>
     .trim()
     .min(1, `${label} is required.`);
 
+const currencySchema = z.enum(["PHP", "USD"]);
+
+export function normalizeAmountInput(value: string) {
+  return value.replace(/,/g, "").trim();
+}
+
+export function formatAmountInputForField(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  if (!cleaned) {
+    return "";
+  }
+
+  const firstDotIndex = cleaned.indexOf(".");
+  const hasDot = firstDotIndex !== -1;
+  const integerRaw = hasDot ? cleaned.slice(0, firstDotIndex) : cleaned;
+  const decimalRaw = hasDot ? cleaned.slice(firstDotIndex + 1).replace(/\./g, "") : "";
+
+  const integerNoLeadingZeros = integerRaw.replace(/^0+(\d)/, "$1");
+  const integerPortion = integerNoLeadingZeros || "0";
+  const groupedInteger = integerPortion.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const decimalPortion = decimalRaw.slice(0, 2);
+
+  if (hasDot) {
+    return `${groupedInteger}.${decimalPortion}`;
+  }
+
+  return groupedInteger;
+}
+
 const partnerStepSchema = z.object({
   consentGiven: z.boolean().refine((value) => value, {
     message: "Consent is required.",
@@ -143,9 +175,12 @@ const partnerStepSchema = z.object({
   ),
   localChurch: requiredString("Local Church"),
   missionaryName: requiredString("Missioner Name/Team"),
+  currency: currencySchema,
   amount: requiredString("Amount")
-    .regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number.")
-    .refine((value) => Number(value) > 0, {
+    .refine((value) => /^\d+(\.\d{1,2})?$/.test(normalizeAmountInput(value)), {
+      message: "Amount must be a valid number.",
+    })
+    .refine((value) => Number(normalizeAmountInput(value)) > 0, {
       message: "Amount must be greater than zero.",
     }),
   nation: requiredString("Nation"),
@@ -259,6 +294,35 @@ export function formatDisplayDate(value: string) {
   return trimmed;
 }
 
+export function formatCurrencyAmount(amount: string, currency: CurrencyCode) {
+  const normalizedAmount = normalizeAmountInput(amount);
+  if (!normalizedAmount) {
+    return "";
+  }
+
+  const numericAmount = Number(normalizedAmount);
+  if (Number.isNaN(numericAmount)) {
+    return `${currency} ${normalizedAmount}`;
+  }
+
+  // pdf-lib's standard WinAnsi fonts cannot encode the peso symbol (₱),
+  // so PHP values are rendered with currency code to remain PDF-safe.
+  if (currency === "PHP") {
+    const amountWithSeparators = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericAmount);
+    return `PHP ${amountWithSeparators}`;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numericAmount);
+}
+
 export function getAccountabilityAffirmationCopy(
   membershipType: SupportFormData["membershipType"],
 ) {
@@ -305,6 +369,7 @@ export function validatePartnerStepDetailed(data: SupportFormData): StepValidati
     mobileNumber: data.mobileNumber,
     localChurch: data.localChurch,
     missionaryName: data.missionaryName,
+    currency: data.currency,
     amount: data.amount,
     nation: data.nation,
     travelDate: data.travelDate,
@@ -338,6 +403,7 @@ export function validateSupportFormDetailed(data: SupportFormData): StepValidati
     mobileNumber: data.mobileNumber,
     localChurch: data.localChurch,
     missionaryName: data.missionaryName,
+    currency: data.currency,
     amount: data.amount,
     nation: data.nation,
     travelDate: data.travelDate,

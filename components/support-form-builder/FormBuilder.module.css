@@ -256,6 +256,22 @@
   min-width: 0;
 }
 
+.selectInput {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 0.6rem;
+  font-size: 0.92rem;
+  color: var(--foreground);
+  background: var(--panel);
+}
+
+.currencyAmountRow {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 6.5rem) minmax(0, 1fr);
+  gap: 0.55rem;
+}
+
 .textInput:focus-visible {
   border-color: var(--accent);
 }

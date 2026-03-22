@@ -22,13 +22,16 @@ async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victor
   await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
 }
 
-async function fillPartnerStep(page: Page) {
+async function fillPartnerStep(page: Page, currency: "PHP" | "USD" = "USD") {
   await page.getByRole("textbox", { name: /^Partner Name/ }).fill("Chris Timario");
   await page.getByRole("textbox", { name: /^Email Address/ }).fill("chris@example.com");
   await page.getByRole("textbox", { name: /^Mobile Number/ }).fill("09171234567");
   await page.getByRole("textbox", { name: /^Local Church/ }).fill("Every Nation Makati");
   await page.getByRole("textbox", { name: /^Missioner Name\/Team/ }).fill("Southeast Team");
-  await page.getByRole("textbox", { name: /^Amount/ }).fill("5000");
+  const amountField = page.locator("label").filter({ hasText: /^Amount/ });
+  await amountField.locator("select").selectOption(currency);
+  await amountField.locator('input[placeholder="0.00"]').fill("5000");
+  await expect(amountField.locator('input[placeholder="0.00"]')).toHaveValue("5,000");
   await page.getByRole("textbox", { name: /^Nation/ }).fill("Thailand");
   await page.getByRole("textbox", { name: /^Travel Date/ }).fill("2026-06-20");
   await page.getByRole("textbox", { name: /^Sending Church/ }).fill("Every Nation Greenhills");
@@ -496,5 +499,124 @@ test.describe("Support forms end-to-end", () => {
 
     const routeTheme = await page.evaluate(() => document.documentElement.dataset.theme);
     expect(routeTheme).toBe(targetTheme);
+  });
+
+  test("supports form completion with default PHP currency", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+    // Use PHP currency (the default) to ensure the currency selector works and amount auto-formats correctly
+    await fillPartnerStep(page, "PHP");
+    
+    // Verify amount was auto-formatted with PHP currency selected
+    const amountField = page.locator("label").filter({ hasText: /^Amount/ });
+    await expect(amountField.locator("select")).toHaveValue("PHP");
+    await expect(amountField.locator('input[placeholder="0.00"]')).toHaveValue("5,000");
+    
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+    await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
+  });
+
+  test("shows snackbar when continuing to accountability with invalid partner step", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    // Click continue without filling any fields
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+    await expect(snackbar).toContainText("Some fields need your attention");
+    await expect(snackbar).toContainText("highlighted errors");
+  });
+
+  test("shows snackbar when advancing to review with incomplete accountability step", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    await fillPartnerStep(page);
+    // Navigate to accountability without a signature
+    await fillAccountabilityStepWithoutSignature(page, { fillPrintedName: false });
+
+    // Attempt to go to review without completing accountability
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
+
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+    await expect(snackbar).toContainText("Some fields need your attention");
+  });
+
+  test("review-path snackbar auto-dismisses after timeout", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    await fillPartnerStep(page);
+    await fillAccountabilityStepWithoutSignature(page, { fillPrintedName: false });
+
+    await page.getByRole("button", { name: "Review and Generate PDF" }).click();
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+
+    await expect(snackbar).toBeHidden({ timeout: 7000 });
+  });
+
+  test("snackbar dismisses when the dismiss button is clicked", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    // Trigger snackbar
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+
+    // Click dismiss
+    await snackbar.getByRole("button", { name: "Dismiss notification" }).click();
+    await expect(snackbar).toBeHidden();
+  });
+
+  test("snackbar auto-dismisses after timeout", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+
+    await expect(snackbar).toBeHidden({ timeout: 7000 });
+  });
+
+  test("snackbar timeout resets when shown again", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    const continueButton = page.getByRole("button", { name: "Continue to Accountability" });
+
+    // First validation failure shows snackbar.
+    await continueButton.click();
+    const snackbar = page.locator(".snackbar");
+    await expect(snackbar).toBeVisible();
+
+    // Trigger snackbar again before auto-dismiss to ensure timeout is refreshed.
+    await page.waitForTimeout(1500);
+    await continueButton.click();
+    await expect(snackbar).toBeVisible();
+
+    // It should still be visible well before the refreshed timeout elapses.
+    await page.waitForTimeout(1500);
+    await expect(snackbar).toBeVisible();
+
+    // It should disappear once the refreshed timeout elapses.
+    await expect(snackbar).toBeHidden({ timeout: 7000 });
+  });
+
+  test("no snackbar shown when partner step is valid on continue", async ({ page }: { page: Page }) => {
+    await page.goto("/");
+    await chooseMembership(page, "Victory Member");
+
+    await fillPartnerStep(page);
+    await page.getByRole("button", { name: "Continue to Accountability" }).click();
+
+    // Should navigate to accountability without snackbar
+    await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
+    await expect(page.locator(".snackbar")).toBeHidden();
   });
 });

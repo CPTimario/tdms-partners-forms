@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
 import {
   displayValue,
+  formatAmountInputForField,
+  formatCurrencyAmount,
   formatDisplayDate,
   getFirstInvalidStep,
   initialSupportFormData,
   isSupportFormValid,
+  normalizeAmountInput,
   type SupportFormData,
   validateAccountabilityStep,
   validatePartnerStep,
@@ -124,5 +127,23 @@ test.describe("support-form formatting helpers", () => {
     expect(displayValue(long)).toBe(`${"x".repeat(54)}...`);
     expect(displayValue("short")).toBe("short");
     expect(displayValue("   ")).toBe("");
+  });
+
+  test("formatAmountInputForField auto-formats grouped number input", () => {
+    expect(formatAmountInputForField("1234")).toBe("1,234");
+    expect(formatAmountInputForField("1234.5")).toBe("1,234.5");
+    expect(formatAmountInputForField("1234.567")).toBe("1,234.56");
+    expect(formatAmountInputForField("abc12x34")).toBe("1,234");
+    expect(formatAmountInputForField("")).toBe("");
+  });
+
+  test("normalizeAmountInput removes formatting commas", () => {
+    expect(normalizeAmountInput("1,234.56")).toBe("1234.56");
+    expect(normalizeAmountInput(" 5,000 ")).toBe("5000");
+  });
+
+  test("formatCurrencyAmount returns currency-formatted values", () => {
+    expect(formatCurrencyAmount("1,234.5", "USD")).toBe("$1,234.50");
+    expect(formatCurrencyAmount("5000", "PHP")).toContain("5,000.00");
   });
 });

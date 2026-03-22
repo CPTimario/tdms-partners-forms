@@ -40,7 +40,9 @@ export interface TemplateCoordinates {
   missionaryName: TextFieldConfig;
   amount: TextFieldConfig;
   nation: TextFieldConfig;
-  travelDate: TextFieldConfig;
+  travelDateMonth: TextFieldConfig;
+  travelDateDay: TextFieldConfig;
+  travelDateYear: TextFieldConfig;
   sendingChurch: TextFieldConfig;
   consentCheckbox?: CheckboxConfig;
 
