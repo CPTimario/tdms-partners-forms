@@ -1,4 +1,8 @@
+"use client";
+
 import { useEffect, useRef, type ChangeEventHandler } from "react";
+import Autocomplete from "./Autocomplete";
+import { useTeamsWithSuggestions } from "@/hooks/useTeams";
 import SignatureCanvas from "react-signature-canvas";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
 import styles from "./FormBuilder.module.css";
@@ -12,6 +16,7 @@ import {
   stepLabels,
   type EditableFormStep,
   type SupportFormData,
+  type RequiredStringField,
 } from "@/lib/support-form";
 
 type FillStepProps = {
@@ -33,6 +38,8 @@ type FillStepProps = {
   onAccountabilityTab: () => void;
   onReview: () => void;
   onReset: () => void;
+  // programmatic field setter from useSupportForm
+  setField?: (field: RequiredStringField, value: string) => void;
 };
 
 type SignaturePadProps = {
@@ -176,6 +183,7 @@ export function FillStep({
   onAccountabilityTab,
   onReview,
   onReset,
+  setField,
 }: FillStepProps) {
   const isPartnerTab = step === "partner";
   const hasFieldError = (name: keyof SupportFormFieldErrors) => Boolean(fieldErrors[name]);
@@ -192,6 +200,8 @@ export function FillStep({
       </p>
     );
   };
+
+  const { suggestions } = useTeamsWithSuggestions();
 
   return (
     <main className={`${styles.shell} ${styles.fillShell}`}>
@@ -294,12 +304,28 @@ export function FillStep({
                 <legend>Recipient</legend>
                 <label className={styles.fieldLabel}>
                   Missioner Name/Team
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("missionaryName") ? styles.textInputError : ""}`}
+                  {/* Autocomplete: suggestions come from useTeams hook via parent */}
+                  {/* Lazy import to reduce surface area; use a simple local component */}
+                  <Autocomplete
                     value={data.missionaryName}
-                    onChange={onTextChange("missionaryName")}
-                    aria-invalid={hasFieldError("missionaryName")}
-                    aria-describedby={hasFieldError("missionaryName") ? errorId("missionaryName") : undefined}
+                    onChange={(v) => {
+                      // update text input value
+                      const handler = onTextChange("missionaryName");
+                      handler({ target: { value: v } } as unknown as React.ChangeEvent<HTMLInputElement>);
+                    }}
+                    onSelect={(item) => {
+                      // populate fields when a suggestion is selected
+                      const handler = onTextChange("missionaryName");
+                      handler({ target: { value: item.label } } as unknown as React.ChangeEvent<HTMLInputElement>);
+                      if (setField) {
+                        if (item.nation) setField("nation", item.nation);
+                        if (item.travelDate) setField("travelDate", item.travelDate);
+                        if (item.sendingChurch) setField("sendingChurch", item.sendingChurch);
+                        if (item.team) setField("missionaryName", item.label);
+                      }
+                    }}
+                    suggestions={suggestions ?? []}
+                    placeholder="Type team or missioner name"
                   />
                   {renderFieldError("missionaryName")}
                 </label>

@@ -29,7 +29,7 @@ async function fillCompleteForm(page: Page, currency: "PHP" | "USD" = "USD") {
   await page.getByRole('textbox', { name: 'Email Address', exact: true }).fill("chris@example.com");
   await page.getByRole('textbox', { name: 'Mobile Number', exact: true }).fill("09171234567");
   await page.getByRole('textbox', { name: 'Local Church', exact: true }).fill("Every Nation Makati");
-  await page.getByRole('textbox', { name: 'Missioner Name/Team', exact: true }).fill("Southeast Team");
+  await page.getByRole('combobox', { name: 'Missioner Name/Team', exact: true }).fill("Southeast Team");
   const amountField = page.locator("label").filter({ hasText: /^Amount/ });
   await amountField.locator("select").selectOption(currency);
   await amountField.locator('input[placeholder="0.00"]').fill("5000");
