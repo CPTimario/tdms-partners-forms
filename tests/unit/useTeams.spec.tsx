@@ -46,7 +46,7 @@ describe("useTeamsWithSuggestions mapping behavior", () => {
     const suggestions: Suggestion[] = teams.flatMap((g) => {
       const teamSuggestion: Suggestion = {
         id: `team::${g._id}`,
-        label: `Team: ${g.teamName}`,
+        label: `${g.teamName}`,
         type: "team",
         team: g.teamName,
         nation: g.nation,
@@ -66,7 +66,7 @@ describe("useTeamsWithSuggestions mapping behavior", () => {
     });
 
     const labels = suggestions.map((s) => s.label);
-    expect(labels).toContain("Team: Alpha Team");
+    expect(labels).toContain("Alpha Team");
     expect(labels).toContain("Alice");
     expect(labels).toContain("Bob");
     expect(suggestions.some((s) => s.type === "team")).toBe(true);

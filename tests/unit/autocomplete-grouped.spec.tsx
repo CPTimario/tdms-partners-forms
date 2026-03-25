@@ -6,9 +6,9 @@ import Autocomplete from "@/components/support-form-builder/Autocomplete";
 import type { Suggestion } from "@/hooks/useTeams";
 
 const suggestions = [
-  { id: "team::1", label: "Team: Alpha", type: "team", team: "Alpha" },
+  { id: "team::1", label: "Alpha", type: "team", team: "Alpha" },
   { id: "m::1::0", label: "Alice", type: "missioner", team: "Alpha" },
-  { id: "team::2", label: "Team: Beta", type: "team", team: "Beta" },
+  { id: "team::2", label: "Beta", type: "team", team: "Beta" },
   { id: "m::2::0", label: "Sam", type: "missioner", team: "Beta" },
 ];
 

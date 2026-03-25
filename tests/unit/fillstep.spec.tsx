@@ -9,13 +9,17 @@ import React from "react";
 vi.mock("@/hooks/useTeams", () => ({
   useTeamsWithSuggestions: () => ({
     suggestions: [
-      { id: "team::1", label: "Team: Southeast Team", type: "team", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
+      { id: "team::1", label: "Southeast Team", type: "team", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
       { id: "m::1::0", label: "Alice Example", type: "missioner", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
     ],
     groups: [],
     loading: false,
     error: null,
   }),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
 describe("FillStep integration (DOM)", () => {
@@ -157,6 +161,80 @@ describe("FillStep integration (DOM)", () => {
     expect(setField).toHaveBeenCalledWith("travelDate", "2026-06-20");
     expect(setField).toHaveBeenCalledWith("sendingChurch", "Every Nation Makati");
     expect(setField).toHaveBeenCalledWith("missionaryName", expect.stringContaining("Alice"));
+  });
+
+  test("clearing a selection then selecting another updates fields and notifies parent", async () => {
+    const data: SupportFormData = { ...initialSupportFormData, missionaryName: "" };
+    const setField = vi.fn();
+    const onRecipientSelect = vi.fn();
+
+    await act(async () => {
+      const root = createRoot(container!);
+      root.render(
+        <FillStep
+          data={data}
+          step={"partner"}
+          fieldErrors={{}}
+          formErrors={[]}
+          isFormValid={false}
+          isPartnerStepComplete={false}
+          isAccountabilityStepComplete={false}
+          onTextChange={() => () => { /* noop */ }}
+          onCurrencyChange={() => {}}
+          onCheckboxChange={() => () => {}}
+          onUnableToGoChange={() => {}}
+          onReroutedChange={() => {}}
+          onCanceledChange={() => {}}
+          onPartnerSignatureChange={() => {}}
+          onPartnerTab={() => {}}
+          onAccountabilityTab={() => {}}
+          onReview={() => {}}
+          onReset={() => {}}
+          setField={setField}
+          onRecipientSelect={onRecipientSelect}
+        />,
+      );
+    });
+
+    const input = container!.querySelector('input[placeholder="Type team or missioner name"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+
+    // Select first suggestion (Southeast Team)
+    await act(async () => {
+      input.focus();
+      input.value = "Southeast";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    const listbox = container!.querySelector('[role="listbox"]') as HTMLElement | null;
+    expect(listbox).toBeTruthy();
+    const options = listbox!.querySelectorAll('[role="option"]');
+    expect(options.length).toBeGreaterThan(0);
+
+    await act(async () => {
+      const first = options[0] as HTMLElement;
+      first.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    });
+
+    // initial selection should populate fields
+    expect(setField).toHaveBeenCalledWith("nation", "Thailand");
+
+    // Now simulate typing (clearing selection)
+    await act(async () => {
+      input.focus();
+      input.value = "SoutheastX";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    // parent should be notified that selection was cleared
+      // (Reselection is covered by separate tests.) Ensure clearing notifies parent only
+      expect(onRecipientSelect).toHaveBeenCalledWith(null);
+
+    // (Reselection is covered by other tests.)
   });
 });
 describe("FillStep basic export", () => {

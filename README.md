@@ -1,33 +1,23 @@
 # TDMS Partners Forms
 
-Minimal README focused on setup, features, API, and test commands.
+A small Next.js app for preparing Ten Days Missions partner support forms and exporting a review-ready PDF.
 
-## Quick overview
+Core points:
+- Accessible Autocomplete for missioner/team lookup with programmatic autofill (nation, travel date, sending church).
+- Deeplinking via a canonical `recipient` query parameter and client-side QR generation for sharing the current form state.
 
-A small Next.js app for preparing Ten Days Missions support partner forms and exporting a review-ready PDF. Includes a guided form flow, an accessible Autocomplete for missioner/team lookup, and a mapping-backed PDF generator.
+Quick setup
+-----------
+Requires Node 20+ and npm.
 
-## Key features
-
-- Guided Partner → Accountability → Review flow
-- Accessible Autocomplete sourcing missioner/team suggestions from MongoDB
-- Programmatic autofill of dependent fields (nation, travel date, sending church)
-- PDF generation and single-file download using templates in `public/tdms-forms`
-- Unit (Vitest) and E2E (Playwright) test suites with an accessibility smoke check
-
-## Prerequisites
-
-- Node.js 20+ and npm 9+
-
-## Setup
-
-Install dependencies and Playwright browsers (if running e2e locally):
+Install dependencies and Playwright browsers (for E2E):
 
 ```bash
 just install
 npx playwright install --with-deps chromium
 ```
 
-Run the app locally:
+Run locally:
 
 ```bash
 just run
@@ -35,51 +25,16 @@ just run
 npm run dev
 ```
 
-Open: http://127.0.0.1:3000
+Deep linking & QR sharing
+-------------------------
+- Canonical query param: `recipient` — a stable suggestion id only (no PII).
+- URL writes are centralized in `components/support-form-builder/SupportFormBuilder.tsx`; child components report selections via `onRecipientSelect(item|null)`.
+- Typing in the Autocomplete clears the selection and the `recipient` param; re-selecting restores it.
+- The Share action generates a downloadable PNG with a QR linking to the canonical URL (client-side, dynamic import of `qrcode`).
 
-## Environment
-
-This app requires MongoDB credentials for the teams API. Provide these via environment variables (no silent defaults):
-
-- `MONGODB_URI` — MongoDB connection string
-- `MONGODB_DB` — Database name
-
-A sample file is included: `.env.example` (intentionally tracked so teams can copy it without exposing secrets).
-
-## Teams API (used by Autocomplete)
-
-- Endpoint: `GET /api/teams`
-- Optional query param: `q` to substring-search `teamName` (case-insensitive)
-- Response shape:
-
-```json
-{
-  "teams": [
-    {
-      "teamId": "<stable-id>",
-      "teamName": "...",
-      "nation": "...",
-      "travelDate": "YYYY-MM-DD",
-      "sendingChurch": "...",
-      "missioners": ["Alice", "Bob"]
-    }
-  ]
-}
-```
-
-Frontend notes:
-- `teamId` is derived from the DB `_id` and is used to build stable suggestion ids.
-- The Autocomplete displays both `Team: <teamName>` suggestions and individual missioner names.
-- Selecting a suggestion fills `nation`, `travelDate`, and `sendingChurch` via the form's programmatic `setField` API.
-
-Files to inspect:
-- `app/api/teams/route.ts` — server route
-- `hooks/useTeams.ts` — fetch + normalize
-- `components/support-form-builder/Autocomplete.tsx` and `FillStep.tsx` — UI wiring
-
-## Tests
-
-Unit (Vitest):
+Running tests
+-------------
+- Unit (Vitest):
 
 ```bash
 just test-unit
@@ -87,7 +42,7 @@ just test-unit
 npm run test:unit
 ```
 
-End-to-end (Playwright):
+- E2E (Playwright):
 
 ```bash
 just test-e2e
@@ -95,49 +50,24 @@ just test-e2e
 npm run test:e2e
 ```
 
-Accessibility smoke (Playwright + axe): included at `tests/e2e/accessibility.spec.ts`. It injects `axe-core` in the page and fails on violations.
+Testing notes
+-------------
+- E2E tests that need deterministic suggestions intercept `GET /api/teams` and return a fixed payload (see `tests/e2e/clear-reselect.spec.ts`).
+- Prefer role-based selectors (`combobox`, `listbox`, `option`) for robust tests.
+- Autocomplete and URL replace are asynchronous; increase timeouts if tests are flaky on slow machines.
+- Playwright may emit artifacts to `playwright-report/` and `test-results/` during debugging; debug screenshots were removed from the stable E2E test, but local artifacts can be deleted if present.
 
-A unit test asserting suggestion id uniqueness is included at `tests/unit/suggestions-unique.spec.ts`.
+CI notes
+--------
+- Ensure Playwright browsers are installed in CI (`npx playwright install --with-deps`).
+- CI workflow should run lint, typecheck, unit tests, then E2E in a separate job with a started dev server. See `.github/workflows/ci.yml` for an example.
 
-## Useful scripts
+Where to look
+-------------
+- Form wiring: `components/support-form-builder/SupportFormBuilder.tsx`, `FillStep.tsx`, `Autocomplete.tsx`.
+- Teams API: `app/api/teams/route.ts` and `hooks/useTeams.ts`.
+- QR generation: implemented in the support form component (dynamic `qrcode` import).
 
-Available via `just` and `package.json` (common):
-
-- `just install` — install deps
-- `just run` — start dev server
-- `just test-unit` — Vitest
-- `just test-e2e` — Playwright e2e
-- `just check` — lint + tests + build
-
-Or with npm:
-
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test:unit`
-- `npm run test:e2e`
-
-## Contributing
-
-- Keep changes focused and add tests for behavior changes.
-- Run `just check` before opening a PR.
-
----
-
-For more details (PDF mapping, signature behavior, and edge-case notes), inspect `lib/pdf-generator.ts`, `lib/pdf-coordinates.ts`, and `components/support-form-builder`.
-
-## Continuous Integration
-
-- **Node engine:** `>=20.19.0` (see [package.json](package.json))
-- **Workflow:** CI runs lint, typecheck, unit tests, and Playwright e2e on Node 20.19.0 — see [.github/workflows/ci.yml](.github/workflows/ci.yml).
-- **To run e2e locally:**
-
-```bash
-npm ci
-npx playwright install --with-deps
-npm run test:e2e
-```
-
-- **To run on GitHub:** push your branch or open a pull request to trigger the workflow.
-
-Note: If e2e tests fail in CI, ensure Playwright browsers are installed and the runner uses Node 20.19.0.
-
+Contributing
+------------
+- Keep changes focused and add tests for behavior changes. Run `just check` before opening a PR.

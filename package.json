@@ -18,6 +18,7 @@
   "dependencies": {
     "lucide-react": "^0.577.0",
     "mongodb": "^7.1.1",
+    "qrcode": "^1.5.1",
     "next": "^16.2.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.1.379",
@@ -41,6 +42,6 @@
   }
   ,
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=24.14.0"
   }
 }

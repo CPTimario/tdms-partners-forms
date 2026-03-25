@@ -24,7 +24,7 @@ describe("Autocomplete keyboard interactions", () => {
 
   test("ArrowDown highlights first option and Enter selects it", async () => {
     const suggestions: Suggestion[] = [
-      { id: "team::1", label: "Team: Alpha", type: "team", team: "Alpha" },
+      { id: "team::1", label: "Alpha", type: "team", team: "Alpha" },
       { id: "m::1::0", label: "Alice", type: "missioner", team: "Alpha" },
     ];
 

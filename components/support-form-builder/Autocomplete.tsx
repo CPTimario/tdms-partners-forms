@@ -65,8 +65,10 @@ export function Autocomplete({ value, onChange, onSelect, suggestions, placehold
       if (open && highlight >= 0 && grouped.flat[highlight]) {
         e.preventDefault();
         const sel = grouped.flat[highlight];
-        onSelect?.(sel);
+        // update value first, then notify selection so parent handlers that
+        // clear on typing don't override a deliberate selection
         onChange(sel.label);
+        onSelect?.(sel);
         setOpen(false);
       }
     }
@@ -127,8 +129,11 @@ export function Autocomplete({ value, onChange, onSelect, suggestions, placehold
                     className={`${styles.autocompleteItem} ${i === highlight ? styles.autocompleteItemActive : ""}`}
                     onMouseDown={(ev) => {
                       ev.preventDefault();
-                      onSelect?.(s);
+                      // ensure the input value is updated first so parent
+                      // "typing clears selection" handlers don't stomp the
+                      // explicit selection notification
                       onChange(s.label);
+                      onSelect?.(s);
                       setOpen(false);
                     }}
                   >
@@ -155,8 +160,8 @@ export function Autocomplete({ value, onChange, onSelect, suggestions, placehold
                     className={`${styles.autocompleteItem} ${i === highlight ? styles.autocompleteItemActive : ""}`}
                     onMouseDown={(ev) => {
                       ev.preventDefault();
-                      onSelect?.(s);
                       onChange(s.label);
+                      onSelect?.(s);
                       setOpen(false);
                     }}
                   >
