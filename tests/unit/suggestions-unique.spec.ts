@@ -33,7 +33,7 @@ describe("Suggestion id uniqueness", () => {
     ];
 
     const suggestions: Suggestion[] = teams.flatMap((g) => {
-      const teamSuggestion: Suggestion = { id: `team::${String(g.teamId ?? g.teamName ?? "")}`, label: `Team: ${g.teamName}`, type: "team" };
+      const teamSuggestion: Suggestion = { id: `team::${String(g.teamId ?? g.teamName ?? "")}`, label: `${g.teamName}`, type: "team" };
       const missionerSuggestions: Suggestion[] = (g.missioners ?? []).map((m, i) => ({ id: `m::${String(g.teamId ?? g.teamName ?? "")}::${i}`, label: m, type: "missioner" }));
       return [teamSuggestion, ...missionerSuggestions];
     });

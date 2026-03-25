@@ -64,7 +64,7 @@ export type Suggestion = {
 export function useTeamsWithSuggestions() {
   const res = useTeams();
   const suggestions = (res.groups ?? []).flatMap((g) => {
-    const teamSuggestion: Suggestion = { id: `team::${g.teamId}`, label: `Team: ${g.team}`, type: "team", team: g.team, nation: g.nation, travelDate: g.travelDate, sendingChurch: g.sendingChurch };
+    const teamSuggestion: Suggestion = { id: `team::${g.teamId}`, label: `${g.team}`, type: "team", team: g.team, nation: g.nation, travelDate: g.travelDate, sendingChurch: g.sendingChurch };
     const missionerSuggestions: Suggestion[] = g.missioners.map((m) => ({ id: `m::${m.id}`, label: m.name, type: "missioner", team: g.team, nation: m.nation ?? g.nation, travelDate: m.travelDate ?? g.travelDate, sendingChurch: m.sendingChurch ?? g.sendingChurch }));
     return [teamSuggestion, ...missionerSuggestions];
   });

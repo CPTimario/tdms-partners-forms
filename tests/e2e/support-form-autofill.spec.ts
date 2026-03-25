@@ -69,7 +69,7 @@ test("selecting a team/missioner autofills dependent fields", async ({ page }) =
     const listbox = page.getByRole("listbox");
     await expect(listbox).toBeVisible();
     // click team option
-    await listbox.getByRole("option", { name: /Team: Southeast Team/ }).click();
+    await listbox.getByRole("option", { name: /Southeast Team/ }).click();
 
     await expect(page.getByRole("textbox", { name: /^Nation/ })).toHaveValue("Thailand");
 

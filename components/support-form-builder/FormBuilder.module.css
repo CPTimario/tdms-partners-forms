@@ -424,6 +424,34 @@
   background: var(--accent-hover);
 }
 
+/* Share controls positioned to avoid overlapping the global ThemeToggle */
+.shareControls {
+  /* fixed near top-right, offset from the ThemeToggle */
+  position: fixed;
+  right: 64px;
+  top: 12px;
+  z-index: 70;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.shareButtonLabel {
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .shareControls {
+    /* keep near top-right but hide label for space */
+    right: 56px;
+    top: 12px;
+  }
+
+  .shareButtonLabel {
+    display: none;
+  }
+}
+
 .secondaryButton {
   background: color-mix(in srgb, var(--foreground) 42%, var(--panel));
 }

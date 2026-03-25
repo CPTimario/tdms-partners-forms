@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ChangeEventHandler } from "react";
 import Autocomplete from "./Autocomplete";
-import { useTeamsWithSuggestions } from "@/hooks/useTeams";
+import { useTeamsWithSuggestions, type Suggestion } from "@/hooks/useTeams";
 import SignatureCanvas from "react-signature-canvas";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
 import styles from "./FormBuilder.module.css";
@@ -40,6 +40,7 @@ type FillStepProps = {
   onReset: () => void;
   // programmatic field setter from useSupportForm
   setField?: (field: RequiredStringField, value: string) => void;
+  onRecipientSelect?: (item: Suggestion | null) => void;
 };
 
 type SignaturePadProps = {
@@ -184,6 +185,7 @@ export function FillStep({
   onReview,
   onReset,
   setField,
+  onRecipientSelect,
 }: FillStepProps) {
   const isPartnerTab = step === "partner";
   const hasFieldError = (name: keyof SupportFormFieldErrors) => Boolean(fieldErrors[name]);
@@ -312,6 +314,8 @@ export function FillStep({
                       // update text input value
                       const handler = onTextChange("missionaryName");
                       handler({ target: { value: v } } as unknown as React.ChangeEvent<HTMLInputElement>);
+                      // typing invalidates any previously selected recipient
+                      onRecipientSelect?.(null);
                     }}
                     onSelect={(item) => {
                       // populate fields when a suggestion is selected
@@ -323,6 +327,9 @@ export function FillStep({
                         if (item.sendingChurch) setField("sendingChurch", item.sendingChurch);
                         if (item.team) setField("missionaryName", item.label);
                       }
+
+                      // Inform parent of the selected suggestion (parent will handle URL)
+                      onRecipientSelect?.(item);
                     }}
                     suggestions={suggestions ?? []}
                     placeholder="Type team or missioner name"
