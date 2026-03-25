@@ -124,3 +124,20 @@ Or with npm:
 ---
 
 For more details (PDF mapping, signature behavior, and edge-case notes), inspect `lib/pdf-generator.ts`, `lib/pdf-coordinates.ts`, and `components/support-form-builder`.
+
+## Continuous Integration
+
+- **Node engine:** `>=20.19.0` (see [package.json](package.json))
+- **Workflow:** CI runs lint, typecheck, unit tests, and Playwright e2e on Node 20.19.0 — see [.github/workflows/ci.yml](.github/workflows/ci.yml).
+- **To run e2e locally:**
+
+```bash
+npm ci
+npx playwright install --with-deps
+npm run test:e2e
+```
+
+- **To run on GitHub:** push your branch or open a pull request to trigger the workflow.
+
+Note: If e2e tests fail in CI, ensure Playwright browsers are installed and the runner uses Node 20.19.0.
+
