@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "just run",
+    command: "npm run dev",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: true,
     timeout: 120000,
