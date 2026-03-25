@@ -6,14 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test:unit": "playwright test -c playwright.unit.config.ts",
+    "lint": "eslint app components lib hooks tests --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint app components lib hooks tests --ext .js,.jsx,.ts,.tsx --fix --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest",
+    "test:unit:playwright": "playwright test -c playwright.unit.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",
+    "mongodb": "^7.1.1",
     "next": "^16.2.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.1.379",
@@ -30,7 +34,13 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^29.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.1"
+  }
+  ,
+  "engines": {
+    "node": ">=20.19.0"
   }
 }

@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, describe } from "vitest";
 
-test.describe("PDFRenderer Configuration", () => {
+describe("PDFRenderer Configuration", () => {
   test("accepts valid PDF path and page number props", async () => {
     // PDFRenderer is a React component that accepts these props:
     const validProps = {
@@ -73,7 +73,7 @@ test.describe("PDFRenderer Configuration", () => {
   });
 });
 
-test.describe("PDFRenderer - Mapper Integration Props", () => {
+describe("PDFRenderer - Mapper Integration Props", () => {
   test("mapper passes correct props for page 1 victory template", async () => {
     const mapperPageProps = {
       pdfPath: "/tdms-forms/pic-saf-victory.pdf",
@@ -136,7 +136,7 @@ test.describe("PDFRenderer - Mapper Integration Props", () => {
   });
 });
 
-test.describe("PDFRenderer - Canvas Rendering", () => {
+describe("PDFRenderer - Canvas Rendering", () => {
   test("canvas renders with correct data-testid for e2e tests", async () => {
     // PDFRenderer renders:
     // <canvas data-testid="mapper-pdf-canvas" ... />
@@ -168,7 +168,7 @@ test.describe("PDFRenderer - Canvas Rendering", () => {
   });
 });
 
-test.describe("PDFRenderer - Error Handling", () => {
+describe("PDFRenderer - Error Handling", () => {
   test("error state shows with context message", async () => {
     // When PDF cannot load, component shows error div
     // Error message format: "PDF Render Error" + specific error details

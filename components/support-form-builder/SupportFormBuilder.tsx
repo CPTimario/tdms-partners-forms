@@ -187,7 +187,9 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     goToPartner,
     goToAccountability,
     goToReview,
+    setField,
   } = useSupportForm(membershipType);
+  // setField allows programmatic updates to text fields (e.g., when selecting autocomplete suggestions)
   const snackbar = useSnackbar();
   const [isExporting, setIsExporting] = useState(false);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
@@ -318,6 +320,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
           onAccountabilityTab={handleGoToAccountability}
           onReview={handleGoToReview}
           onReset={resetForm}
+          setField={setField}
         />
         <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
       </>

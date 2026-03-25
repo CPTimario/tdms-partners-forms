@@ -1,6 +1,14 @@
 /**
- * PDF generation engine using pdf-lib
- * Handles creating filled PDFs from templates with user data
+ * PDF generation engine using pdf-lib.
+ *
+ * Responsibilities:
+ * - Loads static PDF templates from `public/tdms-forms` and fills mapped fields
+ * - Centers text when a mapped field exposes both `width` and `height`
+ * - Embeds and auto-fits signature images, preserving aspect ratio and centering inside the mapped signature box
+ * - Throws explicit errors when templates fail to load or when required data (e.g. `membershipType`) is missing
+ *
+ * Notes:
+ * - PHP currency values are intentionally rendered as `PHP <amount>` (no peso symbol) to remain compatible with pdf-lib's WinAnsi fonts.
  */
 
 import {

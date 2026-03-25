@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, describe } from "vitest";
 import {
   displayValue,
   formatAmountInputForField,
@@ -39,7 +39,7 @@ function buildValidData(): SupportFormData {
   };
 }
 
-test.describe("support-form domain validation", () => {
+describe("support-form domain validation", () => {
   test("valid partner step has no errors", () => {
     const data = buildValidData();
     expect(validatePartnerStep(data)).toEqual([]);
@@ -115,7 +115,7 @@ test.describe("support-form domain validation", () => {
   });
 });
 
-test.describe("support-form formatting helpers", () => {
+describe("support-form formatting helpers", () => {
   test("formatDisplayDate formats yyyy-mm-dd to mm/dd/yy", () => {
     expect(formatDisplayDate("2026-06-20")).toBe("06/20/26");
     expect(formatDisplayDate("06/20/26")).toBe("06/20/26");

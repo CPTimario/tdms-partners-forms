@@ -369,6 +369,9 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     onTextChange,
     onCurrencyChange,
     onCheckboxChange,
+    setField: (field: RequiredStringField, value: string) => {
+      dispatch({ type: "set-text", field, value });
+    },
     setMembership,
     onUnableToGoChange,
     onReroutedChange,

@@ -153,7 +153,9 @@ export function MapperPage() {
   }, [draftCoordinates]);
 
   useEffect(() => {
-    setIsHydrated(true);
+    // Defer hydration flag update to avoid synchronous setState inside effect
+    const id = window.setTimeout(() => setIsHydrated(true), 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   const templateCoordinates = draftCoordinates[membershipType];

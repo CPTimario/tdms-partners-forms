@@ -5,14 +5,24 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Override default ignores of eslint-config-next.
+  // Global ignore patterns (flat config method)
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
     "public/pdf.worker.mjs",
+    "playwright-report/",
+    "test-results/",
+    "public/",
+    "node_modules/",
+    "**/*.min.js",
+    "**/dist/",
+    "**/build/",
+    "**/*.bundle.js",
+    "**/codeMirrorModule-*.js",
+    "**/uiMode.*.js",
+    "coverage/",
   ]),
 ]);
 
