@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, describe } from "vitest";
 
-test.describe("Snackbar component", () => {
+describe("Snackbar component", () => {
   test("Snackbar accepts a message prop and an onDismiss callback", () => {
     // Structure validation — types enforced at compile time
     const props = {

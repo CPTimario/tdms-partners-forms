@@ -351,11 +351,18 @@ export function getAccountabilityTitle(membershipType: SupportFormData["membersh
   return "TEN DAYS MISSIONS SUPPORT ACCOUNTABILITY FORM";
 }
 
+/**
+ * Convenience: validate partner step and return a concise list of error messages.
+ * Useful for inline step validation and snackbar summaries.
+ */
 export function validatePartnerStep(data: SupportFormData) {
   const result = validatePartnerStepDetailed(data);
   return [...Object.values(result.fieldErrors), ...result.formErrors];
 }
 
+/**
+ * Convenience: validate accountability step and return a concise list of error messages.
+ */
 export function validateAccountabilityStep(data: SupportFormData) {
   const result = validateAccountabilityStepDetailed(data);
   return [...Object.values(result.fieldErrors), ...result.formErrors];

@@ -131,8 +131,20 @@ Available local workflows from [justfile](justfile):
 - `just build`: production build
 - `just start`: serve production build
 - `just lint`: lint source
-- `just test-unit`: run unit tests
-- `just test-e2e`: run end-to-end tests
+ - `just lint-fix`: run eslint autofix and fail if warnings remain
+ - `just typecheck`: run `tsc --noEmit` and fail on errors
+
+NPM scripts (convenience):
+
+- `npm run lint` — run ESLint across `app`, `components`, `lib`, `hooks`, and `tests`. Linting is strict (`--max-warnings=0`) and will fail a CI run if any warnings remain.
+- `npm run lint:fix` — run ESLint autofix across sources and fail if warnings remain.
+- `npm run typecheck` — run `tsc -p tsconfig.json --noEmit`.
+- `npm run test:unit` — run unit tests (Vitest).
+- `npm run test:unit:playwright` — transitional: run Playwright-based unit tests while migrating to Vitest.
+- `npm run test:e2e` — run Playwright end-to-end tests.
+
+- `just test-unit`: run unit tests (uses `npm run test:unit` / Vitest)
+- `just test-e2e`: run end-to-end tests (Playwright)
 - `just test`: run unit and e2e tests
 - `just check`: run lint, tests, and build
 

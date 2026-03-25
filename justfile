@@ -24,9 +24,17 @@ start:
 lint: install
   npm run lint
 
+# Auto-fix lint issues
+lint-fix: install
+  npm run lint:fix
+
 # Run unit tests
 test-unit: install
   npm run test:unit
+
+# Transitional: run Playwright-based unit tests
+test-unit-playwright: install
+  npm run test:unit:playwright
 
 # Run end-to-end tests
 test-e2e: install
@@ -36,4 +44,12 @@ test-e2e: install
 test: test-unit test-e2e
 
 # Run local quality checks
-check: lint test build
+check: lint typecheck test build
+
+# Run TypeScript typecheck
+typecheck: install
+  npm run typecheck
+
+# Strict typecheck (alias for CI / review enforcement)
+typecheck-strict: install
+  npm run typecheck

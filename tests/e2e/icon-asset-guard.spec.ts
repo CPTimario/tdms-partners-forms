@@ -28,6 +28,6 @@ test.describe("Icon asset guard", () => {
   test("app/layout.tsx metadata points to /apple-icon.svg and /icon.svg", () => {
     const layoutPath = path.join(appDir, "layout.tsx");
     const layoutSource = fs.readFileSync(layoutPath, "utf8");
-    expect(layoutSource).toMatch(/icons:\s*{[^}]*icon:\s*['\"]\/icon\.svg['\"][^}]*apple:\s*['\"]\/apple-icon\.svg['\"][^}]*}/s);
+    expect(layoutSource).toMatch(/icons:\s*{[\s\S]*?icon:\s*['\"]\/icon\.svg['\"][\s\S]*?apple:\s*['\"]\/apple-icon\.svg['\"][\s\S]*?}/);
   });
 });

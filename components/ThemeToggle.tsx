@@ -43,13 +43,14 @@ export function ThemeToggle({ initialTheme }: ThemeToggleProps) {
     if (initialTheme) {
       applyTheme(initialTheme);
       persistTheme(initialTheme);
-      setCurrentTheme(initialTheme);
+      // Defer setState to avoid synchronous state update within effect
+      setTimeout(() => setCurrentTheme(initialTheme), 0);
       return;
     }
 
     if (appliedTheme === "light" || appliedTheme === "dark") {
       persistTheme(appliedTheme);
-      setCurrentTheme(appliedTheme);
+      setTimeout(() => setCurrentTheme(appliedTheme), 0);
       return;
     }
 
@@ -57,7 +58,7 @@ export function ThemeToggle({ initialTheme }: ThemeToggleProps) {
     const resolvedTheme = storedTheme ?? getSystemTheme();
     applyTheme(resolvedTheme);
     persistTheme(resolvedTheme);
-    setCurrentTheme(resolvedTheme);
+    setTimeout(() => setCurrentTheme(resolvedTheme), 0);
   }, [initialTheme]);
 
   const handleToggle = () => {

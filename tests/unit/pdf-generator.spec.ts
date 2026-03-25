@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, describe } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PDFDocument, PDFPage, StandardFonts } from "pdf-lib";
@@ -130,7 +130,7 @@ async function captureDrawnImages<T>(action: () => Promise<T>) {
   }
 }
 
-test.describe("PDF Generator - Data Validation", () => {
+describe("PDF Generator - Data Validation", () => {
   test("validates form data structure", () => {
     const data = buildValidFormData();
 
@@ -230,7 +230,7 @@ test.describe("PDF Generator - Data Validation", () => {
   });
 });
 
-test.describe("PDF Generator - Runtime Behavior", () => {
+describe("PDF Generator - Runtime Behavior", () => {
   test("fails when membership type is missing", async () => {
     const data = buildValidFormData({ membershipType: null });
     await expect(generateReviewPDF(data)).rejects.toThrow("Membership type is required");
@@ -509,7 +509,7 @@ test.describe("PDF Generator - Runtime Behavior", () => {
   });
 });
 
-test.describe("PDF Coordinates - Placement Regression Guard", () => {
+describe("PDF Coordinates - Placement Regression Guard", () => {
   // These tests pin down the exact field positions after the most recent coordinate
   // update (−0.5mm Y across text fields, +0.5mm nation.x, −0.75mm printed-name Y).
   // They will fail if coordinates are accidentally shifted in a future edit.
