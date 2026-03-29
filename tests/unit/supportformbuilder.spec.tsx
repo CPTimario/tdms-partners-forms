@@ -17,16 +17,33 @@ vi.mock("@/components/support-form-builder/FillStep", () => ({
   },
 }));
 
-vi.mock("@/hooks/useTeams", () => ({
-  useTeamsWithSuggestions: () => ({
-    suggestions: [
-      { id: "team::1", label: "Southeast Team", type: "team", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
-    ],
-    groups: [],
-    loading: false,
-    error: null,
-  }),
-}));
+// no-op: FillStep is stubbed in this test and we don't rely on suggestions
+
+// Ensure a stable DEEPLINK_KEY for encryption/decryption used in tests
+process.env.DEEPLINK_KEY = process.env.DEEPLINK_KEY || "test-deeplink-key";
+
+// Mock fetch to handle server-side deeplink encrypt/decrypt API
+import * as deeplinkCryptoModule from "@/lib/deeplink-crypto";
+const originalFetch = global.fetch;
+beforeEach(() => {
+  global.fetch = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+    const urlStr = typeof input === "string" ? input : (input as Request).url;
+    const u = new URL(urlStr, "http://localhost");
+    if (init && init.method && init.method.toUpperCase() === "POST") {
+      const body = init.body ? JSON.parse(init.body.toString()) : {};
+      const token = deeplinkCryptoModule.encryptRecipient(body as Record<string, string>);
+      return { ok: true, json: async () => ({ token }) } as unknown as Response;
+    }
+    // GET -> decrypt
+    const token = u.searchParams.get("token");
+    const fields = token ? deeplinkCryptoModule.decryptRecipient(token) : null;
+    return { ok: true, json: async () => ({ fields }) } as unknown as Response;
+  }) as unknown as typeof fetch;
+});
+
+afterEach(() => {
+  global.fetch = originalFetch;
+});
 
 // Mock useSupportForm to provide required shape
 const mockSetField = vi.fn();
@@ -105,8 +122,15 @@ describe("SupportFormBuilder URL sync", () => {
     // router.replace should be called with a query string containing the recipient id
     expect(replace).toHaveBeenCalled();
     const calledWith = replace.mock.calls[replace.mock.calls.length - 1][0] as string;
-    // URL will be encoded; decode and assert presence of canonical fragment
-    expect(decodeURIComponent(calledWith)).toContain("recipient=team::1");
+    // URL will contain an encrypted recipient token; decrypt and assert payload
+    const qs = calledWith.split("?")[1] ?? calledWith;
+    const params = new URLSearchParams(qs.replace(/^\?/, ""));
+    const token = params.get("recipient");
+    expect(token).toBeTruthy();
+    const crypto = await import("@/lib/deeplink-crypto");
+    const parsed = crypto.decryptRecipient(token as string);
+    expect(parsed).toBeTruthy();
+    expect(parsed?.missionaryName).toBe("Southeast Team");
   });
 
   test("removes recipient param when child clears selection", async () => {
@@ -130,8 +154,10 @@ describe("SupportFormBuilder URL sync", () => {
   });
 
   test("initializes fields from deeplink recipient parameter", async () => {
-    // Mock searchParams to return the canonical id and ensure setField is called
-    _searchGet = () => "team::1";
+    // Mock searchParams to return an encrypted token and ensure setField is called
+    const crypto = await import("@/lib/deeplink-crypto");
+    const token = crypto.encryptRecipient({ missionaryName: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" });
+    _searchGet = () => token;
 
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
 

@@ -65,7 +65,7 @@ test.describe("Clear then reselect flow", () => {
         await option.click();
         clicked = true;
         break;
-      } catch (err) {
+      } catch {
         await page.waitForTimeout(250);
       }
     }

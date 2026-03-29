@@ -24,7 +24,18 @@ export async function generateCompositeQr(url: string, opts: QROptions = {}): Pr
     const nameLabel = r.name ? r.name : r.id;
     labelLines.push(r.kind === 'team' ? `Team: ${nameLabel}`: `Missioner: ${nameLabel}`);
     if (r.nation) labelLines.push(`Nation: ${r.nation}`);
-    if (r.travelDate) labelLines.push(`Travel Date: ${r.travelDate}`);
+    if (r.travelDate) {
+      let formatted = String(r.travelDate);
+      try {
+        const d = new Date(r.travelDate);
+        if (!Number.isNaN(d.getTime())) {
+          formatted = new Intl.DateTimeFormat("en-US", { month: "long", day: "2-digit", year: "numeric" }).format(d);
+        }
+      } catch {
+        // fall back to raw value
+      }
+      labelLines.push(`Travel Date: ${formatted}`);
+    }
     if (r.sendingChurch) labelLines.push(`Sending Church: ${r.sendingChurch}`);
   }
 

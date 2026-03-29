@@ -7,13 +7,14 @@ import {
   generateReviewPDF,
 } from "@/lib/pdf-generator";
 import { useSupportForm } from "@/hooks/use-support-form";
-import { useTeamsWithSuggestions, type Suggestion } from "@/hooks/useTeams";
+import { type Suggestion } from "@/hooks/useTeams";
 import { Share2 } from "lucide-react";
-import { parseRecipientParam, canonicalRecipientId, type Recipient } from "@/lib/recipient";
+ 
 import { generateCompositeQr } from "@/lib/qr";
 import {
   getAccountabilityAffirmationCopy,
   type MembershipType,
+  type SupportFormFieldErrors,
 } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
 import { Snackbar } from "@/components/Snackbar";
@@ -192,6 +193,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     goToAccountability,
     goToReview,
     setField,
+    setValidation,
   } = useSupportForm(membershipType);
   // setField allows programmatic updates to text fields (e.g., when selecting autocomplete suggestions)
   const snackbar = useSnackbar();
@@ -202,12 +204,11 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
   const [previewError, setPreviewError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { suggestions, loading: suggestionsLoading } = useTeamsWithSuggestions();
+  // suggestions/API removed; keeping compatible types
 
   // QR/share state
   const [showQR, setShowQR] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [currentRecipient, setCurrentRecipient] = useState<Suggestion | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -277,10 +278,9 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     };
   }, [reviewPdfUrl]);
 
-  // Initialize form fields from URL deeplink param `recipient`
+  // Initialize form fields from encrypted URL deeplink param `recipient`
   const _deeplinkInitialized = useRef(false);
   useEffect(() => {
-    if (suggestionsLoading) return;
     if (_deeplinkInitialized.current) return;
     try {
       const recipientParam = searchParams.get("recipient");
@@ -289,63 +289,95 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         return;
       }
 
-      // parse and normalize the incoming param (reject ambiguous/loose matches)
-      const parsed = parseRecipientParam(recipientParam);
-      if (!parsed) {
-        _deeplinkInitialized.current = true;
-        return;
-      }
-
-      // find exact suggestion by canonical id
-      const canonicalId = canonicalRecipientId(parsed);
-      const recipientSuggestion = suggestions?.find((s) => s.id === canonicalId) ?? null;
-
-      if (recipientSuggestion) {
-        if (setField && data.missionaryName !== recipientSuggestion.label) {
-          if (recipientSuggestion.nation) setField("nation", recipientSuggestion.nation);
-          if (recipientSuggestion.travelDate) setField("travelDate", recipientSuggestion.travelDate);
-          if (recipientSuggestion.sendingChurch) setField("sendingChurch", recipientSuggestion.sendingChurch);
-          setField("missionaryName", recipientSuggestion.label);
+      // Ask server to decrypt the token so the secret key stays server-side
+      void (async () => {
+        try {
+          const res = await fetch(`/api/deeplink?token=${encodeURIComponent(recipientParam)}`);
+          if (!res.ok) return;
+          const json = await res.json();
+          const parsed = json.fields as Record<string, string> | null;
+          if (parsed && setField) {
+            if (parsed.missionaryName) setField("missionaryName", parsed.missionaryName);
+            if (parsed.nation) setField("nation", parsed.nation);
+            if (parsed.travelDate) setField("travelDate", parsed.travelDate);
+            if (parsed.sendingChurch) setField("sendingChurch", parsed.sendingChurch);
+          }
+        } catch (err) {
+          console.warn("SupportFormBuilder: deeplink fetch failed", err);
         }
-        setCurrentRecipient(recipientSuggestion);
-      }
-
-      // normalize URL to canonical ID if matched
-      const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-      if (recipientSuggestion) params.set("recipient", recipientSuggestion.id);
-      const current = typeof window !== "undefined" ? window.location.search.replace(/^\?/, "") : "";
-      const desired = params.toString();
-      if (desired && desired !== current) {
-        router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${desired ? `?${desired}` : ""}`);
-      }
+      })();
     } catch (err) {
-      // Log deeplink initialization failures for observability
       console.warn("SupportFormBuilder: deeplink initialization failed", err);
     } finally {
       _deeplinkInitialized.current = true;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, suggestionsLoading]);
+  }, [searchParams]);
 
   const handleShowQR = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
+    const currentHref = typeof window !== "undefined" ? window.location.href : "";
+
+    // require these fields for deeplinking/QR
+    const missing: SupportFormFieldErrors = {};
+    if (!data.missionaryName || !String(data.missionaryName).trim()) missing.missionaryName = "This field is required to share a QR link.";
+    if (!data.nation || !String(data.nation).trim()) missing.nation = "This field is required to share a QR link.";
+    if (!data.travelDate || !String(data.travelDate).trim()) missing.travelDate = "This field is required to share a QR link.";
+    if (!data.sendingChurch || !String(data.sendingChurch).trim()) missing.sendingChurch = "This field is required to share a QR link.";
+
+    // ensure travelDate is today or later (compare YYYY-MM-DD strings in local date)
+    if (data.travelDate && String(data.travelDate).trim()) {
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      if (String(data.travelDate) < localToday) {
+        missing.travelDate = "Travel date must be today or later to share a QR link.";
+      }
+    }
+
+    if (Object.keys(missing).length > 0) {
+      setValidation({ fieldErrors: missing, formErrors: [] });
+      snackbar.show(VALIDATION_ERROR_MESSAGE);
+      return;
+    }
+
+    const title = data.membershipType === "victory" ? "PIC & SAF Form for Victory Members" : "PIC & SAF Form";
+
     try {
-      const title = data.membershipType === "victory" ? "PIC & SAF Form for Victory Members" : "PIC & SAF Form";
-      const recipientForQr: Recipient | null = currentRecipient
-        ? {
-            kind: currentRecipient.type === "team" ? "team" : "missioner",
-            id: currentRecipient.id,
-            name: currentRecipient.label,
-            nation: currentRecipient.nation ?? null,
-            travelDate: currentRecipient.travelDate ?? null,
-            sendingChurch: currentRecipient.sendingChurch ?? null,
-          }
-        : null;
-      const finalDataUrl = await generateCompositeQr(url, { title, recipient: recipientForQr });
+      const recipientPayload: Record<string, string> = {
+        missionaryName: data.missionaryName ?? "",
+        nation: data.nation ?? "",
+        travelDate: data.travelDate ?? "",
+        sendingChurch: data.sendingChurch ?? "",
+      };
+
+      // Request server to create encrypted token (server keeps DEEPLINK_KEY)
+      const tokenRes = await fetch("/api/deeplink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipientPayload),
+      });
+      if (!tokenRes.ok) throw new Error("unable to create deeplink token");
+      const tokenJson = await tokenRes.json();
+      const token = tokenJson.token as string;
+
+      const shareUrl = new URL(currentHref || "http://localhost");
+      shareUrl.searchParams.set("recipient", token);
+
+      const finalDataUrl = await generateCompositeQr(shareUrl.toString(), {
+        title,
+        recipient: {
+          kind: "missioner",
+          id: String(data.missionaryName ?? ""),
+          name: data.missionaryName ?? null,
+          nation: data.nation ?? null,
+          travelDate: data.travelDate ?? null,
+          sendingChurch: data.sendingChurch ?? null,
+        },
+      });
       setQrDataUrl(finalDataUrl);
       setShowQR(true);
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(shareUrl.toString());
         snackbar.show("Link copied to clipboard");
       } catch {
         // ignore clipboard failures
@@ -355,7 +387,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
       // fallback to plain QR
       try {
         const QRCode = await import("qrcode");
-        const dataUrl = await QRCode.toDataURL(url);
+        const dataUrl = await QRCode.toDataURL(currentHref || "");
         setQrDataUrl(dataUrl);
         setShowQR(true);
       } catch (err2) {
@@ -404,7 +436,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", right: 12, top: 12, zIndex: 60, display: "flex", gap: 8, alignItems: "center" }}>
               <div className={styles.shareControls}>
-                <button className={styles.button} type="button" onClick={handleShowQR} disabled={!currentRecipient} aria-disabled={!currentRecipient} title={currentRecipient ? "Share link" : "Select a team or missioner to share"}>
+                <button className={styles.button} type="button" onClick={handleShowQR} title="Share link">
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <Share2 size={16} aria-hidden="true" />
                     <span className={styles.shareButtonLabel}>Share</span>
@@ -432,21 +464,48 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             onReview={handleGoToReview}
             onReset={resetForm}
             setField={setField}
-            onRecipientSelect={(item) => {
-              // update local recipient state
-              setCurrentRecipient(item ?? null);
+            onRecipientSelect={async (item: Suggestion | null) => {
+              // When a suggestion is selected (if present), populate fields and set an encrypted recipient token in the URL.
+              if (item) {
+                if (setField) {
+                  if (item.label) setField("missionaryName", item.label);
+                  if (item.nation) setField("nation", item.nation);
+                  if (item.travelDate) setField("travelDate", item.travelDate);
+                  if (item.sendingChurch) setField("sendingChurch", item.sendingChurch);
+                }
+                try {
+                  const payload = {
+                    missionaryName: item.label,
+                    nation: item.nation ?? "",
+                    travelDate: item.travelDate ?? "",
+                    sendingChurch: item.sendingChurch ?? "",
+                  };
+                  const tokenRes = await fetch("/api/deeplink", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  });
+                  if (!tokenRes.ok) throw new Error("failed to create token");
+                  const tokenJson = await tokenRes.json();
+                  const token = tokenJson.token as string;
+
+                  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+                  params.set("recipient", token);
+                  const qs = params.toString();
+                  router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${qs ? `?${qs}` : ""}`);
+                } catch (err) {
+                  console.warn("SupportFormBuilder: failed to update recipient param", err);
+                }
+                return;
+              }
+
               try {
                 const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-                if (item) {
-                  params.set("recipient", item.id);
-                } else {
-                  params.delete("recipient");
-                }
+                params.delete("recipient");
                 const qs = params.toString();
                 router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${qs ? `?${qs}` : ""}`);
               } catch (err) {
-                // Log router failures for debugging
-                console.warn("SupportFormBuilder: failed to update recipient param", err);
+                console.warn("SupportFormBuilder: failed to clear recipient param", err);
               }
             }}
           />

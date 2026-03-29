@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type MissionerItem = { id: string; name: string; nation?: string; travelDate?: string; sendingChurch?: string };
 type TeamGroup = {
@@ -13,40 +13,11 @@ type TeamGroup = {
 };
 
 export function useTeams() {
-  const [groups, setGroups] = useState<TeamGroup[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/teams")
-      .then((r) => r.json())
-      .then((json) => {
-        if (cancelled) return;
-        type TeamDoc = { teamId?: string; teamName?: string; nation?: string; travelDate?: string; sendingChurch?: string; missioners?: unknown[] };
-        const teams = Array.isArray(json.teams) ? (json.teams as TeamDoc[]) : [];
-        const normalized = teams.map((t) => ({
-          teamId: String(t.teamId ?? t.teamName ?? ""),
-          team: String(t.teamName ?? ""),
-          nation: t.nation,
-          travelDate: t.travelDate,
-          sendingChurch: t.sendingChurch,
-          missioners: (Array.isArray(t.missioners) ? t.missioners : []).map((m: unknown, i: number) => ({ id: `${String(t.teamId ?? t.teamName ?? "")}::${i}`, name: String(m) })),
-        }));
-        setGroups(normalized);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError("Unable to load teams");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Database + auto-complete removed. Keep hook shape but return empty values
+  // so callers don't need to change.
+  const [groups] = useState<TeamGroup[] | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
   return { groups, loading, error } as const;
 }

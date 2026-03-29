@@ -381,5 +381,9 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     goToPartner,
     goToAccountability,
     goToReview,
+    // allow callers to set validation results (useful for external checks like QR share)
+    setValidation: (value: { fieldErrors: SupportFormFieldErrors; formErrors: string[] }) => {
+      dispatch({ type: "set-validation", value });
+    },
   };
 }

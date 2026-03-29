@@ -184,10 +184,18 @@ const partnerStepSchema = z.object({
       message: "Amount must be greater than zero.",
     }),
   nation: requiredString("Nation"),
-  travelDate: requiredString("Travel Date").regex(
-    /^\d{4}-\d{2}-\d{2}$/,
-    "Travel Date is invalid.",
-  ),
+  travelDate: requiredString("Travel Date")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Travel Date is invalid.")
+    .refine((value) => {
+      try {
+        const todayIso = new Date().toISOString().slice(0, 10);
+        return value >= todayIso;
+      } catch {
+        return false;
+      }
+    }, {
+      message: "Travel Date cannot be earlier than today.",
+    }),
   sendingChurch: requiredString("Sending Church"),
 });
 

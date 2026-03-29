@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("qrcode", () => ({
-  toDataURL: async (text: string) => {
+  toDataURL: async () => {
     // return a tiny valid PNG data URL stub
     return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
   },
@@ -10,7 +11,7 @@ vi.mock("qrcode", () => ({
 import { generateCompositeQr } from "@/lib/qr";
 
 describe("generateCompositeQr", () => {
-  let OriginalImage: any;
+    let OriginalImage: any;
   beforeEach(() => {
     OriginalImage = (global as any).Image;
     // mock Image to immediately call onload when src is set
@@ -25,7 +26,6 @@ describe("generateCompositeQr", () => {
     // mock canvas creation/context since jsdom doesn't implement it
     const originalCreate = document.createElement.bind(document);
     (document as any).__orig_createElement = originalCreate;
-    let last: any = null;
     (document as any).createElement = (tag: string) => {
       if (tag.toLowerCase() === "canvas") {
         const canvas: any = {
@@ -33,7 +33,7 @@ describe("generateCompositeQr", () => {
           height: 0,
           toDataURL: () => "data:image/png;base64,MOCK",
           _fillTextCalls: [] as Array<{ text: string; x: number; y: number }>,
-          getContext: (_: string) => ({
+          getContext: () => ({
             fillStyle: "",
             font: "",
             textAlign: "",
@@ -44,7 +44,7 @@ describe("generateCompositeQr", () => {
             drawImage: () => {},
           }),
         };
-        last = canvas;
+        (document as any).__lastCanvas = canvas;
         (document as any).__lastCanvas = canvas;
         return canvas;
       }
@@ -89,7 +89,7 @@ describe("generateCompositeQr", () => {
     expect(texts.some((t: string) => /Alice|m::/.test(t))).toBe(true);
     // nation and travel should appear; sending church may be formatted/truncated
     expect(texts).toContain("Nation: Thailand");
-    expect(texts).toContain("Travel Date: 2026-06-20");
+    expect(texts).toContain("Travel Date: June 20, 2026");
     expect(texts).toContain("Sending Church: Every Nation Makati");
   });
 });

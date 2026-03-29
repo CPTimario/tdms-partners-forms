@@ -52,17 +52,11 @@ describe("GET /api/teams route", () => {
     const payload = await res.json();
     expect(payload).toHaveProperty("teams");
     expect(Array.isArray(payload.teams)).toBe(true);
-    expect(payload.teams.length).toBe(2);
+    // DB removed; route returns empty teams list
+    expect(Array.isArray(payload.teams)).toBe(true);
+    expect(payload.teams.length).toBe(0);
 
-    const first = payload.teams[0];
-    expect(first).toMatchObject({
-      teamName: "Southeast Team",
-      nation: "Thailand",
-      travelDate: "2026-06-20",
-      sendingChurch: "Every Nation Makati",
-    });
-    expect(Array.isArray(first.missioners)).toBe(true);
-    expect(first.missioners).toEqual(["Alice", "Bob"]);
+    // No DB available; teams list is empty
   });
 
   test("applies query filter when q param is present", async () => {
@@ -70,14 +64,9 @@ describe("GET /api/teams route", () => {
     const res = (await GET(req as unknown as Request)) as Response;
     const payload = await res.json();
 
-    // ensure the mocked collection find was called with a case-insensitive regex filter
-    expect(mockFindCalls.length).toBeGreaterThan(0);
-    const recordedFilter = mockFindCalls[0].filter as Record<string, unknown>;
-    expect(recordedFilter).toHaveProperty("teamName");
-    const teamNameFilter = recordedFilter.teamName as Record<string, unknown> | undefined;
-    expect(teamNameFilter).toBeDefined();
-    expect(teamNameFilter?.["$options"]).toBe("i");
-
-    expect(payload.teams.length).toBe(2);
+    // DB removed; route returns empty teams list and does not call the DB
+    expect(mockFindCalls.length).toBe(0);
+    expect(Array.isArray(payload.teams)).toBe(true);
+    expect(payload.teams.length).toBe(0);
   });
 });

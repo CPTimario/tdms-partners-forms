@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, type ChangeEventHandler } from "react";
-import Autocomplete from "./Autocomplete";
-import { useTeamsWithSuggestions, type Suggestion } from "@/hooks/useTeams";
+// Autocomplete removed; use a plain text input for recipient entry
+import type { Suggestion } from "@/hooks/useTeams";
 import SignatureCanvas from "react-signature-canvas";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
 import styles from "./FormBuilder.module.css";
@@ -50,20 +50,62 @@ type SignaturePadProps = {
   ariaDescribedBy?: string;
 };
 
+type TabButtonProps = {
+  step: "partner" | "accountability" | "review";
+  label: string;
+  status: string;
+  active: boolean;
+  onClick: () => void;
+};
+
+// NOTE: using native date input; value stored as ISO yyyy-mm-dd
+
+type DatePickerInlineProps = {
+  value: string;
+  setField?: (field: RequiredStringField, value: string) => void;
+  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
+  hasFieldError: boolean;
+  errorId: string;
+};
+
+const DatePickerInline = ({ value, setField, onTextChange, hasFieldError, errorId }: DatePickerInlineProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value ?? ""; // native date input returns yyyy-mm-dd
+    if (setField) {
+      setField("travelDate", val);
+    } else {
+      const handler = onTextChange("travelDate");
+      handler(e);
+    }
+  };
+
+  const min = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className={styles.dateInputWrap}>
+      <input
+        type="date"
+        className={`${styles.textInput} ${styles.dateInput} ${hasFieldError ? styles.textInputError : ""}`}
+        value={value}
+        onChange={handleChange}
+        min={min}
+        aria-invalid={hasFieldError}
+        aria-describedby={hasFieldError ? errorId : undefined}
+      />
+    </div>
+  );
+};
+
 function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: SignaturePadProps) {
   const signatureRef = useRef<SignatureCanvas | null>(null);
   const loadedValueRef = useRef("");
 
   useEffect(() => {
     const canvas = signatureRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     if (!value) {
-      if (!canvas.isEmpty()) {
-        canvas.clear();
-      }
+      if (!canvas.isEmpty()) canvas.clear();
       loadedValueRef.current = "";
       return;
     }
@@ -76,9 +118,7 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
 
   const handleEnd = () => {
     const canvas = signatureRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     if (canvas.isEmpty()) {
       loadedValueRef.current = "";
@@ -93,10 +133,7 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
 
   const handleClear = () => {
     const canvas = signatureRef.current;
-    if (!canvas) {
-      return;
-    }
-
+    if (!canvas) return;
     canvas.clear();
     loadedValueRef.current = "";
     onChange("");
@@ -132,14 +169,6 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
     </div>
   );
 }
-
-type TabButtonProps = {
-  step: "partner" | "accountability" | "review";
-  label: string;
-  status: string;
-  active: boolean;
-  onClick: () => void;
-};
 
 function TabButton({ step, label, status, active, onClick }: TabButtonProps) {
   return (
@@ -187,6 +216,7 @@ export function FillStep({
   setField,
   onRecipientSelect,
 }: FillStepProps) {
+  
   const isPartnerTab = step === "partner";
   const hasFieldError = (name: keyof SupportFormFieldErrors) => Boolean(fieldErrors[name]);
   const errorId = (name: keyof SupportFormFieldErrors) => `support-form-error-${name}`;
@@ -203,7 +233,9 @@ export function FillStep({
     );
   };
 
-  const { suggestions } = useTeamsWithSuggestions();
+  // suggestions removed; no local suggestions needed
+
+  // Using top-level `DatePickerInline` component above
 
   return (
     <main className={`${styles.shell} ${styles.fillShell}`}>
@@ -306,33 +338,15 @@ export function FillStep({
                 <legend>Recipient</legend>
                 <label className={styles.fieldLabel}>
                   Missioner Name/Team
-                  {/* Autocomplete: suggestions come from useTeams hook via parent */}
-                  {/* Lazy import to reduce surface area; use a simple local component */}
-                  <Autocomplete
+                  <input
+                    className={`${styles.textInput} ${hasFieldError("missionaryName") ? styles.textInputError : ""}`}
                     value={data.missionaryName}
-                    onChange={(v) => {
-                      // update text input value
+                    placeholder="Type team or missioner name"
+                    onChange={(e) => {
                       const handler = onTextChange("missionaryName");
-                      handler({ target: { value: v } } as unknown as React.ChangeEvent<HTMLInputElement>);
-                      // typing invalidates any previously selected recipient
+                      handler(e as unknown as React.ChangeEvent<HTMLInputElement>);
                       onRecipientSelect?.(null);
                     }}
-                    onSelect={(item) => {
-                      // populate fields when a suggestion is selected
-                      const handler = onTextChange("missionaryName");
-                      handler({ target: { value: item.label } } as unknown as React.ChangeEvent<HTMLInputElement>);
-                      if (setField) {
-                        if (item.nation) setField("nation", item.nation);
-                        if (item.travelDate) setField("travelDate", item.travelDate);
-                        if (item.sendingChurch) setField("sendingChurch", item.sendingChurch);
-                        if (item.team) setField("missionaryName", item.label);
-                      }
-
-                      // Inform parent of the selected suggestion (parent will handle URL)
-                      onRecipientSelect?.(item);
-                    }}
-                    suggestions={suggestions ?? []}
-                    placeholder="Type team or missioner name"
                   />
                   {renderFieldError("missionaryName")}
                 </label>
@@ -376,13 +390,12 @@ export function FillStep({
                   </label>
                   <label className={`${styles.fieldLabel} ${styles.dateFieldLabel}`}>
                     Travel Date
-                    <input
-                      className={`${styles.textInput} ${styles.dateInput} ${hasFieldError("travelDate") ? styles.textInputError : ""}`}
-                      type="date"
+                    <DatePickerInline
                       value={data.travelDate}
-                      onChange={onTextChange("travelDate")}
-                      aria-invalid={hasFieldError("travelDate")}
-                      aria-describedby={hasFieldError("travelDate") ? errorId("travelDate") : undefined}
+                      setField={setField}
+                      onTextChange={onTextChange}
+                      hasFieldError={hasFieldError("travelDate")}
+                      errorId={errorId("travelDate")}
                     />
                     {renderFieldError("travelDate")}
                   </label>
