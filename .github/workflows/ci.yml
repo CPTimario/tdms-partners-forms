@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DEEPLINK_KEY: ${{ secrets.DEEPLINK_KEY }}
     steps:
       - uses: actions/checkout@v4
 

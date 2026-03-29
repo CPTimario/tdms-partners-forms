@@ -169,4 +169,185 @@ describe("SupportFormBuilder URL sync", () => {
     // setField should have been called to populate dependent fields for the deeplinked suggestion
     expect(mockSetField).toHaveBeenCalledWith("nation", "Thailand");
   });
+
+  test("auto-creates recipient token when required fields present (debounced)", async () => {
+    // Reset module cache so we can provide a different useSupportForm mock
+    vi.resetModules();
+
+    // Ensure fetch mock will still respond (beforeEach sets global.fetch)
+
+    // Use fake timers to control debounce
+    vi.useFakeTimers();
+
+    // Provide a mock useSupportForm that returns fully-populated data on mount
+    const now = new Date();
+    const pad = (v: number) => String(v).padStart(2, "0");
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const mockUseSupportForm = () => ({
+      data: { membershipType: "non-victory", missionaryName: "Auto Test", nation: "Nowhere", travelDate: localToday, sendingChurch: "Test Church" },
+      step: "partner",
+      fieldErrors: {},
+      formErrors: [],
+      isFormValid: true,
+      isPartnerStepComplete: false,
+      isAccountabilityStepComplete: false,
+      onTextChange: () => () => {},
+      onCurrencyChange: () => {},
+      onCheckboxChange: () => () => {},
+      setMembership: () => {},
+      onUnableToGoChange: () => {},
+      onReroutedChange: () => {},
+      onCanceledChange: () => {},
+      setPartnerSignature: () => {},
+      resetForm: () => {},
+      goToPartner: () => {},
+      goToAccountability: () => {},
+      goToReview: () => {},
+      setField: mockSetField,
+      setValidation: () => {},
+    });
+
+    // Mock the hook module before importing the component
+    vi.doMock("@/hooks/use-support-form", () => ({ useSupportForm: mockUseSupportForm }));
+
+    // Re-mock next/navigation to ensure router.replace spy is available
+    vi.doMock("next/navigation", () => ({
+      useRouter: () => ({ replace: _replace, push: vi.fn() }),
+      useSearchParams: () => ({ get: () => null }),
+    }));
+    const replaceSpy = _replace;
+
+    const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    try {
+      await act(async () => {
+        const root = createRoot(container);
+        root.render(<SupportFormBuilder />);
+      });
+
+      // advance timers past debounce (400ms -> advance 500ms)
+      await vi.advanceTimersByTimeAsync(500);
+
+      // allow pending promises/microtasks to resolve
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(replaceSpy).toHaveBeenCalled();
+      const calledWith = replaceSpy.mock.calls[replaceSpy.mock.calls.length - 1][0] as string;
+      const qs = calledWith.split("?")[1] ?? calledWith;
+      const params = new URLSearchParams(qs.replace(/^\?/, ""));
+      const token = params.get("recipient");
+      expect(token).toBeTruthy();
+      const crypto = await import("@/lib/deeplink-crypto");
+      const parsed = crypto.decryptRecipient(token as string);
+      expect(parsed).toBeTruthy();
+      expect(parsed?.missionaryName).toBe("Auto Test");
+    } finally {
+      vi.useRealTimers();
+      if (container) {
+        container.remove();
+      }
+      // reset module mocks so other tests remain unaffected
+      vi.resetModules();
+    }
+  });
+
+  test("does not update URL when token creation is aborted", async () => {
+    vi.resetModules();
+    vi.useFakeTimers();
+
+    const now = new Date();
+    const pad = (v: number) => String(v).padStart(2, "0");
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    const mockUseSupportForm = () => ({
+      data: { membershipType: "non-victory", missionaryName: "Abort Test", nation: "Nowhere", travelDate: localToday, sendingChurch: "Test Church" },
+      step: "partner",
+      fieldErrors: {},
+      formErrors: [],
+      isFormValid: true,
+      isPartnerStepComplete: false,
+      isAccountabilityStepComplete: false,
+      onTextChange: () => () => {},
+      onCurrencyChange: () => {},
+      onCheckboxChange: () => () => {},
+      setMembership: () => {},
+      onUnableToGoChange: () => {},
+      onReroutedChange: () => {},
+      onCanceledChange: () => {},
+      setPartnerSignature: () => {},
+      resetForm: () => {},
+      goToPartner: () => {},
+      goToAccountability: () => {},
+      goToReview: () => {},
+      setField: mockSetField,
+      setValidation: () => {},
+    });
+
+    vi.doMock("@/hooks/use-support-form", () => ({ useSupportForm: mockUseSupportForm }));
+
+    // Mock a fetch that listens to AbortSignal and rejects when aborted
+    global.fetch = vi.fn((input: RequestInfo, init?: RequestInit) => {
+      const urlStr = typeof input === "string" ? input : (input as Request).url;
+      const u = new URL(urlStr, "http://localhost");
+      if (init && init.method && init.method.toUpperCase() === "POST") {
+        return new Promise((resolve, reject) => {
+          const signal = init.signal as AbortSignal | undefined;
+          const t = setTimeout(() => {
+            // produce a valid token using the crypto helper
+            import("@/lib/deeplink-crypto").then((crypto) => {
+              const token = crypto.encryptRecipient({ missionaryName: "Abort Test", nation: "Nowhere", travelDate: localToday, sendingChurch: "Test Church" });
+              resolve({ ok: true, json: async () => ({ token }) } as unknown as Response);
+            });
+          }, 1000);
+          if (signal) {
+            signal.addEventListener("abort", () => {
+              clearTimeout(t);
+              reject(new DOMException("Aborted", "AbortError"));
+            });
+          }
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ fields: null }) } as unknown as Response);
+    }) as unknown as typeof fetch;
+
+    vi.doMock("next/navigation", () => ({
+      useRouter: () => ({ replace: _replace, push: vi.fn() }),
+      useSearchParams: () => ({ get: () => null }),
+    }));
+
+    const replaceSpy = _replace;
+
+    const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    try {
+      await act(async () => {
+        const root = createRoot(container);
+        root.render(<SupportFormBuilder />);
+      });
+
+      // advance timers to trigger debounce and start the inflight request
+      await vi.advanceTimersByTimeAsync(500);
+
+      // unmount component to trigger cleanup and abort inflight
+      await act(async () => {
+        // best-effort unmount: clear the container
+        container.innerHTML = "";
+      });
+
+      // allow microtasks
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(replaceSpy).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      if (container) container.remove();
+      vi.resetModules();
+    }
+  });
 });

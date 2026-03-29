@@ -11,6 +11,7 @@ import { type Suggestion } from "@/hooks/useTeams";
 import { Share2 } from "lucide-react";
  
 import { generateCompositeQr } from "@/lib/qr";
+import { createRecipientToken } from "@/lib/deeplink-client";
 import {
   getAccountabilityAffirmationCopy,
   type MembershipType,
@@ -280,6 +281,10 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
 
   // Initialize form fields from encrypted URL deeplink param `recipient`
   const _deeplinkInitialized = useRef(false);
+  // cache: payloadKey -> token
+  const tokenCacheRef = useRef<Map<string, string>>(new Map());
+  const inflightAbortRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (_deeplinkInitialized.current) return;
     try {
@@ -313,6 +318,83 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Debounced sync: when share-related fields are present & valid, create token and update URL
+  useEffect(() => {
+    // Only run client-side
+    if (typeof window === "undefined") return;
+
+    const m = String(data.missionaryName ?? "").trim();
+    const n = String(data.nation ?? "").trim();
+    const t = String(data.travelDate ?? "").trim();
+    const s = String(data.sendingChurch ?? "").trim();
+
+    const requiredPresent = m && n && t && s;
+    if (!requiredPresent) {
+      return;
+    }
+
+    // validate travelDate >= today (local)
+    const now = new Date();
+    const pad = (v: number) => String(v).padStart(2, "0");
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    if (t < localToday) return;
+
+    const payload = { missionaryName: m, nation: n, travelDate: t, sendingChurch: s };
+    const payloadKey = JSON.stringify(payload);
+
+    const updateUrlWithToken = (token: string) => {
+      try {
+        const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+        if (params.get("recipient") === token) return;
+        params.set("recipient", token);
+        const qs = params.toString();
+        router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${qs ? `?${qs}` : ""}`);
+      } catch (err) {
+        // ignore router errors
+      }
+    };
+
+    // cached token -> update immediately
+    const cached = tokenCacheRef.current.get(payloadKey);
+    if (cached) {
+      updateUrlWithToken(cached);
+      return;
+    }
+
+    // debounce token creation
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = window.setTimeout(async () => {
+      // cancel previous inflight
+      if (inflightAbortRef.current) inflightAbortRef.current.abort();
+      const ac = new AbortController();
+      inflightAbortRef.current = ac;
+      try {
+        const token = await createRecipientToken(payload, ac.signal);
+        tokenCacheRef.current.set(payloadKey, token);
+        updateUrlWithToken(token);
+      } catch (err) {
+        // ignore network/errors (including abort)
+      } finally {
+        inflightAbortRef.current = null;
+      }
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      // abort any inflight request when dependencies change or on unmount
+      if (inflightAbortRef.current) {
+        inflightAbortRef.current.abort();
+        inflightAbortRef.current = null;
+      }
+    };
+  // only watch the four fields
+  }, [data.missionaryName, data.nation, data.travelDate, data.sendingChurch, router]);
 
   const handleShowQR = async () => {
     const currentHref = typeof window !== "undefined" ? window.location.href : "";

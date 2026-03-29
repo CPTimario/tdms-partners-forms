@@ -38,6 +38,36 @@ Set the following environment variable for server-side deeplink operations:
 DEEPLINK_KEY=your-secret-key
 ```
 
+In CI (GitHub Actions) add `DEEPLINK_KEY` as a repository secret (Settings → Secrets) and ensure your workflow injects it into the job environment. Example (already present in this repo):
+
+```yaml
+jobs:
+	build-and-test:
+		env:
+			DEEPLINK_KEY: ${{ secrets.DEEPLINK_KEY }}
+```
+
+Locally you can use a `.env` file or your shell environment. The development and start scripts run a startup check that will fail fast if `DEEPLINK_KEY` is not present.
+
+Quick local setup
+-----------------
+1. Copy the example env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` and set a secure random value for `DEEPLINK_KEY`.
+
+3. Start dev server:
+
+```bash
+npm ci
+npm run dev
+```
+
+Note: the dev/start scripts run a startup check and will exit if `DEEPLINK_KEY` is missing.
+
 Testing
 -------
 - Unit tests: `npm run test:unit` (Vitest).
