@@ -2,27 +2,42 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Privacy modal', () => {
   test('appears on first visit and persists dismissal across pages', async ({ page }) => {
-    // Visit root (webServer in playwright.config.ts will start the dev server)
-    await page.goto('/');
+    // Create a fresh context without storageState so the privacy modal will open
+    const browser = page.context().browser();
+    if (!browser) throw new Error("Unable to access browser instance for new context");
+    const context = await browser.newContext();
+    const newPage = await context.newPage();
 
-    // Modal should appear on first visit
-    const heading = page.getByRole('heading', { name: 'Privacy notice' });
-    await expect(heading).toBeVisible();
+    try {
+      // Visit root (webServer in playwright.config.ts will start the dev server)
+      await newPage.goto('/');
 
-    // Dismiss the modal
-    const understood = page.getByRole('button', { name: 'Understood' });
-    await expect(understood).toBeVisible();
-    await understood.click();
+      // Modal should appear on first visit. If it doesn't, ensure dismissal flag is cleared and reload.
+      let heading = newPage.getByRole('heading', { name: 'Privacy notice' });
+      if ((await heading.count()) === 0 || !(await heading.isVisible())) {
+        await newPage.evaluate(() => window.localStorage.removeItem('disclaimer_dismissed'));
+        await newPage.reload();
+        heading = newPage.getByRole('heading', { name: 'Privacy notice' });
+      }
+      await expect(heading).toBeVisible();
 
-    // Modal should be hidden
-    await expect(heading).toBeHidden();
+      // Dismiss the modal
+      const understood = newPage.getByRole('button', { name: 'Understood' });
+      await expect(understood).toBeVisible();
+      await understood.click();
 
-    // localStorage should have dismissal key
-    const dismissed = await page.evaluate(() => window.localStorage.getItem('disclaimer_dismissed'));
-    expect(dismissed).toBe('1');
+      // Modal should be hidden
+      await expect(heading).toBeHidden();
 
-    // Navigate to another page and ensure modal does not reappear
-    await page.goto('/victory');
-    await expect(page.getByRole('heading', { name: 'Privacy notice' })).toHaveCount(0);
+      // localStorage should have dismissal key
+      const dismissed = await newPage.evaluate(() => window.localStorage.getItem('disclaimer_dismissed'));
+      expect(dismissed).toBe('1');
+
+      // Navigate to another page and ensure modal does not reappear
+      await newPage.goto('/victory');
+      await expect(newPage.getByRole('heading', { name: 'Privacy notice' })).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
   });
 });

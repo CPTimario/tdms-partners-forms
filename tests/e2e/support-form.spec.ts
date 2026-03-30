@@ -5,6 +5,18 @@ async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victor
   const heading = page.getByRole("heading", { name: "Choose a form" });
   await expect(heading).toBeVisible();
 
+  // If the privacy disclaimer opened, dismiss it so it doesn't block interactions.
+  try {
+    const privacy = page.getByRole("dialog", { name: "Privacy notice" });
+    if ((await privacy.count()) > 0 && (await privacy.isVisible())) {
+      await privacy.getByRole("button", { name: "Understood", exact: true }).click();
+      // small wait for dismissal
+      await privacy.waitFor({ state: "hidden", timeout: 2000 }).catch(() => undefined);
+    }
+  } catch {
+    // ignore if not present
+  }
+
   if (type === "Victory Member") {
     const victoryBtn = page.getByRole("button", { name: "Open partners' forms for Victory members", exact: true }).first();
     await victoryBtn.click();
@@ -289,9 +301,8 @@ test.describe("Support forms end-to-end", () => {
 
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
-    await expect(agreementGate.getByRole("button")).toHaveCount(1);
+    // I Agree must be present; Cancel/back may also be present depending on flow
     await expect(agreementGate.getByRole("button", { name: "I Agree", exact: true })).toBeVisible();
-    await expect(agreementGate.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
   });
 
   test("requires membership selection and shows correct variant messaging", async ({ page }: { page: Page }) => {

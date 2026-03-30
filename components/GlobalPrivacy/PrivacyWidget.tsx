@@ -18,9 +18,11 @@ export default function PrivacyWidget() {
     try {
       const dismissed = window.localStorage.getItem("disclaimer_dismissed");
       if (!dismissed) {
-        setTimeout(() => {
+        // Schedule opening on a microtask so tests that await a resolved promise
+        // will observe the update without relying on macrotasks.
+        Promise.resolve().then(() => {
           if (mounted) setOpen(true);
-        }, 0);
+        });
       }
     } catch {
       // ignore

@@ -20,14 +20,11 @@ import { Share2 } from "lucide-react";
  
 import { generateCompositeQr } from "@/lib/qr";
 import { createRecipientToken } from "@/lib/deeplink-client";
-import {
-  getAccountabilityAffirmationCopy,
-  type MembershipType,
-  type SupportFormFieldErrors,
-} from "@/lib/support-form";
+import { type MembershipType, type SupportFormFieldErrors } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
 import AppSnackbar from "@/components/ui/Snackbar";
 import LandingMembershipCTAs from "./LandingMembershipCTAs";
+import AccountabilityModal from "@/components/AccountabilityModal";
 import Button from "@mui/material/Button";
 import { useSnackbar } from "@/hooks/use-snackbar";
 import styles from "./FormBuilder.module.css";
@@ -36,70 +33,6 @@ import { ReviewStep } from "./ReviewStep";
 const VALIDATION_ERROR_MESSAGE =
   "Some fields need your attention. Please fix the highlighted errors.";
 
-type VictoryAgreementGateProps = {
-  onAgree: () => void;
-};
-
-function VictoryAgreementGate({ onAgree }: VictoryAgreementGateProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) {
-      return;
-    }
-
-    const focusableElements = dialog.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    firstElement?.focus();
-
-    const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusableElements.length === 0) {
-        return;
-      }
-
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement?.focus();
-        return;
-      }
-
-      if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement?.focus();
-      }
-    };
-
-    dialog.addEventListener("keydown", handleTabTrap);
-    return () => {
-      dialog.removeEventListener("keydown", handleTabTrap);
-    };
-  }, []);
-
-  return (
-    <main className={styles.gateShell}>
-      <div
-        ref={dialogRef}
-        className={styles.gateCard}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="membership-agreement-title"
-      >
-        <h1 className={styles.gateTitle} id="membership-agreement-title">
-          Accountability Agreement
-        </h1>
-        <p className={styles.gateText}>{getAccountabilityAffirmationCopy("victory")}</p>
-        <div className={styles.gateActions}>
-          <Button variant="contained" onClick={onAgree}>I Agree</Button>
-        </div>
-      </div>
-    </main>
-  );
-}
 
 type SupportFormBuilderProps = {
   membershipType?: MembershipType;
@@ -136,6 +69,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
   const [reviewPdfBytes, setReviewPdfBytes] = useState<Uint8Array | null>(null);
   const [reviewPdfUrl, setReviewPdfUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   // suggestions/API removed; keeping compatible types
@@ -251,6 +185,19 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  useEffect(() => {
+    if (membershipType === "victory" && !data.membershipType) {
+      if (typeof window !== "undefined" && window.location.pathname !== "/victory") {
+        // navigate to /victory first so the form is the background
+        router.replace("/victory");
+        // show modal after navigation; leaving modal state true is fine because route change will rehydrate
+      }
+      setShowAgreementModal(true);
+      return;
+    }
+    setShowAgreementModal(false);
+  }, [membershipType, data.membershipType, router]);
 
   // Debounced sync: when share-related fields are present & valid, create token and update URL
   useEffect(() => {
@@ -428,9 +375,11 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
 
   if (!data.membershipType) {
     if (membershipType === "victory") {
-      return <VictoryAgreementGate onAgree={() => setMembership("victory")} />;
+      // Let the form render as the background and show a modal prompting agreement.
+      // The modal is controlled by `showAgreementModal` and will set membership on agree.
+    } else {
+      return <LandingMembershipCTAs />;
     }
-    return <LandingMembershipCTAs />;
   }
 
   const handleGoToAccountability = () => {
@@ -545,6 +494,22 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             </div>
           </div>
         ) : null}
+        {/* Accountability modal for victory-membership flow */}
+        <AccountabilityModal
+          open={showAgreementModal}
+          onAgree={() => {
+            setMembership("victory");
+            setShowAgreementModal(false);
+          }}
+          onClose={() => {
+            setShowAgreementModal(false);
+            try {
+              router.replace("/");
+            } catch {
+              // ignore
+            }
+          }}
+        />
       </>
     );
   }
