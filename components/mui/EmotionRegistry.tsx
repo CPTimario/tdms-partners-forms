@@ -7,7 +7,6 @@ import React, { useState } from 'react';
 
 import createEmotionCache from './createEmotionCache';
 
-
 type Props = {
   children: React.ReactNode;
 };

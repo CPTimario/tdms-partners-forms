@@ -41,7 +41,11 @@ describe('generateCompositeQr', () => {
             fillRect: () => {},
             fillText: (text: string, x: number, y: number) => {
               // push typed entry
-              (canvas._fillTextCalls as Array<{ text: string; x: number; y: number }>).push({ text, x, y });
+              (canvas._fillTextCalls as Array<{ text: string; x: number; y: number }>).push({
+                text,
+                x,
+                y,
+              });
             },
             drawImage: () => {},
           }),
@@ -56,7 +60,9 @@ describe('generateCompositeQr', () => {
   afterEach(() => {
     (global as any).Image = OriginalImage as any;
     if ((document as any).__orig_createElement) {
-      (document as any).createElement = (document as any).__orig_createElement as unknown as (tag: string) => Element;
+      (document as any).createElement = (document as any).__orig_createElement as unknown as (
+        tag: string,
+      ) => Element;
       delete (document as any).__orig_createElement;
     }
   });
@@ -79,7 +85,10 @@ describe('generateCompositeQr', () => {
       travelDate: '2026-06-20',
       sendingChurch: 'Every Nation Makati',
     } as const;
-    const dataUrl = await generateCompositeQr(url, { title: 'Test', recipient: recipient as unknown as Recipient });
+    const dataUrl = await generateCompositeQr(url, {
+      title: 'Test',
+      recipient: recipient as unknown as Recipient,
+    });
     expect(typeof dataUrl).toBe('string');
     const canvas = (document as unknown as Record<string, any>).__lastCanvas as any;
     expect(canvas).toBeDefined();

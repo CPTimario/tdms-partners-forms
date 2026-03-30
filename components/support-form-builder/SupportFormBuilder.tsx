@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Button from '@mui/material/Button';
 import { Share2 } from 'lucide-react';
@@ -14,7 +14,6 @@ import { createRecipientToken } from '@/lib/deeplink-client';
 import { downloadPDF, generateReviewPDF } from '@/lib/pdf-generator';
 import { generateCompositeQr } from '@/lib/qr';
 import { type MembershipType, type SupportFormFieldErrors } from '@/lib/support-form';
-
 
 import styles from './FormBuilder.module.css';
 import LandingMembershipCTAs from './LandingMembershipCTAs';

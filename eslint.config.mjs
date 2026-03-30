@@ -18,6 +18,7 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // filename rules removed temporarily to avoid flat-config schema issues
   // Global ignore patterns (flat config method)
   globalIgnores([
     '.next/**',

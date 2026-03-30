@@ -6,7 +6,7 @@ import './globals.css';
 import PrivacyWidget from '@/components/GlobalPrivacy/PrivacyWidget';
 import EmotionRegistry from '@/components/mui/EmotionRegistry';
 import MuiProviders from '@/components/mui/MuiProviders';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { isThemeMode, THEME_STORAGE_KEY } from '@/lib/theme';
 
 const geistSans = Geist({

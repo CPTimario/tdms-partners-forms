@@ -21,8 +21,6 @@ type Props = {
 };
 
 function emphasizeCopy(text: string) {
-  // Emphasize a few key phrases and insert small icons visually.
-  // The source copy is controlled inside the repo so using simple replacements is acceptable here.
   const replacements: Array<[RegExp, string]> = [
     [/(not approached for partnership)/i, `<span class="${styles.emphasis}">$1</span>`],
     [/(not compelled to give)/i, `<span class="${styles.emphasis}">$1</span>`],
@@ -37,7 +35,6 @@ function emphasizeCopy(text: string) {
     out = out.replace(re, sub);
   });
 
-  // Wrap emphasized phrases with an inline-icon span for visual clarity (icons are added via CSS/markup in the component).
   return out;
 }
 
@@ -46,14 +43,10 @@ export default function AccountabilityModal({ open, onAgree, onClose }: Props) {
   const raw = getAccountabilityAffirmationCopy('victory');
   const theme = useTheme();
 
-  // Map MUI theme tokens into CSS variables so the module CSS uses exact design colors
   const cssVars: CSSVars = {
-    // text colors
     ['--text']: theme.palette.text.primary,
     ['--text-secondary']: theme.palette.text.secondary,
-    // muted/notes use an alpha of the text color
     ['--muted']: alpha(theme.palette.text.primary, 0.65),
-    // brand color from primary
     ['--brand']: theme.palette.primary.main,
   };
 
@@ -68,7 +61,6 @@ export default function AccountabilityModal({ open, onAgree, onClose }: Props) {
           </div>
 
           <div className={styles.copy}>
-            {/* Safe: source copy is repository-controlled */}
             <p dangerouslySetInnerHTML={{ __html: emphasizeCopy(raw) }} />
           </div>
 

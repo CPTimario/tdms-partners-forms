@@ -10,6 +10,8 @@
     "lint:fix": "eslint app components lib hooks tests --ext .js,.jsx,.ts,.tsx --fix --max-warnings=0",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,mjs}\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "filenames:check": "node scripts/check-filenames.mjs",
+    "filenames:fix": "node scripts/fix-filenames.mjs",
     "test:unit": "vitest",
     "test:unit:playwright": "playwright test -c playwright.unit.config.ts",
     "test:e2e": "playwright test",
@@ -34,6 +36,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@playwright/test": "^1.54.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -42,9 +45,10 @@
     "dotenv": "^16.1.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-filenames": "^1.3.0",
+    "eslint-plugin-import": "^2.27.5",
     "jsdom": "^29.0.1",
     "prettier": "^2.8.8",
-    "eslint-plugin-import": "^2.27.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.1"

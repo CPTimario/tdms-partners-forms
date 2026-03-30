@@ -79,6 +79,28 @@ This document captures the core coding standards and best practices for the tdm-
 - **Unit tests**: `npm run test:unit`
 - **E2E tests**: `npm run test:e2e`
 
+**Folder & File Structure**
+
+- **app/**: Next.js app routes, layout and page entry points. See [app/](app/).
+- **components/**: Reusable UI components. Use subfolders for feature groups (e.g., `support-form-builder`, `mapper`).
+- **hooks/**: Custom React hooks (prefix files with `use-`).
+- **lib/**: Domain logic and utilities (kebab-case filenames).
+- **types/**: Shared TypeScript types and declaration files.
+- **tests/**: Test sources — `tests/unit` for Vitest unit tests and `tests/e2e` for Playwright tests.
+- **public/**: Static assets served by Next.js.
+- **scripts/**: Local build/dev helper scripts.
+- Configuration files: root-level configs live at [eslint.config.mjs](eslint.config.mjs), [tsconfig.json](tsconfig.json), [playwright.config.ts](playwright.config.ts), [vitest.config.ts](vitest.config.ts), and `.prettierrc`.
+
+**Naming Conventions**
+
+- **React components (files):** PascalCase with the component name, e.g. `AccountabilityModal.tsx`. Component files should export the component as the default export when the file contains a single primary component.
+- **Component styles:** Use CSS Modules named to match the component: `ComponentName.module.css` (see [components/AccountabilityModal.module.css](components/AccountabilityModal.module.css)).
+- **Hooks:** Prefix with `use-` and use kebab-case, e.g. `use-snackbar.ts`.
+- **Utilities & libs:** Use kebab-case filenames, e.g. `deeplink-client.ts`, `pdf-generator.ts`.
+- **Types & d.ts:** Keep in `types/` or colocated next to the owner module. Use descriptive names like `qrcode.d.ts` or `pdf-form.ts`.
+- **Tests:** Unit tests use `*.spec.tsx` under `tests/unit/`; e2e tests use `*.spec.ts` under `tests/e2e/`. Match the tested module path when practical.
+- **Assets:** Put static assets in `public/` and avoid checked-in large binaries.
+
 **Where to Update This Doc**
 
 - Update this file when adding or changing repository-wide tooling, lint rules, build steps, or test strategies.
