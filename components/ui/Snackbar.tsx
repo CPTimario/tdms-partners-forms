@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import Snackbar from "@mui/material/Snackbar";
-import Portal from "@mui/material/Portal";
-import Alert from "@mui/material/Alert";
-import type { AlertColor } from "@mui/material/Alert";
+import Alert from '@mui/material/Alert';
+import type { AlertColor } from '@mui/material/Alert';
+import Portal from '@mui/material/Portal';
+import Snackbar from '@mui/material/Snackbar';
+import React from 'react';
 
 type Props = {
   open: boolean;
@@ -15,10 +15,13 @@ type Props = {
 };
 
 const AppSnackbar = React.forwardRef<HTMLDivElement, Props>(function AppSnackbar(
-  { open, message, severity = "info", onClose, autoHideDuration = 5000 },
+  { open, message, severity = 'info', onClose, autoHideDuration = 5000 },
   ref,
 ) {
-  const container = typeof document !== "undefined" ? document.getElementById("mui-portal-root") ?? undefined : undefined;
+  const container =
+    typeof document !== 'undefined'
+      ? document.getElementById('mui-portal-root') ?? undefined
+      : undefined;
 
   return (
     <Portal container={container as HTMLElement | undefined}>
@@ -27,10 +30,10 @@ const AppSnackbar = React.forwardRef<HTMLDivElement, Props>(function AppSnackbar
         open={open}
         autoHideDuration={autoHideDuration}
         onClose={onClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         className="snackbar"
       >
-        <Alert onClose={onClose} severity={severity} sx={{ width: "100%" }}>
+        <Alert onClose={onClose} severity={severity} sx={{ width: '100%' }}>
           {message}
         </Alert>
       </Snackbar>

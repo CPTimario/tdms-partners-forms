@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
-import { ChangeEvent, useEffect, useMemo, useReducer, useRef } from "react";
+import { ChangeEvent, useEffect, useMemo, useReducer, useRef } from 'react';
+
 import {
   type CurrencyCode,
   type CanceledChoice,
@@ -20,9 +21,9 @@ import {
   validateAccountabilityStepDetailed,
   validatePartnerStepDetailed,
   validateSupportFormDetailed,
-} from "@/lib/support-form";
+} from '@/lib/support-form';
 
-type CheckboxField = "consentGiven";
+type CheckboxField = 'consentGiven';
 
 type SupportFormState = {
   data: SupportFormData;
@@ -33,65 +34,62 @@ type SupportFormState = {
 
 type SupportFormAction =
   | {
-      type: "set-text";
+      type: 'set-text';
       field: RequiredStringField;
       value: string;
     }
   | {
-      type: "set-checkbox";
+      type: 'set-checkbox';
       field: CheckboxField;
       value: boolean;
     }
   | {
-      type: "set-currency";
+      type: 'set-currency';
       value: CurrencyCode;
     }
   | {
-      type: "set-membership";
+      type: 'set-membership';
       value: MembershipType;
     }
   | {
-      type: "set-canceled";
+      type: 'set-canceled';
       value: CanceledChoice;
     }
   | {
-      type: "set-unable-to-go";
+      type: 'set-unable-to-go';
       value: UnableToGoChoice;
     }
   | {
-      type: "set-rerouted";
+      type: 'set-rerouted';
       value: ReroutedChoice;
     }
   | {
-      type: "set-step";
+      type: 'set-step';
       value: FormStep;
     }
   | {
-      type: "set-signature";
+      type: 'set-signature';
       value: string;
     }
   | {
-      type: "set-validation";
+      type: 'set-validation';
       value: StepValidationResult;
     }
   | {
-      type: "clear-validation";
+      type: 'clear-validation';
     }
   | {
-      type: "reset";
+      type: 'reset';
     };
 
 const initialState: SupportFormState = {
   data: initialSupportFormData,
-  step: "partner",
+  step: 'partner',
   fieldErrors: {},
   formErrors: [],
 };
 
-function withoutFieldError(
-  errors: SupportFormFieldErrors,
-  field: keyof SupportFormFieldErrors,
-) {
+function withoutFieldError(errors: SupportFormFieldErrors, field: keyof SupportFormFieldErrors) {
   if (!errors[field]) {
     return errors;
   }
@@ -101,12 +99,9 @@ function withoutFieldError(
   return nextErrors;
 }
 
-function reducer(
-  state: SupportFormState,
-  action: SupportFormAction,
-): SupportFormState {
+function reducer(state: SupportFormState, action: SupportFormAction): SupportFormState {
   switch (action.type) {
-    case "set-text":
+    case 'set-text':
       return {
         ...state,
         data: {
@@ -115,7 +110,7 @@ function reducer(
         },
         fieldErrors: withoutFieldError(state.fieldErrors, action.field),
       };
-    case "set-checkbox":
+    case 'set-checkbox':
       return {
         ...state,
         data: {
@@ -124,16 +119,16 @@ function reducer(
         },
         fieldErrors: withoutFieldError(state.fieldErrors, action.field),
       };
-    case "set-currency":
+    case 'set-currency':
       return {
         ...state,
         data: {
           ...state.data,
           currency: action.value,
         },
-        fieldErrors: withoutFieldError(state.fieldErrors, "currency"),
+        fieldErrors: withoutFieldError(state.fieldErrors, 'currency'),
       };
-    case "set-membership":
+    case 'set-membership':
       return {
         ...state,
         data: {
@@ -141,60 +136,60 @@ function reducer(
           membershipType: action.value,
         },
       };
-    case "set-canceled":
+    case 'set-canceled':
       return {
         ...state,
         data: {
           ...state.data,
           canceledChoice: action.value,
         },
-        fieldErrors: withoutFieldError(state.fieldErrors, "canceledChoice"),
+        fieldErrors: withoutFieldError(state.fieldErrors, 'canceledChoice'),
       };
-    case "set-unable-to-go":
+    case 'set-unable-to-go':
       return {
         ...state,
         data: {
           ...state.data,
           unableToGoChoice: action.value,
         },
-        fieldErrors: withoutFieldError(state.fieldErrors, "unableToGoChoice"),
+        fieldErrors: withoutFieldError(state.fieldErrors, 'unableToGoChoice'),
       };
-    case "set-rerouted":
+    case 'set-rerouted':
       return {
         ...state,
         data: {
           ...state.data,
           reroutedChoice: action.value,
         },
-        fieldErrors: withoutFieldError(state.fieldErrors, "reroutedChoice"),
+        fieldErrors: withoutFieldError(state.fieldErrors, 'reroutedChoice'),
       };
-    case "set-step":
+    case 'set-step':
       return {
         ...state,
         step: action.value,
       };
-    case "set-signature":
+    case 'set-signature':
       return {
         ...state,
         data: {
           ...state.data,
           partnerSignature: action.value,
         },
-        fieldErrors: withoutFieldError(state.fieldErrors, "partnerSignature"),
+        fieldErrors: withoutFieldError(state.fieldErrors, 'partnerSignature'),
       };
-    case "set-validation":
+    case 'set-validation':
       return {
         ...state,
         fieldErrors: action.value.fieldErrors,
         formErrors: action.value.formErrors,
       };
-    case "clear-validation":
+    case 'clear-validation':
       return {
         ...state,
         fieldErrors: {},
         formErrors: [],
       };
-    case "reset":
+    case 'reset':
       return {
         ...initialState,
         data: {
@@ -208,15 +203,19 @@ function reducer(
 }
 
 export function useSupportForm(initialMembershipType?: MembershipType) {
-  const [state, dispatch] = useReducer(reducer, initialMembershipType, (membership): SupportFormState => {
-    if (membership === "nonVictory") {
-      return {
-        ...initialState,
-        data: { ...initialSupportFormData, membershipType: "nonVictory" },
-      };
-    }
-    return initialState;
-  });
+  const [state, dispatch] = useReducer(
+    reducer,
+    initialMembershipType,
+    (membership): SupportFormState => {
+      if (membership === 'nonVictory') {
+        return {
+          ...initialState,
+          data: { ...initialSupportFormData, membershipType: 'nonVictory' },
+        };
+      }
+      return initialState;
+    },
+  );
   const latestDataRef = useRef(state.data);
 
   useEffect(() => {
@@ -224,46 +223,37 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
   }, [state.data]);
 
   const isFormValid = useMemo(() => isSupportFormValid(state.data), [state.data]);
-  const isPartnerStepComplete = useMemo(
-    () => {
-      const result = validatePartnerStepDetailed(state.data);
-      return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
-    },
-    [state.data],
-  );
-  const isAccountabilityStepComplete = useMemo(
-    () => {
-      const result = validateAccountabilityStepDetailed(state.data);
-      return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
-    },
-    [state.data],
-  );
+  const isPartnerStepComplete = useMemo(() => {
+    const result = validatePartnerStepDetailed(state.data);
+    return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
+  }, [state.data]);
+  const isAccountabilityStepComplete = useMemo(() => {
+    const result = validateAccountabilityStepDetailed(state.data);
+    return Object.keys(result.fieldErrors).length === 0 && result.formErrors.length === 0;
+  }, [state.data]);
 
-  const onTextChange =
-    (field: RequiredStringField) => (event: ChangeEvent<HTMLInputElement>) => {
-      const nextValue = field === "amount"
-        ? formatAmountInputForField(event.target.value)
-        : event.target.value;
+  const onTextChange = (field: RequiredStringField) => (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue =
+      field === 'amount' ? formatAmountInputForField(event.target.value) : event.target.value;
 
-      dispatch({
-        type: "set-text",
-        field,
-        value: nextValue,
-      });
-    };
+    dispatch({
+      type: 'set-text',
+      field,
+      value: nextValue,
+    });
+  };
 
-  const onCheckboxChange =
-    (field: CheckboxField) => (event: ChangeEvent<HTMLInputElement>) => {
-      dispatch({
-        type: "set-checkbox",
-        field,
-        value: event.target.checked,
-      });
-    };
+  const onCheckboxChange = (field: CheckboxField) => (event: ChangeEvent<HTMLInputElement>) => {
+    dispatch({
+      type: 'set-checkbox',
+      field,
+      value: event.target.checked,
+    });
+  };
 
   const onCurrencyChange = (event: ChangeEvent<HTMLSelectElement>) => {
     dispatch({
-      type: "set-currency",
+      type: 'set-currency',
       value: event.target.value as CurrencyCode,
     });
   };
@@ -275,50 +265,50 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     };
 
     dispatch({
-      type: "set-membership",
+      type: 'set-membership',
       value,
     });
   };
 
   const onCanceledChange = (event: ChangeEvent<HTMLInputElement>) => {
     dispatch({
-      type: "set-canceled",
+      type: 'set-canceled',
       value: event.target.value as CanceledChoice,
     });
   };
 
   const onUnableToGoChange = (event: ChangeEvent<HTMLInputElement>) => {
     dispatch({
-      type: "set-unable-to-go",
+      type: 'set-unable-to-go',
       value: event.target.value as UnableToGoChoice,
     });
   };
 
   const onReroutedChange = (event: ChangeEvent<HTMLInputElement>) => {
     dispatch({
-      type: "set-rerouted",
+      type: 'set-rerouted',
       value: event.target.value as ReroutedChoice,
     });
   };
 
   const setPartnerSignature = (value: string) => {
     dispatch({
-      type: "set-signature",
+      type: 'set-signature',
       value,
     });
   };
 
   const resetForm = () => {
-    dispatch({ type: "reset" });
+    dispatch({ type: 'reset' });
   };
 
   const goToStep = (value: EditableFormStep) => {
-    dispatch({ type: "clear-validation" });
-    dispatch({ type: "set-step", value });
+    dispatch({ type: 'clear-validation' });
+    dispatch({ type: 'set-step', value });
   };
 
   const goToPartner = () => {
-    goToStep("partner");
+    goToStep('partner');
   };
 
   const goToAccountability = (): boolean => {
@@ -327,15 +317,18 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
       ...latestDataRef.current,
     };
     const validationResult = validatePartnerStepDetailed(currentData);
-    dispatch({ type: "set-validation", value: validationResult });
+    dispatch({ type: 'set-validation', value: validationResult });
 
-    if (Object.keys(validationResult.fieldErrors).length > 0 || validationResult.formErrors.length > 0) {
-      dispatch({ type: "set-step", value: "partner" });
+    if (
+      Object.keys(validationResult.fieldErrors).length > 0 ||
+      validationResult.formErrors.length > 0
+    ) {
+      dispatch({ type: 'set-step', value: 'partner' });
       return false;
     }
 
-    dispatch({ type: "clear-validation" });
-    dispatch({ type: "set-step", value: "accountability" });
+    dispatch({ type: 'clear-validation' });
+    dispatch({ type: 'set-step', value: 'accountability' });
     return true;
   };
 
@@ -346,15 +339,18 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     };
 
     const validationResult = validateSupportFormDetailed(currentData);
-    dispatch({ type: "set-validation", value: validationResult });
+    dispatch({ type: 'set-validation', value: validationResult });
 
-    if (Object.keys(validationResult.fieldErrors).length === 0 && validationResult.formErrors.length === 0) {
-      dispatch({ type: "set-step", value: "review" });
+    if (
+      Object.keys(validationResult.fieldErrors).length === 0 &&
+      validationResult.formErrors.length === 0
+    ) {
+      dispatch({ type: 'set-step', value: 'review' });
       return true;
     }
 
     const firstInvalidStep = getFirstInvalidStep(currentData);
-    dispatch({ type: "set-step", value: firstInvalidStep ?? "partner" });
+    dispatch({ type: 'set-step', value: firstInvalidStep ?? 'partner' });
     return false;
   };
 
@@ -370,7 +366,7 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     onCurrencyChange,
     onCheckboxChange,
     setField: (field: RequiredStringField, value: string) => {
-      dispatch({ type: "set-text", field, value });
+      dispatch({ type: 'set-text', field, value });
     },
     setMembership,
     onUnableToGoChange,
@@ -383,7 +379,7 @@ export function useSupportForm(initialMembershipType?: MembershipType) {
     goToReview,
     // allow callers to set validation results (useful for external checks like QR share)
     setValidation: (value: { fieldErrors: SupportFormFieldErrors; formErrors: string[] }) => {
-      dispatch({ type: "set-validation", value });
+      dispatch({ type: 'set-validation', value });
     },
   };
 }

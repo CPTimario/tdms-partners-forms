@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { CacheProvider } from "@emotion/react";
-import type { EmotionCache } from "@emotion/cache";
-import createEmotionCache from "./createEmotionCache";
-import { useServerInsertedHTML } from "next/navigation";
+import type { EmotionCache } from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import { useServerInsertedHTML } from 'next/navigation';
+import React, { useState } from 'react';
+
+import createEmotionCache from './createEmotionCache';
+
 
 type Props = {
   children: React.ReactNode;
@@ -27,11 +29,11 @@ export default function EmotionRegistry({ children }: Props) {
 
     if (!sheet || !sheet.tags || sheet.tags.length === 0) return null;
 
-    const css = sheet.tags.map((t) => t.textContent).join("");
-    const names = sheet.tags.map((t) => t.key).join(" ");
+    const css = sheet.tags.map((t) => t.textContent).join('');
+    const names = sheet.tags.map((t) => t.key).join(' ');
 
     // flush so a second render won't duplicate styles
-    if (typeof sheet.flush === "function") sheet.flush();
+    if (typeof sheet.flush === 'function') sheet.flush();
 
     return (
       <style data-emotion={`${cache.key} ${names}`} dangerouslySetInnerHTML={{ __html: css }} />

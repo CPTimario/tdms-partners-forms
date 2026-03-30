@@ -1,6 +1,7 @@
-import styles from "./FormBuilder.module.css";
-import { Download, FilePenLine, ListChecks } from "lucide-react";
-import Button from "@mui/material/Button";
+import Button from '@mui/material/Button';
+import { Download, FilePenLine, ListChecks } from 'lucide-react';
+
+import styles from './FormBuilder.module.css';
 
 type ReviewStepProps = {
   isExporting: boolean;
@@ -31,14 +32,28 @@ export function ReviewStep({
         </div>
 
         <div className={styles.reviewActions}>
-          <Button variant="outlined" startIcon={<FilePenLine size={16} aria-hidden="true" />} onClick={onEditPartnerInfo}>
+          <Button
+            variant="outlined"
+            startIcon={<FilePenLine size={16} aria-hidden="true" />}
+            onClick={onEditPartnerInfo}
+          >
             Edit Partner Details
           </Button>
-          <Button variant="outlined" startIcon={<ListChecks size={16} aria-hidden="true" />} onClick={onEditAccountability}>
+          <Button
+            variant="outlined"
+            startIcon={<ListChecks size={16} aria-hidden="true" />}
+            onClick={onEditAccountability}
+          >
             Edit Accountability Choices
           </Button>
-          <Button startIcon={<Download size={16} aria-hidden="true" />} onClick={() => { void onDownloadPdf(); }} disabled={isBusy}>
-            {isBusy ? "Preparing PDF..." : "Download Final PDF"}
+          <Button
+            startIcon={<Download size={16} aria-hidden="true" />}
+            onClick={() => {
+              void onDownloadPdf();
+            }}
+            disabled={isBusy}
+          >
+            {isBusy ? 'Preparing PDF...' : 'Download Final PDF'}
           </Button>
         </div>
       </div>
@@ -56,9 +71,7 @@ export function ReviewStep({
             ) : (
               <p className={styles.previewPlaceholder}>Preparing preview...</p>
             )}
-            {previewError ? (
-              <p className={styles.previewError}>{previewError}</p>
-            ) : null}
+            {previewError ? <p className={styles.previewError}>{previewError}</p> : null}
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useContext } from "react";
-import { Moon, Sun } from "lucide-react";
-import { ColorModeContext } from "@/components/mui/MuiProviders";
+import { Moon, Sun } from 'lucide-react';
+import { useContext } from 'react';
+
+import { ColorModeContext } from '@/components/mui/MuiProviders';
 
 export function ThemeToggle() {
   const { mode, toggleColorMode } = useContext(ColorModeContext);
@@ -13,7 +14,7 @@ export function ThemeToggle() {
       className="theme-toggle"
       onClick={toggleColorMode}
       aria-label="Toggle light and dark mode"
-      aria-pressed={mode === "dark"}
+      aria-pressed={mode === 'dark'}
       title="Toggle light and dark mode"
     >
       <Sun className="theme-toggle-icon theme-toggle-icon-light" size={18} aria-hidden="true" />

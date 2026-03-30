@@ -1,12 +1,12 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export type MembershipType = "victory" | "nonVictory";
-export type CurrencyCode = "PHP" | "USD";
-export type UnableToGoChoice = "teamFund" | "generalFund" | null;
-export type ReroutedChoice = "retain" | "generalFund" | null;
-export type CanceledChoice = "generalFund" | null;
-export type EditableFormStep = "partner" | "accountability";
-export type FormStep = EditableFormStep | "review";
+export type MembershipType = 'victory' | 'nonVictory';
+export type CurrencyCode = 'PHP' | 'USD';
+export type UnableToGoChoice = 'teamFund' | 'generalFund' | null;
+export type ReroutedChoice = 'retain' | 'generalFund' | null;
+export type CanceledChoice = 'generalFund' | null;
+export type EditableFormStep = 'partner' | 'accountability';
+export type FormStep = EditableFormStep | 'review';
 
 export type SupportFormData = {
   membershipType: MembershipType | null;
@@ -31,61 +31,58 @@ export type SupportFormData = {
 export const initialSupportFormData: SupportFormData = {
   membershipType: null,
   consentGiven: false,
-  partnerName: "",
-  emailAddress: "",
-  mobileNumber: "",
-  localChurch: "",
-  missionaryName: "",
-  currency: "PHP",
-  amount: "",
-  nation: "",
-  travelDate: "",
-  sendingChurch: "",
+  partnerName: '',
+  emailAddress: '',
+  mobileNumber: '',
+  localChurch: '',
+  missionaryName: '',
+  currency: 'PHP',
+  amount: '',
+  nation: '',
+  travelDate: '',
+  sendingChurch: '',
   unableToGoChoice: null,
   reroutedChoice: null,
   canceledChoice: null,
-  partnerSignature: "",
-  partnerPrintedName: "",
+  partnerSignature: '',
+  partnerPrintedName: '',
 };
 
 export const consentCopy =
-  "By providing my information, I am allowing Every Nation to process my information.";
+  'By providing my information, I am allowing Every Nation to process my information.';
 
 export const partnerFormIntroCopy =
-  "Complete the support partner information exactly as it should appear on the support form. The consent section is part of the signed-up form and will be included in the final output.";
+  'Complete the support partner information exactly as it should appear on the support form. The consent section is part of the signed-up form and will be included in the final output.';
 
 export const privacyCopy =
-  "The information you provide will be treated with utmost respect and confidentiality. Every Nation follows general principles and rules of data privacy protection in the Philippines. For more information, visit everynation.org.ph/privacy.";
+  'The information you provide will be treated with utmost respect and confidentiality. Every Nation follows general principles and rules of data privacy protection in the Philippines. For more information, visit everynation.org.ph/privacy.';
 
 export const accountabilityIntroCopy =
-  "Choose how your support should be handled for each accountability scenario, then provide your digital signature exactly as you want it printed on the form.";
+  'Choose how your support should be handled for each accountability scenario, then provide your digital signature exactly as you want it printed on the form.';
 
 export const victoryAccountabilityAffirmationCopy =
-  "I confirm that I was not approached for partnership and understand that I am not compelled to give. I am grateful for the opportunity to advance the gospel to the nations.";
+  'I confirm that I was not approached for partnership and understand that I am not compelled to give. I am grateful for the opportunity to advance the gospel to the nations.';
 
 export const victoryAccountabilityInstructionCopy =
-  "I have selected below my instructions to the Gift Processing Office on how to handle my support in each specified scenario.";
+  'I have selected below my instructions to the Gift Processing Office on how to handle my support in each specified scenario.';
 
 export const nonVictoryAccountabilityInstructionCopy =
   "I confirm the options I've selected below as my instructions to the Gift Processing Office on how to handle my support in each specified scenario.";
 
 export const partnerRequiredFields = [
-  "partnerName",
-  "emailAddress",
-  "mobileNumber",
-  "localChurch",
-  "missionaryName",
-  "currency",
-  "amount",
-  "nation",
-  "travelDate",
-  "sendingChurch",
+  'partnerName',
+  'emailAddress',
+  'mobileNumber',
+  'localChurch',
+  'missionaryName',
+  'currency',
+  'amount',
+  'nation',
+  'travelDate',
+  'sendingChurch',
 ] as const;
 
-export const accountabilityRequiredFields = [
-  "partnerSignature",
-  "partnerPrintedName",
-] as const;
+export const accountabilityRequiredFields = ['partnerSignature', 'partnerPrintedName'] as const;
 
 export type RequiredStringField =
   | (typeof partnerRequiredFields)[number]
@@ -93,15 +90,13 @@ export type RequiredStringField =
 
 export type SupportFormFieldErrorKey =
   | RequiredStringField
-  | "membershipType"
-  | "consentGiven"
-  | "unableToGoChoice"
-  | "reroutedChoice"
-  | "canceledChoice";
+  | 'membershipType'
+  | 'consentGiven'
+  | 'unableToGoChoice'
+  | 'reroutedChoice'
+  | 'canceledChoice';
 
-export type SupportFormFieldErrors = Partial<
-  Record<SupportFormFieldErrorKey, string>
->;
+export type SupportFormFieldErrors = Partial<Record<SupportFormFieldErrorKey, string>>;
 
 export type StepValidationResult = {
   fieldErrors: SupportFormFieldErrors;
@@ -109,51 +104,47 @@ export type StepValidationResult = {
 };
 
 export const fieldLabels: Record<RequiredStringField, string> = {
-  partnerName: "Partner Name",
-  emailAddress: "Email Address",
-  mobileNumber: "Mobile Number",
-  localChurch: "Local Church",
-  missionaryName: "Missioner Name/Team",
-  currency: "Currency",
-  amount: "Amount",
-  nation: "Nation",
-  travelDate: "Travel Date",
-  sendingChurch: "Sending Church",
-  partnerSignature: "Signature",
-  partnerPrintedName: "Partner Full Name",
+  partnerName: 'Partner Name',
+  emailAddress: 'Email Address',
+  mobileNumber: 'Mobile Number',
+  localChurch: 'Local Church',
+  missionaryName: 'Missioner Name/Team',
+  currency: 'Currency',
+  amount: 'Amount',
+  nation: 'Nation',
+  travelDate: 'Travel Date',
+  sendingChurch: 'Sending Church',
+  partnerSignature: 'Signature',
+  partnerPrintedName: 'Partner Full Name',
 };
 
 export const stepLabels: Record<EditableFormStep, string> = {
-  partner: "Partner Information",
-  accountability: "Accountability",
+  partner: 'Partner Information',
+  accountability: 'Accountability',
 };
 
-const requiredString = (label: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `${label} is required.`);
+const requiredString = (label: string) => z.string().trim().min(1, `${label} is required.`);
 
-const currencySchema = z.enum(["PHP", "USD"]);
+const currencySchema = z.enum(['PHP', 'USD']);
 
 export function normalizeAmountInput(value: string) {
-  return value.replace(/,/g, "").trim();
+  return value.replace(/,/g, '').trim();
 }
 
 export function formatAmountInputForField(value: string) {
-  const cleaned = value.replace(/[^\d.]/g, "");
+  const cleaned = value.replace(/[^\d.]/g, '');
   if (!cleaned) {
-    return "";
+    return '';
   }
 
-  const firstDotIndex = cleaned.indexOf(".");
+  const firstDotIndex = cleaned.indexOf('.');
   const hasDot = firstDotIndex !== -1;
   const integerRaw = hasDot ? cleaned.slice(0, firstDotIndex) : cleaned;
-  const decimalRaw = hasDot ? cleaned.slice(firstDotIndex + 1).replace(/\./g, "") : "";
+  const decimalRaw = hasDot ? cleaned.slice(firstDotIndex + 1).replace(/\./g, '') : '';
 
-  const integerNoLeadingZeros = integerRaw.replace(/^0+(\d)/, "$1");
-  const integerPortion = integerNoLeadingZeros || "0";
-  const groupedInteger = integerPortion.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const integerNoLeadingZeros = integerRaw.replace(/^0+(\d)/, '$1');
+  const integerPortion = integerNoLeadingZeros || '0';
+  const groupedInteger = integerPortion.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const decimalPortion = decimalRaw.slice(0, 2);
 
   if (hasDot) {
@@ -165,70 +156,73 @@ export function formatAmountInputForField(value: string) {
 
 const partnerStepSchema = z.object({
   consentGiven: z.boolean().refine((value) => value, {
-    message: "Consent is required.",
+    message: 'Consent is required.',
   }),
-  partnerName: requiredString("Partner Name"),
-  emailAddress: requiredString("Email Address").email("Email Address must be a valid email."),
-  mobileNumber: requiredString("Mobile Number").regex(
+  partnerName: requiredString('Partner Name'),
+  emailAddress: requiredString('Email Address').email('Email Address must be a valid email.'),
+  mobileNumber: requiredString('Mobile Number').regex(
     /^[0-9+\-()\s]{7,20}$/,
-    "Mobile Number format is invalid.",
+    'Mobile Number format is invalid.',
   ),
-  localChurch: requiredString("Local Church"),
-  missionaryName: requiredString("Missioner Name/Team"),
+  localChurch: requiredString('Local Church'),
+  missionaryName: requiredString('Missioner Name/Team'),
   currency: currencySchema,
-  amount: requiredString("Amount")
+  amount: requiredString('Amount')
     .refine((value) => /^\d+(\.\d{1,2})?$/.test(normalizeAmountInput(value)), {
-      message: "Amount must be a valid number.",
+      message: 'Amount must be a valid number.',
     })
     .refine((value) => Number(normalizeAmountInput(value)) > 0, {
-      message: "Amount must be greater than zero.",
+      message: 'Amount must be greater than zero.',
     }),
-  nation: requiredString("Nation"),
-  travelDate: requiredString("Travel Date")
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Travel Date is invalid.")
-    .refine((value) => {
-      try {
-        const now = new Date();
-        const pad = (n: number) => String(n).padStart(2, "0");
-        const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-        return value >= localToday;
-      } catch {
-        return false;
-      }
-    }, {
-      message: "Travel Date cannot be earlier than today.",
-    }),
-  sendingChurch: requiredString("Sending Church"),
+  nation: requiredString('Nation'),
+  travelDate: requiredString('Travel Date')
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Travel Date is invalid.')
+    .refine(
+      (value) => {
+        try {
+          const now = new Date();
+          const pad = (n: number) => String(n).padStart(2, '0');
+          const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+            now.getDate(),
+          )}`;
+          return value >= localToday;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: 'Travel Date cannot be earlier than today.',
+      },
+    ),
+  sendingChurch: requiredString('Sending Church'),
 });
 
 const accountabilityStepSchema = z.object({
   membershipType: z
-    .enum(["victory", "nonVictory"])
+    .enum(['victory', 'nonVictory'])
     .nullable()
     .refine((value) => value !== null, {
-      message: "Membership type is required.",
+      message: 'Membership type is required.',
     }),
-  partnerSignature: requiredString("Signature"),
-  partnerPrintedName: requiredString("Partner Full Name"),
+  partnerSignature: requiredString('Signature'),
+  partnerPrintedName: requiredString('Partner Full Name'),
   unableToGoChoice: z
-    .enum(["teamFund", "generalFund"])
+    .enum(['teamFund', 'generalFund'])
     .nullable()
     .refine((value) => value !== null, {
-      message:
-        "Please choose an accountability option for when the missioner is unable to go.",
+      message: 'Please choose an accountability option for when the missioner is unable to go.',
     }),
   reroutedChoice: z
-    .enum(["retain", "generalFund"])
+    .enum(['retain', 'generalFund'])
     .nullable()
     .refine((value) => value !== null, {
-      message:
-        "Please choose an accountability option for when the missioner or team is rerouted.",
+      message: 'Please choose an accountability option for when the missioner or team is rerouted.',
     }),
   canceledChoice: z
-    .enum(["generalFund"])
+    .enum(['generalFund'])
     .nullable()
     .refine((value) => value !== null, {
-      message: "Please confirm the accountability instruction for a canceled trip.",
+      message: 'Please confirm the accountability instruction for a canceled trip.',
     }),
 });
 
@@ -253,7 +247,7 @@ function toStepValidationResult(
 
   result.error.issues.forEach((issue) => {
     const firstPath = issue.path[0];
-    if (typeof firstPath === "string") {
+    if (typeof firstPath === 'string') {
       const key = firstPath as SupportFormFieldErrorKey;
       if (!fieldErrors[key]) {
         fieldErrors[key] = issue.message;
@@ -275,7 +269,7 @@ const maxLineChars = 55;
 export function displayValue(value: string) {
   const trimmed = value.trim();
   if (!trimmed) {
-    return "";
+    return '';
   }
 
   if (trimmed.length <= maxLineChars) {
@@ -286,13 +280,13 @@ export function displayValue(value: string) {
 }
 
 export function checkmark(checked: boolean) {
-  return checked ? "X" : "";
+  return checked ? 'X' : '';
 }
 
 export function formatDisplayDate(value: string) {
   const trimmed = value.trim();
   if (!trimmed) {
-    return "";
+    return '';
   }
 
   const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -307,7 +301,7 @@ export function formatDisplayDate(value: string) {
 export function formatCurrencyAmount(amount: string, currency: CurrencyCode) {
   const normalizedAmount = normalizeAmountInput(amount);
   if (!normalizedAmount) {
-    return "";
+    return '';
   }
 
   const numericAmount = Number(normalizedAmount);
@@ -317,16 +311,16 @@ export function formatCurrencyAmount(amount: string, currency: CurrencyCode) {
 
   // pdf-lib's standard WinAnsi fonts cannot encode the peso symbol (₱),
   // so PHP values are rendered with currency code to remain PDF-safe.
-  if (currency === "PHP") {
-    const amountWithSeparators = new Intl.NumberFormat("en-US", {
+  if (currency === 'PHP') {
+    const amountWithSeparators = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(numericAmount);
     return `PHP ${amountWithSeparators}`;
   }
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -334,9 +328,9 @@ export function formatCurrencyAmount(amount: string, currency: CurrencyCode) {
 }
 
 export function getAccountabilityAffirmationCopy(
-  membershipType: SupportFormData["membershipType"],
+  membershipType: SupportFormData['membershipType'],
 ) {
-  if (membershipType === "victory") {
+  if (membershipType === 'victory') {
     return victoryAccountabilityAffirmationCopy;
   }
 
@@ -344,21 +338,21 @@ export function getAccountabilityAffirmationCopy(
 }
 
 export function getAccountabilityInstructionCopy(
-  membershipType: SupportFormData["membershipType"],
+  membershipType: SupportFormData['membershipType'],
 ) {
-  if (membershipType === "victory") {
+  if (membershipType === 'victory') {
     return victoryAccountabilityInstructionCopy;
   }
 
-  return "";
+  return '';
 }
 
-export function getAccountabilityTitle(membershipType: SupportFormData["membershipType"]) {
-  if (membershipType === "victory") {
-    return "TEN DAYS MISSIONS SUPPORT ACCOUNTABILITY FORM FOR VICTORY MEMBERS";
+export function getAccountabilityTitle(membershipType: SupportFormData['membershipType']) {
+  if (membershipType === 'victory') {
+    return 'TEN DAYS MISSIONS SUPPORT ACCOUNTABILITY FORM FOR VICTORY MEMBERS';
   }
 
-  return "TEN DAYS MISSIONS SUPPORT ACCOUNTABILITY FORM";
+  return 'TEN DAYS MISSIONS SUPPORT ACCOUNTABILITY FORM';
 }
 
 /**
@@ -396,9 +390,7 @@ export function validatePartnerStepDetailed(data: SupportFormData): StepValidati
   return toStepValidationResult(result);
 }
 
-export function validateAccountabilityStepDetailed(
-  data: SupportFormData,
-): StepValidationResult {
+export function validateAccountabilityStepDetailed(data: SupportFormData): StepValidationResult {
   const result = accountabilityStepSchema.safeParse({
     membershipType: data.membershipType,
     partnerSignature: data.partnerSignature,
@@ -443,7 +435,7 @@ export function validateSupportForm(data: SupportFormData) {
 export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | null {
   const partnerResult = validatePartnerStepDetailed(data);
   if (Object.keys(partnerResult.fieldErrors).length > 0 || partnerResult.formErrors.length > 0) {
-    return "partner";
+    return 'partner';
   }
 
   const accountabilityResult = validateAccountabilityStepDetailed(data);
@@ -451,7 +443,7 @@ export function getFirstInvalidStep(data: SupportFormData): EditableFormStep | n
     Object.keys(accountabilityResult.fieldErrors).length > 0 ||
     accountabilityResult.formErrors.length > 0
   ) {
-    return "accountability";
+    return 'accountability';
   }
 
   return null;

@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import { Lock } from "lucide-react";
-import DisclaimerModal from "@/components/ui/DisclaimerModal";
-import styles from "@/components/support-form-builder/FormBuilder.module.css";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import { Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+import styles from '@/components/support-form-builder/FormBuilder.module.css';
+import DisclaimerModal from '@/components/ui/DisclaimerModal';
 
 export default function PrivacyWidget() {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,7 @@ export default function PrivacyWidget() {
   useEffect(() => {
     let mounted = true;
     try {
-      const dismissed = window.localStorage.getItem("disclaimer_dismissed");
+      const dismissed = window.localStorage.getItem('disclaimer_dismissed');
       if (!dismissed) {
         // Schedule opening on a microtask so tests that await a resolved promise
         // will observe the update without relying on macrotasks.
@@ -34,7 +35,7 @@ export default function PrivacyWidget() {
 
   const handleClose = () => {
     try {
-      window.localStorage.setItem("disclaimer_dismissed", "1");
+      window.localStorage.setItem('disclaimer_dismissed', '1');
     } catch {
       // ignore
     }
@@ -43,7 +44,7 @@ export default function PrivacyWidget() {
 
   return (
     <>
-      <Box sx={{ position: "fixed", left: 12, top: 12, zIndex: 200, display: "flex" }}>
+      <Box sx={{ position: 'fixed', left: 12, top: 12, zIndex: 200, display: 'flex' }}>
         <Button
           className={styles.button}
           onClick={() => setOpen(true)}

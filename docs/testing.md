@@ -2,8 +2,8 @@
 
 This file documents the repository's test setup and common commands for running tests locally and in CI.
 
-Unit tests
-----------
+## Unit tests
+
 - Runner: Vitest
 - Command:
 
@@ -13,8 +13,8 @@ npm run test:unit
 
 - Unit tests stub browser-specific or heavy UI modules where appropriate (see `tests/unit/*` for examples).
 
-End-to-end tests (E2E)
----------------------
+## End-to-end tests (E2E)
+
 - Runner: Playwright
 - Before running E2E tests, install browsers and start a dev server. Recommended sequence:
 
@@ -38,7 +38,7 @@ npm run test:e2e
 CI
 -- The included GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint, typecheck, unit tests, installs Playwright browsers, and runs E2E tests. Ensure `DEEPLINK_KEY` is set in repository secrets and injected into the job environment.
 
-Troubleshooting
----------------
+## Troubleshooting
+
 - If Playwright tests fail due to inaccessible elements, verify the dev server is ready and increase timeouts locally.
 - Unit tests may mock `@mui/x-date-pickers` and other ESM-heavy modules; if you add new UI dependencies, add lightweight mocks in `tests/unit` to keep unit runs fast and deterministic.

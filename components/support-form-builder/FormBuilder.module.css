@@ -94,7 +94,7 @@
   gap: 0.7rem;
   align-items: center;
   padding: 0.8rem 1rem;
-  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01));
   border-radius: 14px;
   border: 1px solid var(--line);
   flex: 1 1 0;
@@ -105,7 +105,12 @@
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
   flex: 0 0 40px;
 }
 
@@ -119,14 +124,24 @@
   height: 14px;
   width: 70%;
   border-radius: 6px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
 }
 
 .skeletonShort {
   height: 12px;
   width: 40%;
   border-radius: 6px;
-  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
 }
 
 /* Landing CTAs */
@@ -214,7 +229,6 @@
   outline: 3px solid color-mix(in srgb, var(--accent) 22%, transparent);
   outline-offset: 3px;
 }
-
 
 /* Content inside the card: keep icon left, text vertically centered and padded */
 .ctaCard > div:last-child {
@@ -499,7 +513,6 @@
 .textInput:focus-visible {
   border-color: var(--accent);
 }
-
 
 .textInputError {
   border-color: var(--danger);

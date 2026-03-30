@@ -1,32 +1,32 @@
-import React from "react";
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { createRoot } from "react-dom/client";
-import { act } from "react";
+import React from 'react';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock("next/navigation", () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
-import LandingMembershipCTAs from "@/components/support-form-builder/LandingMembershipCTAs";
+import LandingMembershipCTAs from '@/components/support-form-builder/LandingMembershipCTAs';
 
-describe("LandingMembershipCTAs (DOM)", () => {
+describe('LandingMembershipCTAs (DOM)', () => {
   let container: HTMLDivElement | null = null;
 
   beforeEach(() => {
-    container = document.createElement("div");
+    container = document.createElement('div');
     document.body.appendChild(container);
   });
 
   afterEach(() => {
     if (container) {
-      container.innerHTML = "";
+      container.innerHTML = '';
       container.remove();
       container = null;
     }
     vi.resetAllMocks();
   });
 
-  test("renders two CTAs with accessible labels and triggers routing on click", async () => {
+  test('renders two CTAs with accessible labels and triggers routing on click', async () => {
     const root = createRoot(container!);
 
     await act(async () => {
@@ -34,7 +34,7 @@ describe("LandingMembershipCTAs (DOM)", () => {
     });
 
     // Should render heading and two buttons
-    const heading = container!.querySelector("#membership-choose-title") as HTMLElement | null;
+    const heading = container!.querySelector('#membership-choose-title') as HTMLElement | null;
     expect(heading).toBeTruthy();
 
     const buttons = Array.from(container!.querySelectorAll("button, [role='button']"));
@@ -42,9 +42,13 @@ describe("LandingMembershipCTAs (DOM)", () => {
     expect(buttons.length).toBeGreaterThanOrEqual(2);
 
     // Check aria-label presence for both CTAs by scanning attributes (avoid quoting issues)
-    const allEls = Array.from(container!.querySelectorAll("*") as NodeListOf<HTMLElement>);
-    const nonVictory = allEls.find((el) => el.getAttribute("aria-label") === "Open partners' forms for Non-Victory members");
-    const victory = allEls.find((el) => el.getAttribute("aria-label") === "Open partners' forms for Victory members");
+    const allEls = Array.from(container!.querySelectorAll('*') as NodeListOf<HTMLElement>);
+    const nonVictory = allEls.find(
+      (el) => el.getAttribute('aria-label') === "Open partners' forms for Non-Victory members",
+    );
+    const victory = allEls.find(
+      (el) => el.getAttribute('aria-label') === "Open partners' forms for Victory members",
+    );
     expect(nonVictory).toBeTruthy();
     expect(victory).toBeTruthy();
 

@@ -4,7 +4,7 @@ test.describe('Privacy modal', () => {
   test('appears on first visit and persists dismissal across pages', async ({ page }) => {
     // Create a fresh context without storageState so the privacy modal will open
     const browser = page.context().browser();
-    if (!browser) throw new Error("Unable to access browser instance for new context");
+    if (!browser) throw new Error('Unable to access browser instance for new context');
     const context = await browser.newContext();
     const newPage = await context.newPage();
 
@@ -21,6 +21,16 @@ test.describe('Privacy modal', () => {
       }
       await expect(heading).toBeVisible();
 
+      // basic accessibility snapshot: ensure the accessibility tree includes the privacy heading
+      // basic accessibility snapshot when available; skip gracefully if not supported
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const accessibilityApi = (newPage as any).accessibility;
+      if (accessibilityApi && typeof accessibilityApi.snapshot === 'function') {
+        const ax = await accessibilityApi.snapshot();
+        // simple string check is sufficient for a quick assertion here
+        expect(JSON.stringify(ax)).toContain('Privacy notice');
+      }
+
       // Dismiss the modal
       const understood = newPage.getByRole('button', { name: 'Understood' });
       await expect(understood).toBeVisible();
@@ -30,7 +40,9 @@ test.describe('Privacy modal', () => {
       await expect(heading).toBeHidden();
 
       // localStorage should have dismissal key
-      const dismissed = await newPage.evaluate(() => window.localStorage.getItem('disclaimer_dismissed'));
+      const dismissed = await newPage.evaluate(() =>
+        window.localStorage.getItem('disclaimer_dismissed'),
+      );
       expect(dismissed).toBe('1');
 
       // Navigate to another page and ensure modal does not reappear

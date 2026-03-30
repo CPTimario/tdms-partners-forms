@@ -8,6 +8,7 @@
     "start": "node ./scripts/check-deeplink-key.js && next start",
     "lint": "eslint app components lib hooks tests --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "lint:fix": "eslint app components lib hooks tests --ext .js,.jsx,.ts,.tsx --fix --max-warnings=0",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,mjs}\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "vitest",
     "test:unit:playwright": "playwright test -c playwright.unit.config.ts",
@@ -42,6 +43,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^29.0.1",
+    "prettier": "^2.8.8",
+    "eslint-plugin-import": "^2.27.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.1"

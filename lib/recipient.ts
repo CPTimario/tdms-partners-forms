@@ -1,5 +1,5 @@
 export type Recipient = {
-  kind: "team" | "missioner";
+  kind: 'team' | 'missioner';
   id: string;
   // optional display fields used by UI and QR generation
   name?: string | null;
@@ -14,14 +14,14 @@ export type Recipient = {
  * Returns null for inputs that don't match expected patterns.
  */
 export function parseRecipientParam(param: string | null): Recipient | null {
-  if (!param || typeof param !== "string") return null;
+  if (!param || typeof param !== 'string') return null;
 
   // canonical forms we support
-  if (/^team::[\w-]+$/.test(param)) return { kind: "team", id: param };
-  if (/^m::[\w-:]+$/.test(param)) return { kind: "missioner", id: param };
+  if (/^team::[\w-]+$/.test(param)) return { kind: 'team', id: param };
+  if (/^m::[\w-:]+$/.test(param)) return { kind: 'missioner', id: param };
 
   // explicit short-hand numeric team id (e.g. "123") -> normalize to team::123
-  if (/^[0-9]+$/.test(param)) return { kind: "team", id: `team::${param}` };
+  if (/^[0-9]+$/.test(param)) return { kind: 'team', id: `team::${param}` };
 
   return null;
 }

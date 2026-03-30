@@ -1,5 +1,10 @@
-"use client";
+'use client';
 
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Slider from '@mui/material/Slider';
+import TextField from '@mui/material/TextField';
+import { ClipboardCopy, Copy, Move, Save } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -9,23 +14,14 @@ import {
   type KeyboardEventHandler,
   type MouseEventHandler,
   type PointerEvent,
-} from "react";
-import { ClipboardCopy, Copy, Move, Save } from "lucide-react";
-import TextField from "@mui/material/TextField";
-import MenuItem from "@mui/material/MenuItem";
-import Slider from "@mui/material/Slider";
-import Button from "@mui/material/Button";
-import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
-import type {
-  MembershipType,
-} from "@/lib/support-form";
-import type {
-  CheckboxConfig,
-  TemplateCoordinates,
-  TextFieldConfig,
-} from "@/types/pdf-form";
-import { PDFRenderer } from "./PDFRenderer";
-import styles from "./MapperPage.module.css";
+} from 'react';
+
+import { getTemplateCoordinates } from '@/lib/pdf-coordinates';
+import type { MembershipType } from '@/lib/support-form';
+import type { CheckboxConfig, TemplateCoordinates, TextFieldConfig } from '@/types/pdf-form';
+
+import styles from './MapperPage.module.css';
+import { PDFRenderer } from './PDFRenderer';
 
 const MM_TO_POINTS = 2.834645669;
 const PAGE_WIDTH_PT = 612;
@@ -34,33 +30,33 @@ const PAGE_WIDTH_MM = PAGE_WIDTH_PT / MM_TO_POINTS;
 const PAGE_HEIGHT_MM = PAGE_HEIGHT_PT / MM_TO_POINTS;
 
 const PAGE_1_FIELDS: Array<keyof TemplateCoordinates> = [
-  "partnerName",
-  "emailAddress",
-  "mobileNumber",
-  "localChurch",
-  "missionaryName",
-  "amount",
-  "nation",
-  "travelDateMonth",
-  "travelDateDay",
-  "travelDateYear",
-  "sendingChurch",
-  "consentCheckbox",
+  'partnerName',
+  'emailAddress',
+  'mobileNumber',
+  'localChurch',
+  'missionaryName',
+  'amount',
+  'nation',
+  'travelDateMonth',
+  'travelDateDay',
+  'travelDateYear',
+  'sendingChurch',
+  'consentCheckbox',
 ];
 
 const PAGE_2_FIELDS: Array<keyof TemplateCoordinates> = [
-  "unableToGoTeamFund",
-  "unableToGoGeneralFund",
-  "reroutedRetain",
-  "reroutedGeneralFund",
-  "canceledGeneralFund",
-  "partnerSignature",
-  "partnerSignaturePrintedName",
+  'unableToGoTeamFund',
+  'unableToGoGeneralFund',
+  'reroutedRetain',
+  'reroutedGeneralFund',
+  'canceledGeneralFund',
+  'partnerSignature',
+  'partnerSignaturePrintedName',
 ];
 
 const TEMPLATE_PDF_PATH: Record<MembershipType, string> = {
-  victory: "/tdms-forms/pic-saf-victory.pdf",
-  nonVictory: "/tdms-forms/pic-saf-non-victory.pdf",
+  victory: '/tdms-forms/pic-saf-victory.pdf',
+  nonVictory: '/tdms-forms/pic-saf-non-victory.pdf',
 };
 
 type MapperPoint = {
@@ -84,7 +80,9 @@ type ResizeState = {
   bottomY: number;
 };
 
-const DEFAULT_FIELD_BOX_DIMENSIONS: Partial<Record<keyof TemplateCoordinates, { width: number; height: number }>> = {
+const DEFAULT_FIELD_BOX_DIMENSIONS: Partial<
+  Record<keyof TemplateCoordinates, { width: number; height: number }>
+> = {
   partnerName: { width: 46, height: 7 },
   emailAddress: { width: 50, height: 7 },
   mobileNumber: { width: 34, height: 7 },
@@ -118,7 +116,7 @@ function cloneTemplateCoordinates(membershipType: MembershipType): TemplateCoord
 }
 
 function toSnippet(field: keyof TemplateCoordinates, config: unknown) {
-  if (!config || typeof config !== "object") {
+  if (!config || typeof config !== 'object') {
     return `${field}: undefined,`;
   }
 
@@ -126,28 +124,25 @@ function toSnippet(field: keyof TemplateCoordinates, config: unknown) {
 }
 
 function isEditableFieldConfig(config: unknown): config is EditableFieldConfig {
-  return Boolean(
-    config &&
-      typeof config === "object" &&
-      "x" in config &&
-      "y" in config,
-  );
+  return Boolean(config && typeof config === 'object' && 'x' in config && 'y' in config);
 }
 
 export function MapperPage() {
-  const [membershipType, setMembershipType] = useState<MembershipType>("victory");
+  const [membershipType, setMembershipType] = useState<MembershipType>('victory');
   const [pageNumber, setPageNumber] = useState<1 | 2>(1);
   const [zoom, setZoom] = useState(1);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [selectedField, setSelectedField] = useState<keyof TemplateCoordinates>("partnerName");
+  const [selectedField, setSelectedField] = useState<keyof TemplateCoordinates>('partnerName');
   const [lastPoint, setLastPoint] = useState<MapperPoint | null>(null);
-  const [draftCoordinates, setDraftCoordinates] = useState<Record<MembershipType, TemplateCoordinates>>(() => ({
-    victory: cloneTemplateCoordinates("victory"),
-    nonVictory: cloneTemplateCoordinates("nonVictory"),
+  const [draftCoordinates, setDraftCoordinates] = useState<
+    Record<MembershipType, TemplateCoordinates>
+  >(() => ({
+    victory: cloneTemplateCoordinates('victory'),
+    nonVictory: cloneTemplateCoordinates('nonVictory'),
   }));
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
-  const [saveStatus, setSaveStatus] = useState<string>("");
+  const [saveStatus, setSaveStatus] = useState<string>('');
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const dragMovedRef = useRef(false);
   const draftCoordinatesRef = useRef(draftCoordinates);
@@ -169,18 +164,19 @@ export function MapperPage() {
     ? selectedField
     : currentFieldKeys[0];
 
-  const mappedFields = useMemo<Array<{ key: keyof TemplateCoordinates; config: EditableFieldConfig }>>(
+  const mappedFields = useMemo<
+    Array<{ key: keyof TemplateCoordinates; config: EditableFieldConfig }>
+  >(
     () =>
-      currentFieldKeys.reduce<Array<{ key: keyof TemplateCoordinates; config: EditableFieldConfig }>>(
-        (acc, key) => {
-          const config = templateCoordinates[key];
-          if (isEditableFieldConfig(config)) {
-            acc.push({ key, config });
-          }
-          return acc;
-        },
-        [],
-      ),
+      currentFieldKeys.reduce<
+        Array<{ key: keyof TemplateCoordinates; config: EditableFieldConfig }>
+      >((acc, key) => {
+        const config = templateCoordinates[key];
+        if (isEditableFieldConfig(config)) {
+          acc.push({ key, config });
+        }
+        return acc;
+      }, []),
     [currentFieldKeys, templateCoordinates],
   );
 
@@ -188,94 +184,109 @@ export function MapperPage() {
   const canvasWidth = PAGE_WIDTH_PT * zoom;
   const canvasHeight = PAGE_HEIGHT_PT * zoom;
 
-  const getFieldDimensions = useCallback((field: keyof TemplateCoordinates, config: EditableFieldConfig) => {
-    const fallback = DEFAULT_FIELD_BOX_DIMENSIONS[field] ?? { width: 24, height: 6 };
-
-    return {
-      width: config.width ?? fallback.width,
-      height: config.height ?? fallback.height,
-    };
-  }, []);
-
-  const updateFieldConfig = useCallback((
-    field: keyof TemplateCoordinates,
-    updater: (config: EditableFieldConfig) => EditableFieldConfig,
-    nextMembershipType: MembershipType = membershipType,
-  ) => {
-    setDraftCoordinates((previous) => {
-      const config = previous[nextMembershipType][field];
-      if (!isEditableFieldConfig(config)) {
-        return previous;
-      }
+  const getFieldDimensions = useCallback(
+    (field: keyof TemplateCoordinates, config: EditableFieldConfig) => {
+      const fallback = DEFAULT_FIELD_BOX_DIMENSIONS[field] ?? { width: 24, height: 6 };
 
       return {
-        ...previous,
-        [nextMembershipType]: {
-          ...previous[nextMembershipType],
-          [field]: updater(config),
-        },
+        width: config.width ?? fallback.width,
+        height: config.height ?? fallback.height,
       };
-    });
-  }, [membershipType]);
+    },
+    [],
+  );
 
-  const updateFieldDimensions = useCallback((
-    field: keyof TemplateCoordinates,
-    widthMm: number,
-    heightMm: number,
-    nextMembershipType: MembershipType = membershipType,
-  ) => {
-    const config = draftCoordinatesRef.current[nextMembershipType][field];
-    if (!isEditableFieldConfig(config)) {
-      return;
-    }
+  const updateFieldConfig = useCallback(
+    (
+      field: keyof TemplateCoordinates,
+      updater: (config: EditableFieldConfig) => EditableFieldConfig,
+      nextMembershipType: MembershipType = membershipType,
+    ) => {
+      setDraftCoordinates((previous) => {
+        const config = previous[nextMembershipType][field];
+        if (!isEditableFieldConfig(config)) {
+          return previous;
+        }
 
-    const minWidth = 1;
-    const minHeight = 1;
-    const maxWidth = PAGE_WIDTH_MM - config.x;
-    const maxHeight = PAGE_HEIGHT_MM - config.y;
+        return {
+          ...previous,
+          [nextMembershipType]: {
+            ...previous[nextMembershipType],
+            [field]: updater(config),
+          },
+        };
+      });
+    },
+    [membershipType],
+  );
 
-    updateFieldConfig(
-      field,
-      (currentConfig) => ({
-        ...currentConfig,
-        width: roundMm(clamp(widthMm, minWidth, Math.max(minWidth, maxWidth))),
-        height: roundMm(clamp(heightMm, minHeight, Math.max(minHeight, maxHeight))),
-      }),
-      nextMembershipType,
-    );
-  }, [membershipType, updateFieldConfig]);
+  const updateFieldDimensions = useCallback(
+    (
+      field: keyof TemplateCoordinates,
+      widthMm: number,
+      heightMm: number,
+      nextMembershipType: MembershipType = membershipType,
+    ) => {
+      const config = draftCoordinatesRef.current[nextMembershipType][field];
+      if (!isEditableFieldConfig(config)) {
+        return;
+      }
 
-  const setFieldPosition = useCallback((
-    field: keyof TemplateCoordinates,
-    xMm: number,
-    yMm: number,
-    nextMembershipType: MembershipType = membershipType,
-  ) => {
-    const config = draftCoordinatesRef.current[nextMembershipType][field];
-    if (!isEditableFieldConfig(config)) {
-      return;
-    }
+      const minWidth = 1;
+      const minHeight = 1;
+      const maxWidth = PAGE_WIDTH_MM - config.x;
+      const maxHeight = PAGE_HEIGHT_MM - config.y;
 
-    const dimensions = getFieldDimensions(field, config);
-    updateFieldConfig(
-      field,
-      (currentConfig) => ({
-        ...currentConfig,
-        x: roundMm(clamp(xMm, 0, PAGE_WIDTH_MM - dimensions.width)),
-        y: roundMm(clamp(yMm, 0, PAGE_HEIGHT_MM - dimensions.height)),
-      }),
-      nextMembershipType,
-    );
-  }, [getFieldDimensions, membershipType, updateFieldConfig]);
+      updateFieldConfig(
+        field,
+        (currentConfig) => ({
+          ...currentConfig,
+          width: roundMm(clamp(widthMm, minWidth, Math.max(minWidth, maxWidth))),
+          height: roundMm(clamp(heightMm, minHeight, Math.max(minHeight, maxHeight))),
+        }),
+        nextMembershipType,
+      );
+    },
+    [membershipType, updateFieldConfig],
+  );
 
-  const moveSelectedFieldBy = useCallback((deltaX: number, deltaY: number) => {
-    const config = templateCoordinates[activeSelectedField];
-    if (!isEditableFieldConfig(config)) {
-      return;
-    }
+  const setFieldPosition = useCallback(
+    (
+      field: keyof TemplateCoordinates,
+      xMm: number,
+      yMm: number,
+      nextMembershipType: MembershipType = membershipType,
+    ) => {
+      const config = draftCoordinatesRef.current[nextMembershipType][field];
+      if (!isEditableFieldConfig(config)) {
+        return;
+      }
 
-    setFieldPosition(activeSelectedField, config.x + deltaX, config.y + deltaY);
-  }, [activeSelectedField, setFieldPosition, templateCoordinates]);
+      const dimensions = getFieldDimensions(field, config);
+      updateFieldConfig(
+        field,
+        (currentConfig) => ({
+          ...currentConfig,
+          x: roundMm(clamp(xMm, 0, PAGE_WIDTH_MM - dimensions.width)),
+          y: roundMm(clamp(yMm, 0, PAGE_HEIGHT_MM - dimensions.height)),
+        }),
+        nextMembershipType,
+      );
+    },
+    [getFieldDimensions, membershipType, updateFieldConfig],
+  );
+
+  const moveSelectedFieldBy = useCallback(
+    (deltaX: number, deltaY: number) => {
+      const config = templateCoordinates[activeSelectedField];
+      if (!isEditableFieldConfig(config)) {
+        return;
+      }
+
+      setFieldPosition(activeSelectedField, config.x + deltaX, config.y + deltaY);
+    },
+    [activeSelectedField, setFieldPosition, templateCoordinates],
+  );
 
   const getPointFromEvent = (clientX: number, clientY: number) => {
     const rect = surfaceRef.current?.getBoundingClientRect();
@@ -292,18 +303,21 @@ export function MapperPage() {
     };
   };
 
-  const placeSelectedFieldAtPoint = useCallback((xPt: number, yPtFromBottom: number) => {
-    const config = templateCoordinates[activeSelectedField];
-    if (!isEditableFieldConfig(config)) {
-      return;
-    }
+  const placeSelectedFieldAtPoint = useCallback(
+    (xPt: number, yPtFromBottom: number) => {
+      const config = templateCoordinates[activeSelectedField];
+      if (!isEditableFieldConfig(config)) {
+        return;
+      }
 
-    const dimensions = getFieldDimensions(activeSelectedField, config);
-    const xMm = xPt / MM_TO_POINTS - dimensions.width / 2;
-    const yMm = yPtFromBottom / MM_TO_POINTS - dimensions.height / 2;
+      const dimensions = getFieldDimensions(activeSelectedField, config);
+      const xMm = xPt / MM_TO_POINTS - dimensions.width / 2;
+      const yMm = yPtFromBottom / MM_TO_POINTS - dimensions.height / 2;
 
-    setFieldPosition(activeSelectedField, xMm, yMm);
-  }, [activeSelectedField, getFieldDimensions, setFieldPosition, templateCoordinates]);
+      setFieldPosition(activeSelectedField, xMm, yMm);
+    },
+    [activeSelectedField, getFieldDimensions, setFieldPosition, templateCoordinates],
+  );
 
   const handleCanvasClick: MouseEventHandler<HTMLDivElement> = (event) => {
     if (dragMovedRef.current) {
@@ -360,12 +374,12 @@ export function MapperPage() {
       }, 0);
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp, { once: true });
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp, { once: true });
 
     return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [dragState, getFieldDimensions, setFieldPosition, zoom]);
 
@@ -397,22 +411,22 @@ export function MapperPage() {
       }, 0);
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp, { once: true });
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp, { once: true });
 
     return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [resizeState, updateFieldDimensions, zoom]);
 
   const handleSaveCoordinates = async () => {
     try {
-      setSaveStatus("Saving...");
-      const response = await fetch("/api/mapper/coordinates", {
-        method: "POST",
+      setSaveStatus('Saving...');
+      const response = await fetch('/api/mapper/coordinates', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           coordinates: draftCoordinates,
@@ -423,50 +437,47 @@ export function MapperPage() {
 
       if (!response.ok) {
         const errorMessage =
-          payload && typeof payload.error === "string"
+          payload && typeof payload.error === 'string'
             ? payload.error
             : `Save failed (${response.status})`;
         setSaveStatus(errorMessage);
         return;
       }
 
-      setSaveStatus("Saved to lib/pdf-coordinates.ts");
+      setSaveStatus('Saved to lib/pdf-coordinates.ts');
     } catch {
-      setSaveStatus("Save failed. Check the dev server logs.");
+      setSaveStatus('Save failed. Check the dev server logs.');
     }
   };
 
   const handleSurfaceKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
     const step = event.shiftKey ? 1 : 0.25;
 
-    if (event.key === "ArrowLeft") {
+    if (event.key === 'ArrowLeft') {
       event.preventDefault();
       moveSelectedFieldBy(-step, 0);
     }
-    if (event.key === "ArrowRight") {
+    if (event.key === 'ArrowRight') {
       event.preventDefault();
       moveSelectedFieldBy(step, 0);
     }
-    if (event.key === "ArrowUp") {
+    if (event.key === 'ArrowUp') {
       event.preventDefault();
       moveSelectedFieldBy(0, step);
     }
-    if (event.key === "ArrowDown") {
+    if (event.key === 'ArrowDown') {
       event.preventDefault();
       moveSelectedFieldBy(0, -step);
     }
   };
 
-  const pageSnippet = mappedFields
-    .map((entry) => toSnippet(entry.key, entry.config))
-    .join("\n");
+  const pageSnippet = mappedFields.map((entry) => toSnippet(entry.key, entry.config)).join('\n');
 
   const pdfPath = TEMPLATE_PDF_PATH[membershipType];
 
-  const selectedDimensions =
-    isEditableFieldConfig(selectedConfig)
-      ? getFieldDimensions(activeSelectedField, selectedConfig)
-      : { width: 0, height: 0 };
+  const selectedDimensions = isEditableFieldConfig(selectedConfig)
+    ? getFieldDimensions(activeSelectedField, selectedConfig)
+    : { width: 0, height: 0 };
 
   if (!isHydrated) {
     return (
@@ -484,8 +495,8 @@ export function MapperPage() {
       <section className={styles.card}>
         <h1 className={styles.title}>PDF Mapper (Development Only)</h1>
         <p className={styles.subtitle}>
-          Position boxes directly on top of the rendered template. Click to place, drag to move, and use arrow keys
-          to nudge the selected field.
+          Position boxes directly on top of the rendered template. Click to place, drag to move, and
+          use arrow keys to nudge the selected field.
         </p>
 
         <div className={styles.controls}>
@@ -566,7 +577,9 @@ export function MapperPage() {
                   <button
                     key={key}
                     type="button"
-                    className={`${styles.fieldBox} ${activeSelectedField === key ? styles.fieldBoxSelected : ""}`}
+                    className={`${styles.fieldBox} ${
+                      activeSelectedField === key ? styles.fieldBoxSelected : ''
+                    }`}
                     data-testid={`mapper-box-${key}`}
                     style={{
                       left: x,
@@ -630,7 +643,9 @@ export function MapperPage() {
             <div>
               <strong>Last click (mm)</strong>
               <p data-testid="mapper-last-click">
-                {lastPoint ? `x: ${lastPoint.xMm}, y: ${lastPoint.yMm}` : "Click the template to capture a point."}
+                {lastPoint
+                  ? `x: ${lastPoint.xMm}, y: ${lastPoint.yMm}`
+                  : 'Click the template to capture a point.'}
               </p>
             </div>
 
@@ -640,7 +655,9 @@ export function MapperPage() {
                 {mappedFields.map(({ key, config }) => (
                   <li key={key}>
                     <Button
-                      className={`${styles.listButton} ${activeSelectedField === key ? styles.listButtonActive : ""}`}
+                      className={`${styles.listButton} ${
+                        activeSelectedField === key ? styles.listButtonActive : ''
+                      }`}
                       onClick={() => {
                         setSelectedField(key);
                         surfaceRef.current?.focus();
@@ -665,10 +682,14 @@ export function MapperPage() {
                       className={styles.metricInput}
                       size="small"
                       type="number"
-                      inputProps={{ step: "0.1", "data-testid": "mapper-x-input" }}
+                      inputProps={{ step: '0.1', 'data-testid': 'mapper-x-input' }}
                       value={String(selectedConfig.x)}
                       onChange={(event) => {
-                        setFieldPosition(activeSelectedField, Number((event.target as HTMLInputElement).value), selectedConfig.y);
+                        setFieldPosition(
+                          activeSelectedField,
+                          Number((event.target as HTMLInputElement).value),
+                          selectedConfig.y,
+                        );
                       }}
                     />
                   </label>
@@ -678,10 +699,14 @@ export function MapperPage() {
                       className={styles.metricInput}
                       size="small"
                       type="number"
-                      inputProps={{ step: "0.1", "data-testid": "mapper-y-input" }}
+                      inputProps={{ step: '0.1', 'data-testid': 'mapper-y-input' }}
                       value={String(selectedConfig.y)}
                       onChange={(event) => {
-                        setFieldPosition(activeSelectedField, selectedConfig.x, Number((event.target as HTMLInputElement).value));
+                        setFieldPosition(
+                          activeSelectedField,
+                          selectedConfig.x,
+                          Number((event.target as HTMLInputElement).value),
+                        );
                       }}
                     />
                   </label>
@@ -691,7 +716,7 @@ export function MapperPage() {
                       className={styles.metricInput}
                       size="small"
                       type="number"
-                      inputProps={{ step: "0.1", "data-testid": "mapper-width-input" }}
+                      inputProps={{ step: '0.1', 'data-testid': 'mapper-width-input' }}
                       value={String(selectedConfig.width ?? selectedDimensions.width)}
                       onChange={(event) => {
                         updateFieldDimensions(
@@ -708,7 +733,7 @@ export function MapperPage() {
                       className={styles.metricInput}
                       size="small"
                       type="number"
-                      inputProps={{ step: "0.1", "data-testid": "mapper-height-input" }}
+                      inputProps={{ step: '0.1', 'data-testid': 'mapper-height-input' }}
                       value={String(selectedConfig.height ?? selectedDimensions.height)}
                       onChange={(event) => {
                         updateFieldDimensions(
@@ -736,7 +761,9 @@ export function MapperPage() {
                 className={styles.button}
                 type="button"
                 onClick={async () => {
-                  await navigator.clipboard.writeText(toSnippet(activeSelectedField, selectedConfig));
+                  await navigator.clipboard.writeText(
+                    toSnippet(activeSelectedField, selectedConfig),
+                  );
                 }}
                 startIcon={<Copy size={16} aria-hidden="true" />}
                 variant="outlined"
@@ -764,17 +791,24 @@ export function MapperPage() {
             <div>
               <strong>Persist coordinates</strong>
               <p>Save current mapper coordinates directly into app source (development only).</p>
-              <Button className={styles.button} type="button" onClick={handleSaveCoordinates} startIcon={<Save size={16} aria-hidden="true" />} variant="contained">
+              <Button
+                className={styles.button}
+                type="button"
+                onClick={handleSaveCoordinates}
+                startIcon={<Save size={16} aria-hidden="true" />}
+                variant="contained"
+              >
                 Save Coordinates to Source
               </Button>
-              <p data-testid="mapper-save-status">{saveStatus || "Not saved in this session."}</p>
+              <p data-testid="mapper-save-status">{saveStatus || 'Not saved in this session.'}</p>
             </div>
 
             <div>
               <strong>Move controls</strong>
               <p>
                 <Move size={14} aria-hidden="true" className={styles.inlineIcon} />
-                Use drag and drop for coarse movement. Use arrow keys for 0.25mm nudges and Shift + arrow for 1mm.
+                Use drag and drop for coarse movement. Use arrow keys for 0.25mm nudges and Shift +
+                arrow for 1mm.
               </p>
             </div>
           </aside>

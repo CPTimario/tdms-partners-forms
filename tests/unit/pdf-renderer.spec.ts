@@ -1,10 +1,10 @@
-import { expect, test, describe } from "vitest";
+import { expect, test, describe } from 'vitest';
 
-describe("PDFRenderer Configuration", () => {
-  test("accepts valid PDF path and page number props", async () => {
+describe('PDFRenderer Configuration', () => {
+  test('accepts valid PDF path and page number props', async () => {
     // PDFRenderer is a React component that accepts these props:
     const validProps = {
-      pdfPath: "/tdms-forms/pic-saf-victory.pdf",
+      pdfPath: '/tdms-forms/pic-saf-victory.pdf',
       pageNumber: 1,
       width: 612,
       height: 252,
@@ -20,7 +20,7 @@ describe("PDFRenderer Configuration", () => {
     expect(validProps.zoom).toBeGreaterThan(0);
   });
 
-  test("supports zoom range 0.8 to 2", async () => {
+  test('supports zoom range 0.8 to 2', async () => {
     const validZooms = [0.8, 1, 1.5, 2];
     const minZoom = 0.8;
     const maxZoom = 2;
@@ -31,10 +31,10 @@ describe("PDFRenderer Configuration", () => {
     }
   });
 
-  test("supports both victory and non-victory PDF templates", async () => {
+  test('supports both victory and non-victory PDF templates', async () => {
     const templatePaths = [
-      "/tdms-forms/pic-saf-victory.pdf",
-      "/tdms-forms/pic-saf-non-victory.pdf",
+      '/tdms-forms/pic-saf-victory.pdf',
+      '/tdms-forms/pic-saf-non-victory.pdf',
     ];
 
     for (const path of templatePaths) {
@@ -42,7 +42,7 @@ describe("PDFRenderer Configuration", () => {
     }
   });
 
-  test("supports both PDF pages (1 and 2)", async () => {
+  test('supports both PDF pages (1 and 2)', async () => {
     const validPages = [1, 2];
 
     for (const page of validPages) {
@@ -50,7 +50,7 @@ describe("PDFRenderer Configuration", () => {
     }
   });
 
-  test("validates dimension requirements", async () => {
+  test('validates dimension requirements', async () => {
     const mapperDimensions = {
       width: 612, // PAGE_WIDTH_PT
       height: 252, // PAGE_HEIGHT_PT
@@ -61,10 +61,10 @@ describe("PDFRenderer Configuration", () => {
     expect(mapperDimensions.height).toBe(252);
   });
 
-  test("optional callback is callable", async () => {
+  test('optional callback is callable', async () => {
     // onLoadingChange is optional
     const mockCallback = (isLoading: boolean) => {
-      expect(typeof isLoading).toBe("boolean");
+      expect(typeof isLoading).toBe('boolean');
     };
 
     // Simulate loading state changes
@@ -73,37 +73,37 @@ describe("PDFRenderer Configuration", () => {
   });
 });
 
-describe("PDFRenderer - Mapper Integration Props", () => {
-  test("mapper passes correct props for page 1 victory template", async () => {
+describe('PDFRenderer - Mapper Integration Props', () => {
+  test('mapper passes correct props for page 1 victory template', async () => {
     const mapperPageProps = {
-      pdfPath: "/tdms-forms/pic-saf-victory.pdf",
+      pdfPath: '/tdms-forms/pic-saf-victory.pdf',
       pageNumber: 1,
       width: 612,
       height: 252,
       zoom: 1, // default from mapper
     };
 
-    expect(mapperPageProps.pdfPath).toContain("victory");
+    expect(mapperPageProps.pdfPath).toContain('victory');
     expect(mapperPageProps.pageNumber).toBe(1);
   });
 
-  test("mapper passes correct props for page 2 victory template", async () => {
+  test('mapper passes correct props for page 2 victory template', async () => {
     const mapperPageProps = {
-      pdfPath: "/tdms-forms/pic-saf-victory.pdf",
+      pdfPath: '/tdms-forms/pic-saf-victory.pdf',
       pageNumber: 2,
       width: 612,
       height: 252,
       zoom: 1,
     };
 
-    expect(mapperPageProps.pdfPath).toContain("victory");
+    expect(mapperPageProps.pdfPath).toContain('victory');
     expect(mapperPageProps.pageNumber).toBe(2);
   });
 
-  test("mapper switches between victory and non-victory templates", async () => {
+  test('mapper switches between victory and non-victory templates', async () => {
     const templates = {
-      victory: "/tdms-forms/pic-saf-victory.pdf",
-      nonVictory: "/tdms-forms/pic-saf-non-victory.pdf",
+      victory: '/tdms-forms/pic-saf-victory.pdf',
+      nonVictory: '/tdms-forms/pic-saf-non-victory.pdf',
     };
 
     for (const [, path] of Object.entries(templates)) {
@@ -111,7 +111,7 @@ describe("PDFRenderer - Mapper Integration Props", () => {
     }
   });
 
-  test("mapper applies zoom from range input (0.8 to 2)", async () => {
+  test('mapper applies zoom from range input (0.8 to 2)', async () => {
     const zoomValues = [0.8, 1, 1.2, 1.5, 2];
 
     for (const zoom of zoomValues) {
@@ -120,12 +120,12 @@ describe("PDFRenderer - Mapper Integration Props", () => {
     }
   });
 
-  test("all mapper props combinations are valid", async () => {
+  test('all mapper props combinations are valid', async () => {
     const combinations = [
-      { template: "victory", page: 1 },
-      { template: "victory", page: 2 },
-      { template: "nonVictory", page: 1 },
-      { template: "nonVictory", page: 2 },
+      { template: 'victory', page: 1 },
+      { template: 'victory', page: 2 },
+      { template: 'nonVictory', page: 1 },
+      { template: 'nonVictory', page: 2 },
     ];
 
     for (const combo of combinations) {
@@ -136,15 +136,15 @@ describe("PDFRenderer - Mapper Integration Props", () => {
   });
 });
 
-describe("PDFRenderer - Canvas Rendering", () => {
-  test("canvas renders with correct data-testid for e2e tests", async () => {
+describe('PDFRenderer - Canvas Rendering', () => {
+  test('canvas renders with correct data-testid for e2e tests', async () => {
     // PDFRenderer renders:
     // <canvas data-testid="mapper-pdf-canvas" ... />
-    const canvasTestId = "mapper-pdf-canvas";
-    expect(canvasTestId).toBe("mapper-pdf-canvas");
+    const canvasTestId = 'mapper-pdf-canvas';
+    expect(canvasTestId).toBe('mapper-pdf-canvas');
   });
 
-  test("canvas inherits width and height from props", async () => {
+  test('canvas inherits width and height from props', async () => {
     // When PDFRenderer receives width=612, height=252
     // Canvas should scale and render at that size
     const expectedWidth = 612;
@@ -154,7 +154,7 @@ describe("PDFRenderer - Canvas Rendering", () => {
     expect(expectedHeight).toBe(252);
   });
 
-  test("canvas scales with zoom multiplier", async () => {
+  test('canvas scales with zoom multiplier', async () => {
     // Canvas viewport scales by zoom factor
     const baseWidth = 612;
     const baseHeight = 252;
@@ -168,15 +168,15 @@ describe("PDFRenderer - Canvas Rendering", () => {
   });
 });
 
-describe("PDFRenderer - Error Handling", () => {
-  test("error state shows with context message", async () => {
+describe('PDFRenderer - Error Handling', () => {
+  test('error state shows with context message', async () => {
     // When PDF cannot load, component shows error div
     // Error message format: "PDF Render Error" + specific error details
-    const errorMessage = "PDF Render Error";
+    const errorMessage = 'PDF Render Error';
     expect(errorMessage).toBeDefined();
   });
 
-  test("invalid page number error message", async () => {
+  test('invalid page number error message', async () => {
     // Page 3 should error on a 2-page PDF
     const invalidPage = 3;
     const maxPages = 2;
@@ -184,10 +184,9 @@ describe("PDFRenderer - Error Handling", () => {
     expect(invalidPage).toBeGreaterThan(maxPages);
   });
 
-  test("missing PDF error message", async () => {
+  test('missing PDF error message', async () => {
     // Error message includes the path that failed
-    const failedPath = "/tdms-forms/missing.pdf";
+    const failedPath = '/tdms-forms/missing.pdf';
     expect(failedPath).toMatch(/\.pdf$/);
   });
 });
-

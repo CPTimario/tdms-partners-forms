@@ -1,7 +1,7 @@
-import { writeFile } from "node:fs/promises";
-import path from "node:path";
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { NextResponse } from 'next/server';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { z } from 'zod';
 
 /**
  * Non-production mapper persistence endpoint.
@@ -10,7 +10,7 @@ import { z } from "zod";
  * so local preview/export uses updated field mappings immediately.
  * This route is intentionally unavailable in production.
  */
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 const textFieldSchema = z.object({
   x: z.number().finite(),
@@ -73,25 +73,25 @@ type PrimitiveValue = number | string;
 type ConfigRecord = Record<string, PrimitiveValue | undefined>;
 
 const FIELD_ORDER = [
-  "partnerName",
-  "emailAddress",
-  "mobileNumber",
-  "localChurch",
-  "missionaryName",
-  "amount",
-  "nation",
-  "travelDateMonth",
-  "travelDateDay",
-  "travelDateYear",
-  "sendingChurch",
-  "consentCheckbox",
-  "unableToGoTeamFund",
-  "unableToGoGeneralFund",
-  "reroutedRetain",
-  "reroutedGeneralFund",
-  "canceledGeneralFund",
-  "partnerSignature",
-  "partnerSignaturePrintedName",
+  'partnerName',
+  'emailAddress',
+  'mobileNumber',
+  'localChurch',
+  'missionaryName',
+  'amount',
+  'nation',
+  'travelDateMonth',
+  'travelDateDay',
+  'travelDateYear',
+  'sendingChurch',
+  'consentCheckbox',
+  'unableToGoTeamFund',
+  'unableToGoGeneralFund',
+  'reroutedRetain',
+  'reroutedGeneralFund',
+  'canceledGeneralFund',
+  'partnerSignature',
+  'partnerSignaturePrintedName',
 ] as const;
 
 function formatNumber(value: number): string {
@@ -103,7 +103,7 @@ function formatNumber(value: number): string {
 }
 
 function formatValue(value: PrimitiveValue): string {
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     return formatNumber(value);
   }
 
@@ -111,18 +111,18 @@ function formatValue(value: PrimitiveValue): string {
 }
 
 function serializeConfig(config: ConfigRecord, indentLevel = 1): string {
-  const indent = "  ".repeat(indentLevel);
-  const childIndent = "  ".repeat(indentLevel + 1);
+  const indent = '  '.repeat(indentLevel);
+  const childIndent = '  '.repeat(indentLevel + 1);
   const keyOrder = [
-    "x",
-    "y",
-    "width",
-    "height",
-    "maxWidth",
-    "maxHeight",
-    "checkSymbol",
-    "fontSize",
-    "fontName",
+    'x',
+    'y',
+    'width',
+    'height',
+    'maxWidth',
+    'maxHeight',
+    'checkSymbol',
+    'fontSize',
+    'fontName',
   ];
 
   const lines: string[] = [];
@@ -134,7 +134,7 @@ function serializeConfig(config: ConfigRecord, indentLevel = 1): string {
     lines.push(`${childIndent}${key}: ${formatValue(value)},`);
   }
 
-  return `${indent}{\n${lines.join("\n")}\n${indent}}`;
+  return `${indent}{\n${lines.join('\n')}\n${indent}}`;
 }
 
 function serializeTemplateObject(template: Record<string, ConfigRecord | undefined>): string {
@@ -149,14 +149,18 @@ function serializeTemplateObject(template: Record<string, ConfigRecord | undefin
     lines.push(`  ${field}: ${serializeConfig(config as ConfigRecord, 1)},`);
   }
 
-  return `{\n${lines.join("\n")}\n}`;
+  return `{\n${lines.join('\n')}\n}`;
 }
 
 function buildCoordinatesFileContent(
-  coordinates: z.infer<typeof payloadSchema>["coordinates"],
+  coordinates: z.infer<typeof payloadSchema>['coordinates'],
 ): string {
-  const victoryObject = serializeTemplateObject(coordinates.victory as Record<string, ConfigRecord | undefined>);
-  const nonVictoryObject = serializeTemplateObject(coordinates.nonVictory as Record<string, ConfigRecord | undefined>);
+  const victoryObject = serializeTemplateObject(
+    coordinates.victory as Record<string, ConfigRecord | undefined>,
+  );
+  const nonVictoryObject = serializeTemplateObject(
+    coordinates.nonVictory as Record<string, ConfigRecord | undefined>,
+  );
 
   return `/**
  * PDF coordinate mappings for Victory and Non-Victory templates.
@@ -202,8 +206,8 @@ export function getTemplateCoordinates(
  * - 500: unexpected write/parse failure
  */
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   try {
@@ -212,7 +216,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         {
-          error: "Invalid payload",
+          error: 'Invalid payload',
           details: parsed.error.flatten(),
         },
         { status: 400 },
@@ -220,11 +224,11 @@ export async function POST(request: Request) {
     }
 
     const nextFileContent = buildCoordinatesFileContent(parsed.data.coordinates);
-    const targetPath = path.join(process.cwd(), "lib", "pdf-coordinates.ts");
-    await writeFile(targetPath, nextFileContent, "utf8");
+    const targetPath = path.join(process.cwd(), 'lib', 'pdf-coordinates.ts');
+    await writeFile(targetPath, nextFileContent, 'utf8');
 
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: "Failed to save coordinates" }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save coordinates' }, { status: 500 });
   }
 }

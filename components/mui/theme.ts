@@ -1,19 +1,20 @@
-import { createTheme } from "@mui/material/styles";
-import type { PaletteMode } from "@mui/material";
+import type { PaletteMode } from '@mui/material';
+import { createTheme } from '@mui/material/styles';
 
 export function getTheme(mode: PaletteMode) {
   return createTheme({
     palette: {
       mode,
-      primary: { main: "#1976d2" },
-      secondary: { main: "#9c27b0" },
+      primary: { main: '#1976d2' },
+      secondary: { main: '#9c27b0' },
       background: {
-        default: mode === "light" ? "#fafafa" : "#121212",
-        paper: mode === "light" ? "#ffffff" : "#1e1e1e",
+        default: mode === 'light' ? '#fafafa' : '#121212',
+        paper: mode === 'light' ? '#ffffff' : '#1e1e1e',
       },
     },
     typography: {
-      fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
+      fontFamily:
+        "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
     },
   });
 }

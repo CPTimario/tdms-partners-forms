@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #f4f8ff;
@@ -17,7 +17,7 @@
   --ring: rgba(29, 78, 216, 0.35);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --background: #020817;
   --background-muted: #0b1222;
   --foreground: #e2e8f0;
@@ -56,10 +56,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--font-geist-sans), 'Helvetica Neue', Helvetica, Arial, sans-serif;
   margin: 0;
   min-height: 100vh;
-  background-image: radial-gradient(circle at 10% 0%, var(--background-muted) 0%, var(--background) 48%);
+  background-image: radial-gradient(
+    circle at 10% 0%,
+    var(--background-muted) 0%,
+    var(--background) 48%
+  );
 }
 
 * {
@@ -127,12 +131,12 @@ textarea {
   transform: scale(0.7) rotate(-18deg);
 }
 
-:root[data-theme="dark"] .theme-toggle-icon-light {
+:root[data-theme='dark'] .theme-toggle-icon-light {
   opacity: 0;
   transform: scale(0.7) rotate(18deg);
 }
 
-:root[data-theme="dark"] .theme-toggle-icon-dark {
+:root[data-theme='dark'] .theme-toggle-icon-dark {
   opacity: 1;
   transform: scale(1) rotate(0deg);
 }
@@ -215,7 +219,7 @@ textarea {
   gap: 0.35rem;
 }
 
-.field-block input[type="text"],
+.field-block input[type='text'],
 .field-block input:not([type]) {
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -225,8 +229,8 @@ textarea {
   background: var(--panel);
 }
 
-.field-block input[type="checkbox"],
-.field-block input[type="radio"] {
+.field-block input[type='checkbox'],
+.field-block input[type='radio'] {
   margin-right: 0.45rem;
 }
 

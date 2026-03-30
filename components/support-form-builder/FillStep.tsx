@@ -1,31 +1,30 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, type ChangeEventHandler, type ChangeEvent } from "react";
-import TextField from "@mui/material/TextField";
-import dayjs, { type Dayjs } from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import MenuItem from "@mui/material/MenuItem";
-type RecipientSuggestion = {
-  id: string;
-  label: string;
-  type?: "team" | "missioner";
-  team?: string;
-  nation?: string;
-  travelDate?: string;
-  sendingChurch?: string;
-};
-import SignatureCanvas from "react-signature-canvas";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import styles from "./FormBuilder.module.css";
-import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import Radio from "@mui/material/Radio";
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import { useTheme } from '@mui/material/styles';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import TextField from '@mui/material/TextField';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { type Dayjs } from 'dayjs';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Lock,
+  RotateCcw,
+  Signature,
+} from 'lucide-react';
+import { useEffect, useRef, type ChangeEventHandler, type ChangeEvent } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
+
 import {
   consentCopy,
   getAccountabilityAffirmationCopy,
@@ -37,7 +36,19 @@ import {
   type EditableFormStep,
   type SupportFormData,
   type RequiredStringField,
-} from "@/lib/support-form";
+} from '@/lib/support-form';
+
+import styles from './FormBuilder.module.css';
+
+type RecipientSuggestion = {
+  id: string;
+  label: string;
+  type?: 'team' | 'missioner';
+  team?: string;
+  nation?: string;
+  travelDate?: string;
+  sendingChurch?: string;
+};
 
 type FillStepProps = {
   data: SupportFormData;
@@ -47,9 +58,23 @@ type FillStepProps = {
   isFormValid: boolean;
   isPartnerStepComplete: boolean;
   isAccountabilityStepComplete: boolean;
-  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
+  onTextChange: (
+    field: keyof Pick<
+      SupportFormData,
+      | 'partnerName'
+      | 'emailAddress'
+      | 'mobileNumber'
+      | 'localChurch'
+      | 'missionaryName'
+      | 'amount'
+      | 'nation'
+      | 'travelDate'
+      | 'sendingChurch'
+      | 'partnerPrintedName'
+    >,
+  ) => ChangeEventHandler<HTMLInputElement>;
   onCurrencyChange: ChangeEventHandler<HTMLSelectElement>;
-  onCheckboxChange: (field: "consentGiven") => ChangeEventHandler<HTMLInputElement>;
+  onCheckboxChange: (field: 'consentGiven') => ChangeEventHandler<HTMLInputElement>;
   onUnableToGoChange: ChangeEventHandler<HTMLInputElement>;
   onReroutedChange: ChangeEventHandler<HTMLInputElement>;
   onCanceledChange: ChangeEventHandler<HTMLInputElement>;
@@ -70,29 +95,50 @@ type SignaturePadProps = {
   ariaDescribedBy?: string;
 };
 
-
-
 // NOTE: value stored as ISO yyyy-mm-dd
 
 type DatePickerInlineProps = {
   value: string;
   id?: string;
   setField?: (field: RequiredStringField, value: string) => void;
-  onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
+  onTextChange: (
+    field: keyof Pick<
+      SupportFormData,
+      | 'partnerName'
+      | 'emailAddress'
+      | 'mobileNumber'
+      | 'localChurch'
+      | 'missionaryName'
+      | 'amount'
+      | 'nation'
+      | 'travelDate'
+      | 'sendingChurch'
+      | 'partnerPrintedName'
+    >,
+  ) => ChangeEventHandler<HTMLInputElement>;
   hasFieldError: boolean;
   errorId: string;
 };
 
-const DatePickerInline = ({ value, id, setField, onTextChange, hasFieldError, errorId }: DatePickerInlineProps) => {
-  const parsed: Dayjs | null = value ? dayjs(value, "YYYY-MM-DD") : null;
+const DatePickerInline = ({
+  value,
+  id,
+  setField,
+  onTextChange,
+  hasFieldError,
+  errorId,
+}: DatePickerInlineProps) => {
+  const parsed: Dayjs | null = value ? dayjs(value, 'YYYY-MM-DD') : null;
 
   const handleDateChange = (next: Dayjs | null) => {
-    const val = next ? next.format("YYYY-MM-DD") : "";
+    const val = next ? next.format('YYYY-MM-DD') : '';
     if (setField) {
-      setField("travelDate", val);
+      setField('travelDate', val);
     } else {
-      const handler = onTextChange("travelDate");
-      const synthetic = { target: { value: val } } as unknown as React.ChangeEvent<HTMLInputElement>;
+      const handler = onTextChange('travelDate');
+      const synthetic = {
+        target: { value: val },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
       handler(synthetic);
     }
   };
@@ -105,19 +151,21 @@ const DatePickerInline = ({ value, id, setField, onTextChange, hasFieldError, er
           value={parsed}
           onChange={handleDateChange}
           disablePast
-          minDate={dayjs().startOf("day")}
+          minDate={dayjs().startOf('day')}
           slots={{ textField: TextField }}
           slotProps={{
             textField: {
               id,
-              size: "small",
-              variant: "outlined",
-              className: `${styles.textInput} ${styles.dateInput} ${hasFieldError ? styles.textInputError : ""}`,
-              placeholder: "MM/DD/YYYY",
+              size: 'small',
+              variant: 'outlined',
+              className: `${styles.textInput} ${styles.dateInput} ${
+                hasFieldError ? styles.textInputError : ''
+              }`,
+              placeholder: 'MM/DD/YYYY',
               inputProps: {
-                inputMode: "numeric",
-                "aria-invalid": hasFieldError,
-                "aria-describedby": hasFieldError ? errorId : undefined,
+                inputMode: 'numeric',
+                'aria-invalid': hasFieldError,
+                'aria-describedby': hasFieldError ? errorId : undefined,
               },
             },
           }}
@@ -129,7 +177,7 @@ const DatePickerInline = ({ value, id, setField, onTextChange, hasFieldError, er
 
 function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: SignaturePadProps) {
   const signatureRef = useRef<SignatureCanvas | null>(null);
-  const loadedValueRef = useRef("");
+  const loadedValueRef = useRef('');
 
   useEffect(() => {
     const canvas = signatureRef.current;
@@ -137,7 +185,7 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
 
     if (!value) {
       if (!canvas.isEmpty()) canvas.clear();
-      loadedValueRef.current = "";
+      loadedValueRef.current = '';
       return;
     }
 
@@ -152,12 +200,12 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
     if (!canvas) return;
 
     if (canvas.isEmpty()) {
-      loadedValueRef.current = "";
-      onChange("");
+      loadedValueRef.current = '';
+      onChange('');
       return;
     }
 
-    const nextValue = canvas.getTrimmedCanvas().toDataURL("image/png");
+    const nextValue = canvas.getTrimmedCanvas().toDataURL('image/png');
     loadedValueRef.current = nextValue;
     onChange(nextValue);
   };
@@ -166,8 +214,8 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
     const canvas = signatureRef.current;
     if (!canvas) return;
     canvas.clear();
-    loadedValueRef.current = "";
-    onChange("");
+    loadedValueRef.current = '';
+    onChange('');
   };
 
   return (
@@ -182,15 +230,20 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
         maxWidth={2}
         canvasProps={{
           className: styles.signaturePad,
-          "aria-label": "Partner Signature",
-          "aria-invalid": ariaInvalid,
-          "aria-describedby": ariaDescribedBy,
+          'aria-label': 'Partner Signature',
+          'aria-invalid': ariaInvalid,
+          'aria-describedby': ariaDescribedBy,
           tabIndex: 0,
         }}
       />
       <div className={styles.signaturePadActions}>
         <p className={styles.helperText}>Sign using mouse, touch, or stylus.</p>
-        <Button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={handleClear} variant="outlined">
+        <Button
+          className={`${styles.button} ${styles.secondaryButton}`}
+          type="button"
+          onClick={handleClear}
+          variant="outlined"
+        >
           <span className={styles.buttonContent}>
             <RotateCcw size={16} aria-hidden="true" />
             Clear Signature
@@ -208,9 +261,9 @@ function renderTabLabel(number: string, label: string, status: string) {
       <span className={styles.tabNumber}>{number}</span>
       <span className={styles.tabLabel}>{label}</span>
       <span className={styles.tabStatus}>
-        {status === "Complete" ? <CheckCircle2 size={14} aria-hidden="true" /> : null}
-        {status === "Needs details" ? <AlertTriangle size={14} aria-hidden="true" /> : null}
-        {status === "Locked" ? <Lock size={14} aria-hidden="true" /> : null}
+        {status === 'Complete' ? <CheckCircle2 size={14} aria-hidden="true" /> : null}
+        {status === 'Needs details' ? <AlertTriangle size={14} aria-hidden="true" /> : null}
+        {status === 'Locked' ? <Lock size={14} aria-hidden="true" /> : null}
         {status}
       </span>
     </span>
@@ -239,8 +292,7 @@ export function FillStep({
   setField,
   onRecipientSelect,
 }: FillStepProps) {
-  
-  const isPartnerTab = step === "partner";
+  const isPartnerTab = step === 'partner';
   const hasFieldError = (name: keyof SupportFormFieldErrors) => Boolean(fieldErrors[name]);
   const errorId = (name: keyof SupportFormFieldErrors) => `support-form-error-${name}`;
   const renderFieldError = (name: keyof SupportFormFieldErrors) => {
@@ -258,9 +310,9 @@ export function FillStep({
 
   // simple responsive switch: use scrollable tabs on xs, fullWidth on sm+
   const theme = useTheme();
-  const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const tabsSx = {
-    width: "100%",
+    width: '100%',
     '& .MuiTabs-scroller': { scrollSnapType: isSmUp ? 'none' : 'x mandatory' },
     '& .MuiTabs-flexContainer': { width: '100%', display: 'flex' },
   };
@@ -275,7 +327,6 @@ export function FillStep({
     },
   } as const;
 
-
   return (
     <main className={`${styles.shell} ${styles.fillShell}`}>
       <div className={styles.card}>
@@ -286,20 +337,52 @@ export function FillStep({
         <nav className={styles.tabList} aria-label="Support form steps">
           <Tabs
             value={step}
-            variant={isSmUp ? "fullWidth" : "scrollable"}
-            scrollButtons={isSmUp ? undefined : "auto"}
+            variant={isSmUp ? 'fullWidth' : 'scrollable'}
+            scrollButtons={isSmUp ? undefined : 'auto'}
             allowScrollButtonsMobile={!isSmUp}
             sx={tabsSx}
             onChange={(_: React.SyntheticEvent, newValue: string) => {
-              if (newValue === "partner") onPartnerTab();
-              else if (newValue === "accountability") onAccountabilityTab();
-              else if (newValue === "review") onReview();
+              if (newValue === 'partner') onPartnerTab();
+              else if (newValue === 'accountability') onAccountabilityTab();
+              else if (newValue === 'review') onReview();
             }}
             aria-label="Support form steps"
           >
-            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("01", stepLabels.partner, isPartnerStepComplete ? "Complete" : "Needs details")}</div>} value="partner" />
-            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("02", stepLabels.accountability, isAccountabilityStepComplete ? "Complete" : "Needs details")}</div>} value="accountability" />
-            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("03", "Review", isFormValid ? "Ready" : "Locked")}</div>} value="review" />
+            <Tab
+              {...tabSx}
+              label={
+                <div className={styles.tabButton}>
+                  {renderTabLabel(
+                    '01',
+                    stepLabels.partner,
+                    isPartnerStepComplete ? 'Complete' : 'Needs details',
+                  )}
+                </div>
+              }
+              value="partner"
+            />
+            <Tab
+              {...tabSx}
+              label={
+                <div className={styles.tabButton}>
+                  {renderTabLabel(
+                    '02',
+                    stepLabels.accountability,
+                    isAccountabilityStepComplete ? 'Complete' : 'Needs details',
+                  )}
+                </div>
+              }
+              value="accountability"
+            />
+            <Tab
+              {...tabSx}
+              label={
+                <div className={styles.tabButton}>
+                  {renderTabLabel('03', 'Review', isFormValid ? 'Ready' : 'Locked')}
+                </div>
+              }
+              value="review"
+            />
           </Tabs>
         </nav>
 
@@ -331,14 +414,16 @@ export function FillStep({
                     variant="outlined"
                     className={styles.textInput}
                     value={data.partnerName}
-                    onChange={onTextChange("partnerName")}
-                    error={hasFieldError("partnerName")}
+                    onChange={onTextChange('partnerName')}
+                    error={hasFieldError('partnerName')}
                     inputProps={{
-                      "aria-invalid": hasFieldError("partnerName"),
-                      "aria-describedby": hasFieldError("partnerName") ? errorId("partnerName") : undefined,
+                      'aria-invalid': hasFieldError('partnerName'),
+                      'aria-describedby': hasFieldError('partnerName')
+                        ? errorId('partnerName')
+                        : undefined,
                     }}
                   />
-                  {renderFieldError("partnerName")}
+                  {renderFieldError('partnerName')}
                 </label>
                 <label className={styles.fieldLabel}>
                   Email Address
@@ -348,14 +433,16 @@ export function FillStep({
                     variant="outlined"
                     className={styles.textInput}
                     value={data.emailAddress}
-                    onChange={onTextChange("emailAddress")}
-                    error={hasFieldError("emailAddress")}
+                    onChange={onTextChange('emailAddress')}
+                    error={hasFieldError('emailAddress')}
                     inputProps={{
-                      "aria-invalid": hasFieldError("emailAddress"),
-                      "aria-describedby": hasFieldError("emailAddress") ? errorId("emailAddress") : undefined,
+                      'aria-invalid': hasFieldError('emailAddress'),
+                      'aria-describedby': hasFieldError('emailAddress')
+                        ? errorId('emailAddress')
+                        : undefined,
                     }}
                   />
-                  {renderFieldError("emailAddress")}
+                  {renderFieldError('emailAddress')}
                 </label>
                 <label className={styles.fieldLabel}>
                   Mobile Number
@@ -365,14 +452,16 @@ export function FillStep({
                     variant="outlined"
                     className={styles.textInput}
                     value={data.mobileNumber}
-                    onChange={onTextChange("mobileNumber")}
-                    error={hasFieldError("mobileNumber")}
+                    onChange={onTextChange('mobileNumber')}
+                    error={hasFieldError('mobileNumber')}
                     inputProps={{
-                      "aria-invalid": hasFieldError("mobileNumber"),
-                      "aria-describedby": hasFieldError("mobileNumber") ? errorId("mobileNumber") : undefined,
+                      'aria-invalid': hasFieldError('mobileNumber'),
+                      'aria-describedby': hasFieldError('mobileNumber')
+                        ? errorId('mobileNumber')
+                        : undefined,
                     }}
                   />
-                  {renderFieldError("mobileNumber")}
+                  {renderFieldError('mobileNumber')}
                 </label>
                 <label className={styles.fieldLabel}>
                   Local Church
@@ -382,14 +471,16 @@ export function FillStep({
                     variant="outlined"
                     className={styles.textInput}
                     value={data.localChurch}
-                    onChange={onTextChange("localChurch")}
-                    error={hasFieldError("localChurch")}
+                    onChange={onTextChange('localChurch')}
+                    error={hasFieldError('localChurch')}
                     inputProps={{
-                      "aria-invalid": hasFieldError("localChurch"),
-                      "aria-describedby": hasFieldError("localChurch") ? errorId("localChurch") : undefined,
+                      'aria-invalid': hasFieldError('localChurch'),
+                      'aria-describedby': hasFieldError('localChurch')
+                        ? errorId('localChurch')
+                        : undefined,
                     }}
                   />
-                  {renderFieldError("localChurch")}
+                  {renderFieldError('localChurch')}
                 </label>
               </fieldset>
 
@@ -404,17 +495,17 @@ export function FillStep({
                     className={styles.textInput}
                     value={data.missionaryName}
                     onChange={(e) => {
-                      const handler = onTextChange("missionaryName");
+                      const handler = onTextChange('missionaryName');
                       handler(e as unknown as React.ChangeEvent<HTMLInputElement>);
                       onRecipientSelect?.(null);
                     }}
-                    error={hasFieldError("missionaryName")}
+                    error={hasFieldError('missionaryName')}
                     inputProps={{
-                      placeholder: "Type team or missioner name",
-                      "aria-invalid": hasFieldError("missionaryName"),
+                      placeholder: 'Type team or missioner name',
+                      'aria-invalid': hasFieldError('missionaryName'),
                     }}
                   />
-                  {renderFieldError("missionaryName")}
+                  {renderFieldError('missionaryName')}
                 </label>
                 <label className={styles.fieldLabel}>
                   Amount
@@ -426,11 +517,15 @@ export function FillStep({
                       variant="outlined"
                       className={styles.selectInput}
                       value={data.currency}
-                      onChange={(e) => onCurrencyChange(e as unknown as React.ChangeEvent<HTMLSelectElement>)}
-                      error={hasFieldError("currency")}
+                      onChange={(e) =>
+                        onCurrencyChange(e as unknown as React.ChangeEvent<HTMLSelectElement>)
+                      }
+                      error={hasFieldError('currency')}
                       inputProps={{
-                        "aria-invalid": hasFieldError("currency"),
-                        "aria-describedby": hasFieldError("currency") ? errorId("currency") : undefined,
+                        'aria-invalid': hasFieldError('currency'),
+                        'aria-describedby': hasFieldError('currency')
+                          ? errorId('currency')
+                          : undefined,
                       }}
                     >
                       <MenuItem value="PHP">PHP</MenuItem>
@@ -441,15 +536,19 @@ export function FillStep({
                       size="small"
                       variant="outlined"
                       className={styles.textInput}
-                      inputProps={{ inputMode: "decimal", "aria-invalid": hasFieldError("amount"), "aria-describedby": hasFieldError("amount") ? errorId("amount") : undefined }}
+                      inputProps={{
+                        inputMode: 'decimal',
+                        'aria-invalid': hasFieldError('amount'),
+                        'aria-describedby': hasFieldError('amount') ? errorId('amount') : undefined,
+                      }}
                       placeholder="0.00"
                       value={data.amount}
-                      onChange={onTextChange("amount")}
-                      error={hasFieldError("amount")}
+                      onChange={onTextChange('amount')}
+                      error={hasFieldError('amount')}
                     />
                   </div>
-                  {renderFieldError("currency")}
-                  {renderFieldError("amount")}
+                  {renderFieldError('currency')}
+                  {renderFieldError('amount')}
                 </label>
                 <div className={styles.recipientDetailsGrid}>
                   <label className={styles.fieldLabel}>
@@ -460,14 +559,14 @@ export function FillStep({
                       variant="outlined"
                       className={styles.textInput}
                       value={data.nation}
-                      onChange={onTextChange("nation")}
-                      error={hasFieldError("nation")}
+                      onChange={onTextChange('nation')}
+                      error={hasFieldError('nation')}
                       inputProps={{
-                        "aria-invalid": hasFieldError("nation"),
-                        "aria-describedby": hasFieldError("nation") ? errorId("nation") : undefined,
+                        'aria-invalid': hasFieldError('nation'),
+                        'aria-describedby': hasFieldError('nation') ? errorId('nation') : undefined,
                       }}
                     />
-                    {renderFieldError("nation")}
+                    {renderFieldError('nation')}
                   </label>
                   <label className={`${styles.fieldLabel} ${styles.dateFieldLabel}`}>
                     Travel Date
@@ -476,10 +575,10 @@ export function FillStep({
                       setField={setField}
                       onTextChange={onTextChange}
                       id="support-travelDate"
-                      hasFieldError={hasFieldError("travelDate")}
-                      errorId={errorId("travelDate")}
+                      hasFieldError={hasFieldError('travelDate')}
+                      errorId={errorId('travelDate')}
                     />
-                    {renderFieldError("travelDate")}
+                    {renderFieldError('travelDate')}
                   </label>
                 </div>
                 <label className={styles.fieldLabel}>
@@ -490,14 +589,16 @@ export function FillStep({
                     variant="outlined"
                     className={styles.textInput}
                     value={data.sendingChurch}
-                    onChange={onTextChange("sendingChurch")}
-                    error={hasFieldError("sendingChurch")}
+                    onChange={onTextChange('sendingChurch')}
+                    error={hasFieldError('sendingChurch')}
                     inputProps={{
-                      "aria-invalid": hasFieldError("sendingChurch"),
-                      "aria-describedby": hasFieldError("sendingChurch") ? errorId("sendingChurch") : undefined,
+                      'aria-invalid': hasFieldError('sendingChurch'),
+                      'aria-describedby': hasFieldError('sendingChurch')
+                        ? errorId('sendingChurch')
+                        : undefined,
                     }}
                   />
-                  {renderFieldError("sendingChurch")}
+                  {renderFieldError('sendingChurch')}
                 </label>
               </fieldset>
             </div>
@@ -509,14 +610,20 @@ export function FillStep({
                   <Checkbox
                     className={styles.choiceInput}
                     checked={data.consentGiven}
-                    onChange={(e) => onCheckboxChange("consentGiven")(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-invalid={hasFieldError("consentGiven")}
-                    aria-describedby={hasFieldError("consentGiven") ? errorId("consentGiven") : undefined}
+                    onChange={(e) =>
+                      onCheckboxChange('consentGiven')(
+                        e as unknown as ChangeEvent<HTMLInputElement>,
+                      )
+                    }
+                    aria-invalid={hasFieldError('consentGiven')}
+                    aria-describedby={
+                      hasFieldError('consentGiven') ? errorId('consentGiven') : undefined
+                    }
                   />
                   {consentCopy}
                 </span>
               </label>
-              {renderFieldError("consentGiven")}
+              {renderFieldError('consentGiven')}
               <p className={styles.longText}>{privacyCopy}</p>
             </fieldset>
           </section>
@@ -530,10 +637,16 @@ export function FillStep({
             </div>
 
             <section className={styles.statementCard} aria-label="Accountability statement">
-              <h3 className={styles.statementTitle}>{getAccountabilityTitle(data.membershipType)}</h3>
-              <p className={styles.statementText}>{getAccountabilityAffirmationCopy(data.membershipType)}</p>
+              <h3 className={styles.statementTitle}>
+                {getAccountabilityTitle(data.membershipType)}
+              </h3>
+              <p className={styles.statementText}>
+                {getAccountabilityAffirmationCopy(data.membershipType)}
+              </p>
               {getAccountabilityInstructionCopy(data.membershipType) ? (
-                <p className={styles.statementText}>{getAccountabilityInstructionCopy(data.membershipType)}</p>
+                <p className={styles.statementText}>
+                  {getAccountabilityInstructionCopy(data.membershipType)}
+                </p>
               ) : null}
             </section>
 
@@ -547,9 +660,13 @@ export function FillStep({
                     className={styles.choiceInput}
                     name="unableToGo"
                     value="teamFund"
-                    checked={data.unableToGoChoice === "teamFund"}
-                    onChange={(e) => onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
+                    checked={data.unableToGoChoice === 'teamFund'}
+                    onChange={(e) =>
+                      onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)
+                    }
+                    aria-describedby={
+                      hasFieldError('unableToGoChoice') ? errorId('unableToGoChoice') : undefined
+                    }
                   />
                   Redirect my support to the team fund
                 </span>
@@ -560,14 +677,18 @@ export function FillStep({
                     className={styles.choiceInput}
                     name="unableToGo"
                     value="generalFund"
-                    checked={data.unableToGoChoice === "generalFund"}
-                    onChange={(e) => onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
+                    checked={data.unableToGoChoice === 'generalFund'}
+                    onChange={(e) =>
+                      onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)
+                    }
+                    aria-describedby={
+                      hasFieldError('unableToGoChoice') ? errorId('unableToGoChoice') : undefined
+                    }
                   />
                   Redirect my support to the Every Nation World Missions General Fund
                 </span>
               </label>
-              {renderFieldError("unableToGoChoice")}
+              {renderFieldError('unableToGoChoice')}
 
               <p className={styles.groupLabel}>If the missioner or team is rerouted:</p>
               <label className={styles.fieldLabel}>
@@ -576,9 +697,13 @@ export function FillStep({
                     className={styles.choiceInput}
                     name="rerouted"
                     value="retain"
-                    checked={data.reroutedChoice === "retain"}
-                    onChange={(e) => onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
+                    checked={data.reroutedChoice === 'retain'}
+                    onChange={(e) =>
+                      onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)
+                    }
+                    aria-describedby={
+                      hasFieldError('reroutedChoice') ? errorId('reroutedChoice') : undefined
+                    }
                   />
                   Retain my support
                 </span>
@@ -589,14 +714,18 @@ export function FillStep({
                     className={styles.choiceInput}
                     name="rerouted"
                     value="generalFund"
-                    checked={data.reroutedChoice === "generalFund"}
-                    onChange={(e) => onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
+                    checked={data.reroutedChoice === 'generalFund'}
+                    onChange={(e) =>
+                      onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)
+                    }
+                    aria-describedby={
+                      hasFieldError('reroutedChoice') ? errorId('reroutedChoice') : undefined
+                    }
                   />
                   Redirect my support to the Every Nation World Missions General Fund
                 </span>
               </label>
-              {renderFieldError("reroutedChoice")}
+              {renderFieldError('reroutedChoice')}
 
               <p className={styles.groupLabel}>If the trip is canceled:</p>
               <label className={styles.fieldLabel}>
@@ -605,14 +734,18 @@ export function FillStep({
                     className={styles.choiceInput}
                     name="canceled"
                     value="generalFund"
-                    checked={data.canceledChoice === "generalFund"}
-                    onChange={(e) => onCanceledChange(e as unknown as ChangeEvent<HTMLInputElement>)}
-                    aria-describedby={hasFieldError("canceledChoice") ? errorId("canceledChoice") : undefined}
+                    checked={data.canceledChoice === 'generalFund'}
+                    onChange={(e) =>
+                      onCanceledChange(e as unknown as ChangeEvent<HTMLInputElement>)
+                    }
+                    aria-describedby={
+                      hasFieldError('canceledChoice') ? errorId('canceledChoice') : undefined
+                    }
                   />
                   Redirect my support to the Every Nation World Missions General Fund
                 </span>
               </label>
-              {renderFieldError("canceledChoice")}
+              {renderFieldError('canceledChoice')}
             </fieldset>
 
             <fieldset className={styles.fieldBlock}>
@@ -620,10 +753,12 @@ export function FillStep({
               <SignaturePad
                 value={data.partnerSignature}
                 onChange={onPartnerSignatureChange}
-                ariaInvalid={hasFieldError("partnerSignature")}
-                ariaDescribedBy={hasFieldError("partnerSignature") ? errorId("partnerSignature") : undefined}
+                ariaInvalid={hasFieldError('partnerSignature')}
+                ariaDescribedBy={
+                  hasFieldError('partnerSignature') ? errorId('partnerSignature') : undefined
+                }
               />
-              {renderFieldError("partnerSignature")}
+              {renderFieldError('partnerSignature')}
 
               <label className={styles.fieldLabel}>
                 Partner Full Name (Printed)
@@ -633,14 +768,16 @@ export function FillStep({
                   variant="outlined"
                   className={styles.textInput}
                   value={data.partnerPrintedName}
-                  onChange={onTextChange("partnerPrintedName")}
-                  error={hasFieldError("partnerPrintedName")}
+                  onChange={onTextChange('partnerPrintedName')}
+                  error={hasFieldError('partnerPrintedName')}
                   inputProps={{
-                    "aria-invalid": hasFieldError("partnerPrintedName"),
-                    "aria-describedby": hasFieldError("partnerPrintedName") ? errorId("partnerPrintedName") : undefined,
+                    'aria-invalid': hasFieldError('partnerPrintedName'),
+                    'aria-describedby': hasFieldError('partnerPrintedName')
+                      ? errorId('partnerPrintedName')
+                      : undefined,
                   }}
                 />
-                {renderFieldError("partnerPrintedName")}
+                {renderFieldError('partnerPrintedName')}
               </label>
             </fieldset>
           </section>

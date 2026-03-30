@@ -8,14 +8,14 @@
 }
 
 /* Respect app-level theme toggles by reading dataset on the root element */
-:global(:root[data-theme="dark"]) {
+:global(:root[data-theme='dark']) {
   --accountability-text: #f5f5f5;
   --accountability-text-secondary: #cfcfcf;
   --accountability-muted: #bdbdbd;
   --accountability-brand: #63b3ff;
 }
 
-:global(:root[data-theme="light"]) {
+:global(:root[data-theme='light']) {
   --accountability-text: #111;
   --accountability-text-secondary: #444;
   --accountability-muted: #666;

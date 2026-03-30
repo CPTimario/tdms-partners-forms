@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState, useEffect } from "react";
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import type { PaletteMode } from "@mui/material";
-import { getTheme } from "./theme";
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import type { PaletteMode } from '@mui/material';
+import React, { useMemo, useState, useEffect } from 'react';
+
+import { getTheme } from './theme';
 
 type Props = {
   children: React.ReactNode;
@@ -11,21 +12,19 @@ type Props = {
 };
 
 export const ColorModeContext = React.createContext({
-  mode: "light" as PaletteMode,
+  mode: 'light' as PaletteMode,
   toggleColorMode: () => {},
 });
 
 export default function MuiProviders({ children, initialTheme }: Props) {
-  const [mode, setMode] = useState<PaletteMode>(initialTheme ?? "light");
-
-  
+  const [mode, setMode] = useState<PaletteMode>(initialTheme ?? 'light');
 
   useEffect(() => {
     // keep legacy dataset theme in sync for existing code that reads it
     try {
       document.documentElement.dataset.theme = mode;
       try {
-        window.localStorage.setItem("theme", mode);
+        window.localStorage.setItem('theme', mode);
       } catch {
         // ignore
       }
@@ -38,7 +37,7 @@ export default function MuiProviders({ children, initialTheme }: Props) {
   const colorMode = useMemo(
     () => ({
       mode,
-      toggleColorMode: () => setMode((prev) => (prev === "light" ? "dark" : "light")),
+      toggleColorMode: () => setMode((prev) => (prev === 'light' ? 'dark' : 'light')),
     }),
     [mode],
   );

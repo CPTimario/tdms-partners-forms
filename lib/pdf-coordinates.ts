@@ -5,156 +5,156 @@
  * Template size is 612 x 252 pt (~215.9 x 88.9 mm), landscape.
  */
 
-import type { TemplateCoordinates } from "@/types/pdf-form";
+import type { TemplateCoordinates } from '@/types/pdf-form';
 
 /**
  * Victory Member template coordinates
  * Adjust these based on your actual PDF layout
  */
 export const victoryCourseCoordinates: TemplateCoordinates = {
-  partnerName:   {
+  partnerName: {
     x: 10.03,
     y: 58.67,
     width: 75,
     height: 4.76,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  emailAddress:   {
+  emailAddress: {
     x: 9.5,
     y: 44.25,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  mobileNumber:   {
+  mobileNumber: {
     x: 9.5,
     y: 29.81,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  localChurch:   {
+  localChurch: {
     x: 9.5,
     y: 15.56,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  missionaryName:   {
+  missionaryName: {
     x: 95,
     y: 58.59,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  amount:   {
+  amount: {
     x: 95,
     y: 44.19,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  nation:   {
+  nation: {
     x: 111.81,
     y: 29.81,
     width: 61.76,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateMonth:   {
+  travelDateMonth: {
     x: 179.83,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateDay:   {
+  travelDateDay: {
     x: 189.95,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateYear:   {
+  travelDateYear: {
     x: 200.1,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  sendingChurch:   {
+  sendingChurch: {
     x: 95.18,
     y: 15.45,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  consentCheckbox:   {
+  consentCheckbox: {
     x: 5.8,
     y: 76.27,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  unableToGoTeamFund:   {
+  unableToGoTeamFund: {
     x: 6.19,
     y: 26.58,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  unableToGoGeneralFund:   {
+  unableToGoGeneralFund: {
     x: 6.01,
     y: 21.11,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  reroutedRetain:   {
+  reroutedRetain: {
     x: 73.74,
     y: 30.53,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  reroutedGeneralFund:   {
+  reroutedGeneralFund: {
     x: 73.74,
     y: 24.99,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  canceledGeneralFund:   {
+  canceledGeneralFund: {
     x: 143.07,
     y: 30.46,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  partnerSignature:   {
+  partnerSignature: {
     x: 147.68,
     y: 12.5,
     width: 59.01,
@@ -162,13 +162,13 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
     maxWidth: 40,
     maxHeight: 10,
   },
-  partnerSignaturePrintedName:   {
+  partnerSignaturePrintedName: {
     x: 145.46,
     y: 8.59,
     width: 63.4,
     height: 6,
     fontSize: 9,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
 };
 
@@ -177,149 +177,149 @@ export const victoryCourseCoordinates: TemplateCoordinates = {
  * Adjust these based on your actual PDF layout
  */
 export const nonVictoryCoordinates: TemplateCoordinates = {
-  partnerName:   {
+  partnerName: {
     x: 10.03,
     y: 58.67,
     width: 75,
     height: 4.76,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  emailAddress:   {
+  emailAddress: {
     x: 9.5,
     y: 44.25,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  mobileNumber:   {
+  mobileNumber: {
     x: 9.5,
     y: 29.81,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  localChurch:   {
+  localChurch: {
     x: 9.5,
     y: 15.56,
     width: 75,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  missionaryName:   {
+  missionaryName: {
     x: 95,
     y: 58.59,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  amount:   {
+  amount: {
     x: 95,
     y: 44.19,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  nation:   {
+  nation: {
     x: 111.81,
     y: 29.81,
     width: 61.76,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateMonth:   {
+  travelDateMonth: {
     x: 179.83,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateDay:   {
+  travelDateDay: {
     x: 189.95,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  travelDateYear:   {
+  travelDateYear: {
     x: 200.1,
     y: 29.66,
     width: 7,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  sendingChurch:   {
+  sendingChurch: {
     x: 95.18,
     y: 15.45,
     width: 112,
     height: 6,
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  consentCheckbox:   {
+  consentCheckbox: {
     x: 5.8,
     y: 76.27,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  unableToGoTeamFund:   {
+  unableToGoTeamFund: {
     x: 6.26,
     y: 35.4,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  unableToGoGeneralFund:   {
+  unableToGoGeneralFund: {
     x: 6.26,
     y: 29.93,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  reroutedRetain:   {
+  reroutedRetain: {
     x: 73.74,
     y: 39.28,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  reroutedGeneralFund:   {
+  reroutedGeneralFund: {
     x: 73.74,
     y: 33.74,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  canceledGeneralFund:   {
+  canceledGeneralFund: {
     x: 143.07,
     y: 39.21,
     width: 3,
     height: 3,
-    checkSymbol: "X",
+    checkSymbol: 'X',
     fontSize: 10,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
-  partnerSignature:   {
+  partnerSignature: {
     x: 147.68,
     y: 12.5,
     width: 59.01,
@@ -327,13 +327,13 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
     maxWidth: 40,
     maxHeight: 10,
   },
-  partnerSignaturePrintedName:   {
+  partnerSignaturePrintedName: {
     x: 145.46,
     y: 8.59,
     width: 63.4,
     height: 6,
     fontSize: 9,
-    fontName: "Helvetica",
+    fontName: 'Helvetica',
   },
 };
 
@@ -341,9 +341,7 @@ export const nonVictoryCoordinates: TemplateCoordinates = {
  * Get coordinates for the appropriate template
  */
 export function getTemplateCoordinates(
-  membershipType: "victory" | "nonVictory"
+  membershipType: 'victory' | 'nonVictory',
 ): TemplateCoordinates {
-  return membershipType === "victory"
-    ? victoryCourseCoordinates
-    : nonVictoryCoordinates;
+  return membershipType === 'victory' ? victoryCourseCoordinates : nonVictoryCoordinates;
 }
