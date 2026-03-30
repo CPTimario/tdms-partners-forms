@@ -7,7 +7,15 @@ import {
   generateReviewPDF,
 } from "@/lib/pdf-generator";
 import { useSupportForm } from "@/hooks/use-support-form";
-import { type Suggestion } from "@/hooks/useTeams";
+type RecipientSuggestion = {
+  id: string;
+  label: string;
+  type?: "team" | "missioner";
+  team?: string;
+  nation?: string;
+  travelDate?: string;
+  sendingChurch?: string;
+};
 import { Share2 } from "lucide-react";
  
 import { generateCompositeQr } from "@/lib/qr";
@@ -18,7 +26,8 @@ import {
   type SupportFormFieldErrors,
 } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
-import { Snackbar } from "@/components/Snackbar";
+import AppSnackbar from "@/components/ui/Snackbar";
+import Button from "@mui/material/Button";
 import { useSnackbar } from "@/hooks/use-snackbar";
 import styles from "./FormBuilder.module.css";
 import { ReviewStep } from "./ReviewStep";
@@ -81,20 +90,8 @@ function MembershipGate() {
         </h1>
         <p className={styles.gateText}>Choose Yes or No to continue.</p>
         <div className={styles.gateActions}>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => router.push("/victory")}
-          >
-            Yes
-          </button>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => router.push("/non-victory")}
-          >
-            No
-          </button>
+          <Button variant="contained" onClick={() => router.push("/victory")}>Yes</Button>
+          <Button variant="contained" onClick={() => router.push("/non-victory")}>No</Button>
         </div>
       </div>
     </main>
@@ -159,9 +156,7 @@ function VictoryAgreementGate({ onAgree }: VictoryAgreementGateProps) {
         </h1>
         <p className={styles.gateText}>{getAccountabilityAffirmationCopy("victory")}</p>
         <div className={styles.gateActions}>
-          <button className={styles.button} type="button" onClick={onAgree}>
-            I Agree
-          </button>
+          <Button variant="contained" onClick={onAgree}>I Agree</Button>
         </div>
       </div>
     </main>
@@ -196,7 +191,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     setField,
     setValidation,
   } = useSupportForm(membershipType);
-  // setField allows programmatic updates to text fields (e.g., when selecting autocomplete suggestions)
+  // setField allows programmatic updates to text fields (used when populating from deeplinks or selections)
   const snackbar = useSnackbar();
   const [isExporting, setIsExporting] = useState(false);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
@@ -517,13 +512,10 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
       <>
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", right: 12, top: 12, zIndex: 60, display: "flex", gap: 8, alignItems: "center" }}>
-              <div className={styles.shareControls}>
-                <button className={styles.button} type="button" onClick={handleShowQR} title="Share link">
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Share2 size={16} aria-hidden="true" />
-                    <span className={styles.shareButtonLabel}>Share</span>
-                  </span>
-                </button>
+                <div className={styles.shareControls}>
+                <Button className={styles.button} type="button" onClick={handleShowQR} title="Share link" startIcon={<Share2 size={16} aria-hidden="true" />}>
+                  <span className={styles.shareButtonLabel}>Share</span>
+                </Button>
               </div>
           </div>
           <FillStep
@@ -546,7 +538,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             onReview={handleGoToReview}
             onReset={resetForm}
             setField={setField}
-            onRecipientSelect={async (item: Suggestion | null) => {
+            onRecipientSelect={async (item: RecipientSuggestion | null) => {
               // When a suggestion is selected (if present), populate fields and set an encrypted recipient token in the URL.
               if (item) {
                 if (setField) {
@@ -592,7 +584,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             }}
           />
         </div>
-        <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+        <AppSnackbar open={Boolean(snackbar.message)} message={snackbar.message} onClose={snackbar.dismiss} />
 
         {showQR ? (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80 }} onClick={() => setShowQR(false)}>
@@ -610,7 +602,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
                 {qrDataUrl ? (
                   <a className={styles.button} href={qrDataUrl} download="tdm-link-qr.png">Download</a>
                 ) : null}
-                <button className={styles.button} type="button" onClick={() => { setShowQR(false); }}>Close</button>
+                <Button className={styles.button} type="button" onClick={() => { setShowQR(false); }} variant="outlined">Close</Button>
               </div>
             </div>
           </div>
@@ -630,7 +622,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         onEditAccountability={handleGoToAccountability}
         onDownloadPdf={downloadReviewPdf}
       />
-      <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+      <AppSnackbar open={Boolean(snackbar.message)} message={snackbar.message} onClose={snackbar.dismiss} />
     </>
   );
 }

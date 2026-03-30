@@ -71,7 +71,7 @@ Note: the dev/start scripts run a startup check and will exit if `DEEPLINK_KEY` 
 Testing
 -------
 - Unit tests: `npm run test:unit` (Vitest).
-- E2E tests: `npm run test:e2e` (Playwright). Tests that need deterministic suggestions stub `GET /api/teams`.
+- E2E tests: `npm run test:e2e` (Playwright). Tests that need deterministic suggestions stub the suggestions source.
 
 CI
 -- Ensure `DEEPLINK_KEY` is provided in CI environment variables.
@@ -82,7 +82,7 @@ Relevant files
 - Form UI: `components/support-form-builder/SupportFormBuilder.tsx`, `components/support-form-builder/FillStep.tsx`
 - Deeplink crypto: `lib/deeplink-crypto.ts`
 - Deeplink API: `app/api/deeplink/route.ts`
-- Teams API shim: `app/api/teams/route.ts` and `hooks/useTeams.ts`
+- Teams suggestions: suggestions source (local or stubbed in tests)
 - QR generation: `lib/qr.ts`
 
 Contributing

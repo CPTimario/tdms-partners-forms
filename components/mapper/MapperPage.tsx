@@ -11,6 +11,10 @@ import {
   type PointerEvent,
 } from "react";
 import { ClipboardCopy, Copy, Move, Save } from "lucide-react";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Slider from "@mui/material/Slider";
+import Button from "@mui/material/Button";
 import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
 import type {
   MembershipType,
@@ -487,50 +491,51 @@ export function MapperPage() {
         <div className={styles.controls}>
           <label className={styles.label}>
             Template
-            <select
+            <TextField
+              select
               className={styles.select}
               value={membershipType}
               disabled={!isHydrated}
-              onInput={(event) => {
-                setMembershipType((event.target as HTMLSelectElement).value as MembershipType);
-              }}
+              size="small"
               onChange={(event) => {
                 setMembershipType(event.target.value as MembershipType);
               }}
             >
-              <option value="victory">Victory</option>
-              <option value="nonVictory">Non-Victory</option>
-            </select>
+              <MenuItem value="victory">Victory</MenuItem>
+              <MenuItem value="nonVictory">Non-Victory</MenuItem>
+            </TextField>
           </label>
 
           <label className={styles.label}>
             Page
-            <select
+            <TextField
+              select
               className={styles.select}
               value={pageNumber}
               disabled={!isHydrated}
+              size="small"
               onChange={(event) => {
                 setPageNumber(Number(event.target.value) as 1 | 2);
               }}
             >
-              <option value={1}>Page 1</option>
-              <option value={2}>Page 2</option>
-            </select>
+              <MenuItem value={1}>Page 1</MenuItem>
+              <MenuItem value={2}>Page 2</MenuItem>
+            </TextField>
           </label>
 
           <label className={styles.label}>
             Zoom: {zoom.toFixed(2)}x
-            <input
+            <Slider
               className={styles.range}
-              type="range"
               min={0.8}
               max={2}
               step={0.1}
               value={zoom}
               disabled={!isHydrated}
-              onChange={(event) => {
-                setZoom(Number(event.target.value));
+              onChange={(_, v) => {
+                setZoom(Number(v));
               }}
+              valueLabelDisplay="auto"
             />
           </label>
         </div>
@@ -634,16 +639,17 @@ export function MapperPage() {
               <ul className={styles.list}>
                 {mappedFields.map(({ key, config }) => (
                   <li key={key}>
-                    <button
-                      type="button"
+                    <Button
                       className={`${styles.listButton} ${activeSelectedField === key ? styles.listButtonActive : ""}`}
                       onClick={() => {
                         setSelectedField(key);
                         surfaceRef.current?.focus();
                       }}
+                      type="button"
+                      variant="text"
                     >
                       {key}: x {config.x}, y {config.y}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -655,42 +661,42 @@ export function MapperPage() {
                 <div className={styles.metricGrid}>
                   <label className={styles.metricLabel}>
                     X (mm)
-                    <input
+                    <TextField
                       className={styles.metricInput}
-                      data-testid="mapper-x-input"
+                      size="small"
                       type="number"
-                      step="0.1"
-                      value={selectedConfig.x}
+                      inputProps={{ step: "0.1", "data-testid": "mapper-x-input" }}
+                      value={String(selectedConfig.x)}
                       onChange={(event) => {
-                        setFieldPosition(activeSelectedField, Number(event.target.value), selectedConfig.y);
+                        setFieldPosition(activeSelectedField, Number((event.target as HTMLInputElement).value), selectedConfig.y);
                       }}
                     />
                   </label>
                   <label className={styles.metricLabel}>
                     Y (mm)
-                    <input
+                    <TextField
                       className={styles.metricInput}
-                      data-testid="mapper-y-input"
+                      size="small"
                       type="number"
-                      step="0.1"
-                      value={selectedConfig.y}
+                      inputProps={{ step: "0.1", "data-testid": "mapper-y-input" }}
+                      value={String(selectedConfig.y)}
                       onChange={(event) => {
-                        setFieldPosition(activeSelectedField, selectedConfig.x, Number(event.target.value));
+                        setFieldPosition(activeSelectedField, selectedConfig.x, Number((event.target as HTMLInputElement).value));
                       }}
                     />
                   </label>
                   <label className={styles.metricLabel}>
                     Width (mm)
-                    <input
+                    <TextField
                       className={styles.metricInput}
-                      data-testid="mapper-width-input"
+                      size="small"
                       type="number"
-                      step="0.1"
-                      value={selectedConfig.width ?? selectedDimensions.width}
+                      inputProps={{ step: "0.1", "data-testid": "mapper-width-input" }}
+                      value={String(selectedConfig.width ?? selectedDimensions.width)}
                       onChange={(event) => {
                         updateFieldDimensions(
                           activeSelectedField,
-                          Number(event.target.value),
+                          Number((event.target as HTMLInputElement).value),
                           selectedConfig.height ?? selectedDimensions.height,
                         );
                       }}
@@ -698,17 +704,17 @@ export function MapperPage() {
                   </label>
                   <label className={styles.metricLabel}>
                     Height (mm)
-                    <input
+                    <TextField
                       className={styles.metricInput}
-                      data-testid="mapper-height-input"
+                      size="small"
                       type="number"
-                      step="0.1"
-                      value={selectedConfig.height ?? selectedDimensions.height}
+                      inputProps={{ step: "0.1", "data-testid": "mapper-height-input" }}
+                      value={String(selectedConfig.height ?? selectedDimensions.height)}
                       onChange={(event) => {
                         updateFieldDimensions(
                           activeSelectedField,
                           selectedConfig.width ?? selectedDimensions.width,
-                          Number(event.target.value),
+                          Number((event.target as HTMLInputElement).value),
                         );
                       }}
                     />
@@ -726,46 +732,41 @@ export function MapperPage() {
                 rows={6}
                 value={toSnippet(activeSelectedField, selectedConfig)}
               />
-              <button
+              <Button
                 className={styles.button}
                 type="button"
                 onClick={async () => {
                   await navigator.clipboard.writeText(toSnippet(activeSelectedField, selectedConfig));
                 }}
+                startIcon={<Copy size={16} aria-hidden="true" />}
+                variant="outlined"
               >
-                <span className={styles.buttonContent}>
-                  <Copy size={16} aria-hidden="true" />
-                  Copy Selected Field Snippet
-                </span>
-              </button>
+                Copy Selected Field Snippet
+              </Button>
             </div>
 
             <div>
               <strong>Current page snippets</strong>
               <textarea className={styles.output} readOnly rows={8} value={pageSnippet} />
-              <button
+              <Button
                 className={styles.button}
                 type="button"
                 onClick={async () => {
                   await navigator.clipboard.writeText(pageSnippet);
                 }}
+                startIcon={<ClipboardCopy size={16} aria-hidden="true" />}
+                variant="outlined"
               >
-                <span className={styles.buttonContent}>
-                  <ClipboardCopy size={16} aria-hidden="true" />
-                  Copy Page Snippets
-                </span>
-              </button>
+                Copy Page Snippets
+              </Button>
             </div>
 
             <div>
               <strong>Persist coordinates</strong>
               <p>Save current mapper coordinates directly into app source (development only).</p>
-              <button className={styles.button} type="button" onClick={handleSaveCoordinates}>
-                <span className={styles.buttonContent}>
-                  <Save size={16} aria-hidden="true" />
-                  Save Coordinates to Source
-                </span>
-              </button>
+              <Button className={styles.button} type="button" onClick={handleSaveCoordinates} startIcon={<Save size={16} aria-hidden="true" />} variant="contained">
+                Save Coordinates to Source
+              </Button>
               <p data-testid="mapper-save-status">{saveStatus || "Not saved in this session."}</p>
             </div>
 

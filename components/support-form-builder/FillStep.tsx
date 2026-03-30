@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useRef, type ChangeEventHandler } from "react";
-// Autocomplete removed; use a plain text input for recipient entry
-import type { Suggestion } from "@/hooks/useTeams";
+import { useEffect, useRef, type ChangeEventHandler, type ChangeEvent } from "react";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+type RecipientSuggestion = {
+  id: string;
+  label: string;
+  type?: "team" | "missioner";
+  team?: string;
+  nation?: string;
+  travelDate?: string;
+  sendingChurch?: string;
+};
 import SignatureCanvas from "react-signature-canvas";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
 import styles from "./FormBuilder.module.css";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import Radio from "@mui/material/Radio";
 import {
   consentCopy,
   getAccountabilityAffirmationCopy,
@@ -40,7 +52,7 @@ type FillStepProps = {
   onReset: () => void;
   // programmatic field setter from useSupportForm
   setField?: (field: RequiredStringField, value: string) => void;
-  onRecipientSelect?: (item: Suggestion | null) => void;
+  onRecipientSelect?: (item: RecipientSuggestion | null) => void;
 };
 
 type SignaturePadProps = {
@@ -290,45 +302,65 @@ export function FillStep({
                 <legend>Partner</legend>
                 <label className={styles.fieldLabel}>
                   Partner Name
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("partnerName") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.partnerName}
                     onChange={onTextChange("partnerName")}
-                    aria-invalid={hasFieldError("partnerName")}
-                    aria-describedby={hasFieldError("partnerName") ? errorId("partnerName") : undefined}
+                    error={hasFieldError("partnerName")}
+                    inputProps={{
+                      "aria-invalid": hasFieldError("partnerName"),
+                      "aria-describedby": hasFieldError("partnerName") ? errorId("partnerName") : undefined,
+                    }}
                   />
                   {renderFieldError("partnerName")}
                 </label>
                 <label className={styles.fieldLabel}>
                   Email Address
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("emailAddress") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.emailAddress}
                     onChange={onTextChange("emailAddress")}
-                    aria-invalid={hasFieldError("emailAddress")}
-                    aria-describedby={hasFieldError("emailAddress") ? errorId("emailAddress") : undefined}
+                    error={hasFieldError("emailAddress")}
+                    inputProps={{
+                      "aria-invalid": hasFieldError("emailAddress"),
+                      "aria-describedby": hasFieldError("emailAddress") ? errorId("emailAddress") : undefined,
+                    }}
                   />
                   {renderFieldError("emailAddress")}
                 </label>
                 <label className={styles.fieldLabel}>
                   Mobile Number
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("mobileNumber") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.mobileNumber}
                     onChange={onTextChange("mobileNumber")}
-                    aria-invalid={hasFieldError("mobileNumber")}
-                    aria-describedby={hasFieldError("mobileNumber") ? errorId("mobileNumber") : undefined}
+                    error={hasFieldError("mobileNumber")}
+                    inputProps={{
+                      "aria-invalid": hasFieldError("mobileNumber"),
+                      "aria-describedby": hasFieldError("mobileNumber") ? errorId("mobileNumber") : undefined,
+                    }}
                   />
                   {renderFieldError("mobileNumber")}
                 </label>
                 <label className={styles.fieldLabel}>
                   Local Church
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("localChurch") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.localChurch}
                     onChange={onTextChange("localChurch")}
-                    aria-invalid={hasFieldError("localChurch")}
-                    aria-describedby={hasFieldError("localChurch") ? errorId("localChurch") : undefined}
+                    error={hasFieldError("localChurch")}
+                    inputProps={{
+                      "aria-invalid": hasFieldError("localChurch"),
+                      "aria-describedby": hasFieldError("localChurch") ? errorId("localChurch") : undefined,
+                    }}
                   />
                   {renderFieldError("localChurch")}
                 </label>
@@ -338,14 +370,20 @@ export function FillStep({
                 <legend>Recipient</legend>
                 <label className={styles.fieldLabel}>
                   Missioner Name/Team
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("missionaryName") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.missionaryName}
-                    placeholder="Type team or missioner name"
                     onChange={(e) => {
                       const handler = onTextChange("missionaryName");
                       handler(e as unknown as React.ChangeEvent<HTMLInputElement>);
                       onRecipientSelect?.(null);
+                    }}
+                    error={hasFieldError("missionaryName")}
+                    inputProps={{
+                      placeholder: "Type team or missioner name",
+                      "aria-invalid": hasFieldError("missionaryName"),
                     }}
                   />
                   {renderFieldError("missionaryName")}
@@ -353,24 +391,31 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Amount
                   <div className={styles.currencyAmountRow}>
-                    <select
-                      className={`${styles.selectInput} ${hasFieldError("currency") ? styles.textInputError : ""}`}
+                    <TextField
+                      select
+                      size="small"
+                      variant="outlined"
+                      className={styles.selectInput}
                       value={data.currency}
-                      onChange={onCurrencyChange}
-                      aria-invalid={hasFieldError("currency")}
-                      aria-describedby={hasFieldError("currency") ? errorId("currency") : undefined}
+                      onChange={(e) => onCurrencyChange(e as unknown as React.ChangeEvent<HTMLSelectElement>)}
+                      error={hasFieldError("currency")}
+                      inputProps={{
+                        "aria-invalid": hasFieldError("currency"),
+                        "aria-describedby": hasFieldError("currency") ? errorId("currency") : undefined,
+                      }}
                     >
-                      <option value="PHP">PHP</option>
-                      <option value="USD">USD</option>
-                    </select>
-                    <input
-                      className={`${styles.textInput} ${hasFieldError("amount") ? styles.textInputError : ""}`}
-                      inputMode="decimal"
+                      <MenuItem value="PHP">PHP</MenuItem>
+                      <MenuItem value="USD">USD</MenuItem>
+                    </TextField>
+                    <TextField
+                      size="small"
+                      variant="outlined"
+                      className={styles.textInput}
+                      inputProps={{ inputMode: "decimal", "aria-invalid": hasFieldError("amount"), "aria-describedby": hasFieldError("amount") ? errorId("amount") : undefined }}
                       placeholder="0.00"
                       value={data.amount}
                       onChange={onTextChange("amount")}
-                      aria-invalid={hasFieldError("amount")}
-                      aria-describedby={hasFieldError("amount") ? errorId("amount") : undefined}
+                      error={hasFieldError("amount")}
                     />
                   </div>
                   {renderFieldError("currency")}
@@ -379,12 +424,17 @@ export function FillStep({
                 <div className={styles.recipientDetailsGrid}>
                   <label className={styles.fieldLabel}>
                     Nation
-                    <input
-                      className={`${styles.textInput} ${hasFieldError("nation") ? styles.textInputError : ""}`}
+                    <TextField
+                      size="small"
+                      variant="outlined"
+                      className={styles.textInput}
                       value={data.nation}
                       onChange={onTextChange("nation")}
-                      aria-invalid={hasFieldError("nation")}
-                      aria-describedby={hasFieldError("nation") ? errorId("nation") : undefined}
+                      error={hasFieldError("nation")}
+                      inputProps={{
+                        "aria-invalid": hasFieldError("nation"),
+                        "aria-describedby": hasFieldError("nation") ? errorId("nation") : undefined,
+                      }}
                     />
                     {renderFieldError("nation")}
                   </label>
@@ -402,12 +452,17 @@ export function FillStep({
                 </div>
                 <label className={styles.fieldLabel}>
                   Sending Church
-                  <input
-                    className={`${styles.textInput} ${hasFieldError("sendingChurch") ? styles.textInputError : ""}`}
+                  <TextField
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
                     value={data.sendingChurch}
                     onChange={onTextChange("sendingChurch")}
-                    aria-invalid={hasFieldError("sendingChurch")}
-                    aria-describedby={hasFieldError("sendingChurch") ? errorId("sendingChurch") : undefined}
+                    error={hasFieldError("sendingChurch")}
+                    inputProps={{
+                      "aria-invalid": hasFieldError("sendingChurch"),
+                      "aria-describedby": hasFieldError("sendingChurch") ? errorId("sendingChurch") : undefined,
+                    }}
                   />
                   {renderFieldError("sendingChurch")}
                 </label>
@@ -418,11 +473,10 @@ export function FillStep({
               <legend>Consent</legend>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Checkbox
                     className={styles.choiceInput}
-                    type="checkbox"
                     checked={data.consentGiven}
-                    onChange={onCheckboxChange("consentGiven")}
+                    onChange={(e) => onCheckboxChange("consentGiven")(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-invalid={hasFieldError("consentGiven")}
                     aria-describedby={hasFieldError("consentGiven") ? errorId("consentGiven") : undefined}
                   />
@@ -456,13 +510,12 @@ export function FillStep({
               <p className={styles.groupLabel}>If the missioner is unable to go:</p>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Radio
                     className={styles.choiceInput}
-                    type="radio"
                     name="unableToGo"
                     value="teamFund"
                     checked={data.unableToGoChoice === "teamFund"}
-                    onChange={onUnableToGoChange}
+                    onChange={(e) => onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
                   />
                   Redirect my support to the team fund
@@ -470,13 +523,12 @@ export function FillStep({
               </label>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Radio
                     className={styles.choiceInput}
-                    type="radio"
                     name="unableToGo"
                     value="generalFund"
                     checked={data.unableToGoChoice === "generalFund"}
-                    onChange={onUnableToGoChange}
+                    onChange={(e) => onUnableToGoChange(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-describedby={hasFieldError("unableToGoChoice") ? errorId("unableToGoChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund
@@ -487,13 +539,12 @@ export function FillStep({
               <p className={styles.groupLabel}>If the missioner or team is rerouted:</p>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Radio
                     className={styles.choiceInput}
-                    type="radio"
                     name="rerouted"
                     value="retain"
                     checked={data.reroutedChoice === "retain"}
-                    onChange={onReroutedChange}
+                    onChange={(e) => onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
                   />
                   Retain my support
@@ -501,13 +552,12 @@ export function FillStep({
               </label>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Radio
                     className={styles.choiceInput}
-                    type="radio"
                     name="rerouted"
                     value="generalFund"
                     checked={data.reroutedChoice === "generalFund"}
-                    onChange={onReroutedChange}
+                    onChange={(e) => onReroutedChange(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-describedby={hasFieldError("reroutedChoice") ? errorId("reroutedChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund
@@ -518,13 +568,12 @@ export function FillStep({
               <p className={styles.groupLabel}>If the trip is canceled:</p>
               <label className={styles.fieldLabel}>
                 <span>
-                  <input
+                  <Radio
                     className={styles.choiceInput}
-                    type="radio"
                     name="canceled"
                     value="generalFund"
                     checked={data.canceledChoice === "generalFund"}
-                    onChange={onCanceledChange}
+                    onChange={(e) => onCanceledChange(e as unknown as ChangeEvent<HTMLInputElement>)}
                     aria-describedby={hasFieldError("canceledChoice") ? errorId("canceledChoice") : undefined}
                   />
                   Redirect my support to the Every Nation World Missions General Fund
@@ -545,12 +594,17 @@ export function FillStep({
 
               <label className={styles.fieldLabel}>
                 Partner Full Name (Printed)
-                <input
-                  className={`${styles.textInput} ${hasFieldError("partnerPrintedName") ? styles.textInputError : ""}`}
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  className={styles.textInput}
                   value={data.partnerPrintedName}
                   onChange={onTextChange("partnerPrintedName")}
-                  aria-invalid={hasFieldError("partnerPrintedName")}
-                  aria-describedby={hasFieldError("partnerPrintedName") ? errorId("partnerPrintedName") : undefined}
+                  error={hasFieldError("partnerPrintedName")}
+                  inputProps={{
+                    "aria-invalid": hasFieldError("partnerPrintedName"),
+                    "aria-describedby": hasFieldError("partnerPrintedName") ? errorId("partnerPrintedName") : undefined,
+                  }}
                 />
                 {renderFieldError("partnerPrintedName")}
               </label>
@@ -559,35 +613,47 @@ export function FillStep({
         )}
 
         <div className={`${styles.actions} ${styles.stepActions}`}>
-          <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={onReset}>
-            <span className={styles.buttonContent}>
-              <RotateCcw size={16} aria-hidden="true" />
-              Reset Form
-            </span>
-          </button>
+          <Button
+            className={`${styles.button} ${styles.secondaryButton}`}
+            type="button"
+            onClick={onReset}
+            startIcon={<RotateCcw size={16} aria-hidden="true" />}
+            variant="outlined"
+          >
+            Reset Form
+          </Button>
 
           {isPartnerTab ? (
-            <button className={styles.button} type="button" onClick={onAccountabilityTab}>
-              <span className={styles.buttonContent}>
-                Continue to Accountability
-                <ArrowRight size={16} aria-hidden="true" />
-              </span>
-            </button>
+            <Button
+              className={styles.button}
+              type="button"
+              onClick={onAccountabilityTab}
+              endIcon={<ArrowRight size={16} aria-hidden="true" />}
+              variant="contained"
+            >
+              Continue to Accountability
+            </Button>
           ) : (
-            <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={onPartnerTab}>
-              <span className={styles.buttonContent}>
-                <ArrowLeft size={16} aria-hidden="true" />
-                Back to Partner Information
-              </span>
-            </button>
+            <Button
+              className={`${styles.button} ${styles.secondaryButton}`}
+              type="button"
+              onClick={onPartnerTab}
+              startIcon={<ArrowLeft size={16} aria-hidden="true" />}
+              variant="outlined"
+            >
+              Back to Partner Information
+            </Button>
           )}
 
-          <button className={styles.button} type="button" onClick={onReview}>
-            <span className={styles.buttonContent}>
-              <Signature size={16} aria-hidden="true" />
-              Review and Generate PDF
-            </span>
-          </button>
+          <Button
+            className={styles.button}
+            type="button"
+            onClick={onReview}
+            startIcon={<Signature size={16} aria-hidden="true" />}
+            variant="contained"
+          >
+            Review and Generate PDF
+          </Button>
         </div>
       </div>
     </main>

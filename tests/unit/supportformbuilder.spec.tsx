@@ -103,21 +103,48 @@ describe("SupportFormBuilder URL sync", () => {
     vi.resetAllMocks();
   });
 
+  // helper to wait for `replace` or other async mocks to be called
+  async function waitForMockCall(mockFn: { mock: { calls: unknown[] } }, timeout = 2000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      if ((mockFn as any).mock && (mockFn as any).mock.calls.length) return;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    // final microtask flush
+    await Promise.resolve();
+  }
+
+  async function waitForSelector(selector: string, root: HTMLElement | null, timeout = 2000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      if (root && root.querySelector(selector)) return root.querySelector(selector);
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    return null;
+  }
+
 
   test("adds recipient param when child selects a suggestion", async () => {
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
-
+    let root = null as any;
     await act(async () => {
-      const root = createRoot(container!);
+      root = createRoot(container!);
       root.render(<SupportFormBuilder />);
     });
 
-    const select = container!.querySelector("#select") as HTMLButtonElement;
+
+    const select = (await waitForSelector("#select", container)) as HTMLButtonElement | null;
     expect(select).toBeTruthy();
 
     await act(async () => {
       select.click();
     });
+
+    // allow pending promises/microtasks (fetch + router.replace)
+    await Promise.resolve();
+    await Promise.resolve();
+    // wait for router.replace to be called (avoid timing races)
+    await waitForMockCall(replace, 2000);
 
     // router.replace should be called with a query string containing the recipient id
     expect(replace).toHaveBeenCalled();
@@ -131,13 +158,20 @@ describe("SupportFormBuilder URL sync", () => {
     const parsed = crypto.decryptRecipient(token as string);
     expect(parsed).toBeTruthy();
     expect(parsed?.missionaryName).toBe("Southeast Team");
+
+    // unmount the root to avoid overlapping createRoot warnings in subsequent tests
+    try {
+      root.unmount();
+    } catch {
+      /* ignore */
+    }
   });
 
   test("removes recipient param when child clears selection", async () => {
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
-
+    let root = null as any;
     await act(async () => {
-      const root = createRoot(container!);
+      root = createRoot(container!);
       root.render(<SupportFormBuilder />);
     });
 
@@ -148,9 +182,19 @@ describe("SupportFormBuilder URL sync", () => {
       clear.click();
     });
 
+    // allow pending promises/microtasks
+    await Promise.resolve();
+    await Promise.resolve();
+
     expect(replace).toHaveBeenCalled();
     const last = replace.mock.calls[replace.mock.calls.length - 1][0] as string;
     expect(last).not.toContain("recipient=");
+
+    try {
+      root.unmount();
+    } catch {
+      /* ignore */
+    }
   });
 
   test("initializes fields from deeplink recipient parameter", async () => {
@@ -161,13 +205,26 @@ describe("SupportFormBuilder URL sync", () => {
 
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
 
+    let root = null as any;
     await act(async () => {
-      const root = createRoot(container!);
+      root = createRoot(container!);
       root.render(<SupportFormBuilder />);
     });
 
+    // allow pending promises/microtasks (fetch + setField)
+    await Promise.resolve();
+    await Promise.resolve();
+    // wait for setField mock to be called
+    await waitForMockCall(mockSetField, 2000);
+
     // setField should have been called to populate dependent fields for the deeplinked suggestion
     expect(mockSetField).toHaveBeenCalledWith("nation", "Thailand");
+
+    try {
+      root.unmount();
+    } catch {
+      /* ignore */
+    }
   });
 
   test("auto-creates recipient token when required fields present (debounced)", async () => {

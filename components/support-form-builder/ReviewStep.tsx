@@ -1,5 +1,6 @@
 import styles from "./FormBuilder.module.css";
 import { Download, FilePenLine, ListChecks } from "lucide-react";
+import Button from "@mui/material/Button";
 
 type ReviewStepProps = {
   isExporting: boolean;
@@ -30,39 +31,15 @@ export function ReviewStep({
         </div>
 
         <div className={styles.reviewActions}>
-          <button
-            className={`${styles.button} ${styles.secondaryButton}`}
-            type="button"
-            onClick={onEditPartnerInfo}
-          >
-            <span className={styles.buttonContent}>
-              <FilePenLine size={16} aria-hidden="true" />
-              Edit Partner Details
-            </span>
-          </button>
-          <button
-            className={`${styles.button} ${styles.secondaryButton}`}
-            type="button"
-            onClick={onEditAccountability}
-          >
-            <span className={styles.buttonContent}>
-              <ListChecks size={16} aria-hidden="true" />
-              Edit Accountability Choices
-            </span>
-          </button>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => {
-              void onDownloadPdf();
-            }}
-            disabled={isBusy}
-          >
-            <span className={styles.buttonContent}>
-              <Download size={16} aria-hidden="true" />
-              {isBusy ? "Preparing PDF..." : "Download Final PDF"}
-            </span>
-          </button>
+          <Button variant="outlined" startIcon={<FilePenLine size={16} aria-hidden="true" />} onClick={onEditPartnerInfo}>
+            Edit Partner Details
+          </Button>
+          <Button variant="outlined" startIcon={<ListChecks size={16} aria-hidden="true" />} onClick={onEditAccountability}>
+            Edit Accountability Choices
+          </Button>
+          <Button startIcon={<Download size={16} aria-hidden="true" />} onClick={() => { void onDownloadPdf(); }} disabled={isBusy}>
+            {isBusy ? "Preparing PDF..." : "Download Final PDF"}
+          </Button>
         </div>
       </div>
 

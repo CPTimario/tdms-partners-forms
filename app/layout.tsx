@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import MuiProviders from "@/components/mui/MuiProviders";
+import EmotionRegistry from "@/components/mui/EmotionRegistry";
 import { isThemeMode, THEME_STORAGE_KEY } from "@/lib/theme";
 
 const geistSans = Geist({
@@ -35,11 +37,18 @@ export default async function RootLayout({
 
   return (
     <html lang="en" data-theme={initialTheme}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeToggle initialTheme={initialTheme} />
-        {children}
+      <head>
+        <meta name="emotion-insertion-point" content="emotion-insertion-point" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* predictable portal root for MUI/portaled components (Snackbar, dialogs, popovers) */}
+        <div id="mui-portal-root" />
+        <EmotionRegistry>
+          <MuiProviders initialTheme={initialTheme as "light" | "dark" | undefined}>
+            {children}
+            <ThemeToggle />
+          </MuiProviders>
+        </EmotionRegistry>
       </body>
     </html>
   );
