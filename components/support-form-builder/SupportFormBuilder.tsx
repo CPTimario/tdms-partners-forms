@@ -1,170 +1,36 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  downloadPDF,
-  generateReviewPDF,
-} from "@/lib/pdf-generator";
-import { useSupportForm } from "@/hooks/use-support-form";
-import { useTeamsWithSuggestions, type Suggestion } from "@/hooks/useTeams";
-import { Share2 } from "lucide-react";
-import { parseRecipientParam, canonicalRecipientId, type Recipient } from "@/lib/recipient";
-import { generateCompositeQr } from "@/lib/qr";
-import {
-  getAccountabilityAffirmationCopy,
-  type MembershipType,
-} from "@/lib/support-form";
-import { FillStep } from "@/components/support-form-builder/FillStep";
-import { Snackbar } from "@/components/Snackbar";
-import { useSnackbar } from "@/hooks/use-snackbar";
-import styles from "./FormBuilder.module.css";
-import { ReviewStep } from "./ReviewStep";
+import Button from '@mui/material/Button';
+import { Share2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
-const VALIDATION_ERROR_MESSAGE =
-  "Some fields need your attention. Please fix the highlighted errors.";
+import AccountabilityModal from '@/components/AccountabilityModal';
+import { FillStep } from '@/components/support-form-builder/FillStep';
+import AppSnackbar from '@/components/ui/Snackbar';
+import { useSnackbar } from '@/hooks/use-snackbar';
+import { useSupportForm } from '@/hooks/use-support-form';
+import { createRecipientToken } from '@/lib/deeplink-client';
+import { downloadPDF, generateReviewPDF } from '@/lib/pdf-generator';
+import { generateCompositeQr } from '@/lib/qr';
+import { type MembershipType, type SupportFormFieldErrors } from '@/lib/support-form';
 
-function MembershipGate() {
-  const router = useRouter();
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+import styles from './FormBuilder.module.css';
+import LandingMembershipCTAs from './LandingMembershipCTAs';
+import { ReviewStep } from './ReviewStep';
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) {
-      return;
-    }
-
-    const focusableElements = dialog.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    firstElement?.focus();
-
-    const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusableElements.length === 0) {
-        return;
-      }
-
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement?.focus();
-        return;
-      }
-
-      if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement?.focus();
-      }
-    };
-
-    dialog.addEventListener("keydown", handleTabTrap);
-    return () => {
-      dialog.removeEventListener("keydown", handleTabTrap);
-    };
-  }, []);
-
-  return (
-    <main className={styles.gateShell}>
-      <div
-        ref={dialogRef}
-        className={styles.gateCard}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="membership-gate-title"
-      >
-        <h1 className={styles.gateTitle} id="membership-gate-title">
-          Are you a Victory church member?
-        </h1>
-        <p className={styles.gateText}>Choose Yes or No to continue.</p>
-        <div className={styles.gateActions}>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => router.push("/victory")}
-          >
-            Yes
-          </button>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => router.push("/non-victory")}
-          >
-            No
-          </button>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-type VictoryAgreementGateProps = {
-  onAgree: () => void;
+type RecipientSuggestion = {
+  id: string;
+  label: string;
+  type?: 'team' | 'missioner';
+  team?: string;
+  nation?: string;
+  travelDate?: string;
+  sendingChurch?: string;
 };
 
-function VictoryAgreementGate({ onAgree }: VictoryAgreementGateProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) {
-      return;
-    }
-
-    const focusableElements = dialog.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    firstElement?.focus();
-
-    const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusableElements.length === 0) {
-        return;
-      }
-
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement?.focus();
-        return;
-      }
-
-      if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement?.focus();
-      }
-    };
-
-    dialog.addEventListener("keydown", handleTabTrap);
-    return () => {
-      dialog.removeEventListener("keydown", handleTabTrap);
-    };
-  }, []);
-
-  return (
-    <main className={styles.gateShell}>
-      <div
-        ref={dialogRef}
-        className={styles.gateCard}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="membership-agreement-title"
-      >
-        <h1 className={styles.gateTitle} id="membership-agreement-title">
-          Accountability Agreement
-        </h1>
-        <p className={styles.gateText}>{getAccountabilityAffirmationCopy("victory")}</p>
-        <div className={styles.gateActions}>
-          <button className={styles.button} type="button" onClick={onAgree}>
-            I Agree
-          </button>
-        </div>
-      </div>
-    </main>
-  );
-}
+const VALIDATION_ERROR_MESSAGE =
+  'Some fields need your attention. Please fix the highlighted errors.';
 
 type SupportFormBuilderProps = {
   membershipType?: MembershipType;
@@ -192,27 +58,28 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     goToAccountability,
     goToReview,
     setField,
+    setValidation,
   } = useSupportForm(membershipType);
-  // setField allows programmatic updates to text fields (e.g., when selecting autocomplete suggestions)
+  // setField allows programmatic updates to text fields (used when populating from deeplinks or selections)
   const snackbar = useSnackbar();
   const [isExporting, setIsExporting] = useState(false);
   const [isPreparingPreview, setIsPreparingPreview] = useState(false);
   const [reviewPdfBytes, setReviewPdfBytes] = useState<Uint8Array | null>(null);
   const [reviewPdfUrl, setReviewPdfUrl] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { suggestions, loading: suggestionsLoading } = useTeamsWithSuggestions();
+  // suggestions/API removed; keeping compatible types
 
   // QR/share state
   const [showQR, setShowQR] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [currentRecipient, setCurrentRecipient] = useState<Suggestion | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (step !== "review") {
+    if (step !== 'review') {
       setReviewPdfBytes(null);
       setPreviewError(null);
       setReviewPdfUrl((previous) => {
@@ -236,7 +103,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         }
 
         const nextUrl = URL.createObjectURL(
-          new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
+          new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }),
         );
 
         setReviewPdfBytes(bytes);
@@ -255,7 +122,9 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             }
             return null;
           });
-          setPreviewError("Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.");
+          setPreviewError(
+            'Unable to prepare preview. Please retry or reload the page. If the issue persists, contact support.',
+          );
         }
       } finally {
         if (!cancelled) {
@@ -277,90 +146,224 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     };
   }, [reviewPdfUrl]);
 
-  // Initialize form fields from URL deeplink param `recipient`
+  // Initialize form fields from encrypted URL deeplink param `recipient`
   const _deeplinkInitialized = useRef(false);
+  // cache: payloadKey -> token
+  const tokenCacheRef = useRef<Map<string, string>>(new Map());
+  const inflightAbortRef = useRef<AbortController | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    if (suggestionsLoading) return;
     if (_deeplinkInitialized.current) return;
     try {
-      const recipientParam = searchParams.get("recipient");
+      const recipientParam = searchParams.get('recipient');
       if (!recipientParam) {
         _deeplinkInitialized.current = true;
         return;
       }
 
-      // parse and normalize the incoming param (reject ambiguous/loose matches)
-      const parsed = parseRecipientParam(recipientParam);
-      if (!parsed) {
-        _deeplinkInitialized.current = true;
-        return;
-      }
-
-      // find exact suggestion by canonical id
-      const canonicalId = canonicalRecipientId(parsed);
-      const recipientSuggestion = suggestions?.find((s) => s.id === canonicalId) ?? null;
-
-      if (recipientSuggestion) {
-        if (setField && data.missionaryName !== recipientSuggestion.label) {
-          if (recipientSuggestion.nation) setField("nation", recipientSuggestion.nation);
-          if (recipientSuggestion.travelDate) setField("travelDate", recipientSuggestion.travelDate);
-          if (recipientSuggestion.sendingChurch) setField("sendingChurch", recipientSuggestion.sendingChurch);
-          setField("missionaryName", recipientSuggestion.label);
+      // Ask server to decrypt the token so the secret key stays server-side
+      void (async () => {
+        try {
+          const res = await fetch(`/api/deeplink?token=${encodeURIComponent(recipientParam)}`);
+          if (!res.ok) return;
+          const json = await res.json();
+          const parsed = json.fields as Record<string, string> | null;
+          if (parsed && setField) {
+            if (parsed.missionaryName) setField('missionaryName', parsed.missionaryName);
+            if (parsed.nation) setField('nation', parsed.nation);
+            if (parsed.travelDate) setField('travelDate', parsed.travelDate);
+            if (parsed.sendingChurch) setField('sendingChurch', parsed.sendingChurch);
+          }
+        } catch (err) {
+          console.warn('SupportFormBuilder: deeplink fetch failed', err);
         }
-        setCurrentRecipient(recipientSuggestion);
-      }
-
-      // normalize URL to canonical ID if matched
-      const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-      if (recipientSuggestion) params.set("recipient", recipientSuggestion.id);
-      const current = typeof window !== "undefined" ? window.location.search.replace(/^\?/, "") : "";
-      const desired = params.toString();
-      if (desired && desired !== current) {
-        router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${desired ? `?${desired}` : ""}`);
-      }
+      })();
     } catch (err) {
-      // Log deeplink initialization failures for observability
-      console.warn("SupportFormBuilder: deeplink initialization failed", err);
+      console.warn('SupportFormBuilder: deeplink initialization failed', err);
     } finally {
       _deeplinkInitialized.current = true;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, suggestionsLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (membershipType === 'victory' && !data.membershipType) {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/victory') {
+        // navigate to /victory first so the form is the background
+        router.replace('/victory');
+        // show modal after navigation; leaving modal state true is fine because route change will rehydrate
+      }
+      setShowAgreementModal(true);
+      return;
+    }
+    setShowAgreementModal(false);
+  }, [membershipType, data.membershipType, router]);
+
+  // Debounced sync: when share-related fields are present & valid, create token and update URL
+  useEffect(() => {
+    // Only run client-side
+    if (typeof window === 'undefined') return;
+
+    const m = String(data.missionaryName ?? '').trim();
+    const n = String(data.nation ?? '').trim();
+    const t = String(data.travelDate ?? '').trim();
+    const s = String(data.sendingChurch ?? '').trim();
+
+    const requiredPresent = m && n && t && s;
+    if (!requiredPresent) {
+      return;
+    }
+
+    // validate travelDate >= today (local)
+    const now = new Date();
+    const pad = (v: number) => String(v).padStart(2, '0');
+    const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    if (t < localToday) return;
+
+    const payload = { missionaryName: m, nation: n, travelDate: t, sendingChurch: s };
+    const payloadKey = JSON.stringify(payload);
+
+    const updateUrlWithToken = (token: string) => {
+      try {
+        const params = new URLSearchParams(
+          typeof window !== 'undefined' ? window.location.search : '',
+        );
+        if (params.get('recipient') === token) return;
+        params.set('recipient', token);
+        const qs = params.toString();
+        router.replace(
+          `${typeof window !== 'undefined' ? window.location.pathname : '/'}${qs ? `?${qs}` : ''}`,
+        );
+      } catch {
+        // ignore router errors
+      }
+    };
+
+    // cached token -> update immediately
+    const cached = tokenCacheRef.current.get(payloadKey);
+    if (cached) {
+      updateUrlWithToken(cached);
+      return;
+    }
+
+    // debounce token creation
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = window.setTimeout(async () => {
+      // cancel previous inflight
+      if (inflightAbortRef.current) inflightAbortRef.current.abort();
+      const ac = new AbortController();
+      inflightAbortRef.current = ac;
+      try {
+        const token = await createRecipientToken(payload, ac.signal);
+        tokenCacheRef.current.set(payloadKey, token);
+        updateUrlWithToken(token);
+      } catch {
+        // ignore network/errors (including abort)
+      } finally {
+        inflightAbortRef.current = null;
+      }
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+      // abort any inflight request when dependencies change or on unmount
+      if (inflightAbortRef.current) {
+        inflightAbortRef.current.abort();
+        inflightAbortRef.current = null;
+      }
+    };
+    // only watch the four fields
+  }, [data.missionaryName, data.nation, data.travelDate, data.sendingChurch, router]);
 
   const handleShowQR = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
+    const currentHref = typeof window !== 'undefined' ? window.location.href : '';
+
+    // require these fields for deeplinking/QR
+    const missing: SupportFormFieldErrors = {};
+    if (!data.missionaryName || !String(data.missionaryName).trim())
+      missing.missionaryName = 'This field is required to share a QR link.';
+    if (!data.nation || !String(data.nation).trim())
+      missing.nation = 'This field is required to share a QR link.';
+    if (!data.travelDate || !String(data.travelDate).trim())
+      missing.travelDate = 'This field is required to share a QR link.';
+    if (!data.sendingChurch || !String(data.sendingChurch).trim())
+      missing.sendingChurch = 'This field is required to share a QR link.';
+
+    // ensure travelDate is today or later (compare YYYY-MM-DD strings in local date)
+    if (data.travelDate && String(data.travelDate).trim()) {
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const localToday = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      if (String(data.travelDate) < localToday) {
+        missing.travelDate = 'Travel date must be today or later to share a QR link.';
+      }
+    }
+
+    if (Object.keys(missing).length > 0) {
+      setValidation({ fieldErrors: missing, formErrors: [] });
+      snackbar.show(VALIDATION_ERROR_MESSAGE);
+      return;
+    }
+
+    const title =
+      data.membershipType === 'victory' ? 'PIC & SAF Form for Victory Members' : 'PIC & SAF Form';
+
     try {
-      const title = data.membershipType === "victory" ? "PIC & SAF Form for Victory Members" : "PIC & SAF Form";
-      const recipientForQr: Recipient | null = currentRecipient
-        ? {
-            kind: currentRecipient.type === "team" ? "team" : "missioner",
-            id: currentRecipient.id,
-            name: currentRecipient.label,
-            nation: currentRecipient.nation ?? null,
-            travelDate: currentRecipient.travelDate ?? null,
-            sendingChurch: currentRecipient.sendingChurch ?? null,
-          }
-        : null;
-      const finalDataUrl = await generateCompositeQr(url, { title, recipient: recipientForQr });
+      const recipientPayload: Record<string, string> = {
+        missionaryName: data.missionaryName ?? '',
+        nation: data.nation ?? '',
+        travelDate: data.travelDate ?? '',
+        sendingChurch: data.sendingChurch ?? '',
+      };
+
+      // Request server to create encrypted token (server keeps DEEPLINK_KEY)
+      const tokenRes = await fetch('/api/deeplink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipientPayload),
+      });
+      if (!tokenRes.ok) throw new Error('unable to create deeplink token');
+      const tokenJson = await tokenRes.json();
+      const token = tokenJson.token as string;
+
+      const shareUrl = new URL(currentHref || 'http://localhost');
+      shareUrl.searchParams.set('recipient', token);
+
+      const finalDataUrl = await generateCompositeQr(shareUrl.toString(), {
+        title,
+        recipient: {
+          kind: 'missioner',
+          id: String(data.missionaryName ?? ''),
+          name: data.missionaryName ?? null,
+          nation: data.nation ?? null,
+          travelDate: data.travelDate ?? null,
+          sendingChurch: data.sendingChurch ?? null,
+        },
+      });
       setQrDataUrl(finalDataUrl);
       setShowQR(true);
       try {
-        await navigator.clipboard.writeText(url);
-        snackbar.show("Link copied to clipboard");
+        await navigator.clipboard.writeText(shareUrl.toString());
+        snackbar.show('Link copied to clipboard');
       } catch {
         // ignore clipboard failures
       }
     } catch (err) {
-      console.warn("SupportFormBuilder: composite QR generation failed", err);
+      console.warn('SupportFormBuilder: composite QR generation failed', err);
       // fallback to plain QR
       try {
-        const QRCode = await import("qrcode");
-        const dataUrl = await QRCode.toDataURL(url);
+        const QRCode = await import('qrcode');
+        const dataUrl = await QRCode.toDataURL(currentHref || '');
         setQrDataUrl(dataUrl);
         setShowQR(true);
       } catch (err2) {
-        console.warn("SupportFormBuilder: fallback QR generation failed", err2);
-        snackbar.show("Unable to generate QR code");
+        console.warn('SupportFormBuilder: fallback QR generation failed', err2);
+        snackbar.show('Unable to generate QR code');
       }
     }
   };
@@ -371,19 +374,21 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
       const bytes = reviewPdfBytes ?? (await generateReviewPDF(data));
       setReviewPdfBytes(bytes);
       setPreviewError(null);
-      await downloadPDF(bytes, "tdm-support-forms.pdf");
+      await downloadPDF(bytes, 'tdm-support-forms.pdf');
     } catch {
-      setPreviewError("Unable to generate PDF. Please try again.");
+      setPreviewError('Unable to generate PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }
   };
 
   if (!data.membershipType) {
-    if (membershipType === "victory") {
-      return <VictoryAgreementGate onAgree={() => setMembership("victory")} />;
+    if (membershipType === 'victory') {
+      // Let the form render as the background and show a modal prompting agreement.
+      // The modal is controlled by `showAgreementModal` and will set membership on agree.
+    } else {
+      return <LandingMembershipCTAs />;
     }
-    return <MembershipGate />;
   }
 
   const handleGoToAccountability = () => {
@@ -398,19 +403,35 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     }
   };
 
-  if (step !== "review") {
+  if (step !== 'review') {
     return (
       <>
-        <div style={{ position: "relative" }}>
-          <div style={{ position: "absolute", right: 12, top: 12, zIndex: 60, display: "flex", gap: 8, alignItems: "center" }}>
-              <div className={styles.shareControls}>
-                <button className={styles.button} type="button" onClick={handleShowQR} disabled={!currentRecipient} aria-disabled={!currentRecipient} title={currentRecipient ? "Share link" : "Select a team or missioner to share"}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Share2 size={16} aria-hidden="true" />
-                    <span className={styles.shareButtonLabel}>Share</span>
-                  </span>
-                </button>
-              </div>
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: 12,
+              zIndex: 60,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <div
+              className={styles.shareControls}
+              style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+            >
+              <Button
+                className={styles.button}
+                type="button"
+                onClick={handleShowQR}
+                title="Share link"
+                startIcon={<Share2 size={16} aria-hidden="true" />}
+              >
+                <span className={styles.shareButtonLabel}>Share</span>
+              </Button>
+            </div>
           </div>
           <FillStep
             data={data}
@@ -432,30 +453,87 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             onReview={handleGoToReview}
             onReset={resetForm}
             setField={setField}
-            onRecipientSelect={(item) => {
-              // update local recipient state
-              setCurrentRecipient(item ?? null);
-              try {
-                const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-                if (item) {
-                  params.set("recipient", item.id);
-                } else {
-                  params.delete("recipient");
+            onRecipientSelect={async (item: RecipientSuggestion | null) => {
+              // When a suggestion is selected (if present), populate fields and set an encrypted recipient token in the URL.
+              if (item) {
+                if (setField) {
+                  if (item.label) setField('missionaryName', item.label);
+                  if (item.nation) setField('nation', item.nation);
+                  if (item.travelDate) setField('travelDate', item.travelDate);
+                  if (item.sendingChurch) setField('sendingChurch', item.sendingChurch);
                 }
+                try {
+                  const payload = {
+                    missionaryName: item.label,
+                    nation: item.nation ?? '',
+                    travelDate: item.travelDate ?? '',
+                    sendingChurch: item.sendingChurch ?? '',
+                  };
+                  const tokenRes = await fetch('/api/deeplink', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                  });
+                  if (!tokenRes.ok) throw new Error('failed to create token');
+                  const tokenJson = await tokenRes.json();
+                  const token = tokenJson.token as string;
+
+                  const params = new URLSearchParams(
+                    typeof window !== 'undefined' ? window.location.search : '',
+                  );
+                  params.set('recipient', token);
+                  const qs = params.toString();
+                  router.replace(
+                    `${typeof window !== 'undefined' ? window.location.pathname : '/'}${
+                      qs ? `?${qs}` : ''
+                    }`,
+                  );
+                } catch (err) {
+                  console.warn('SupportFormBuilder: failed to update recipient param', err);
+                }
+                return;
+              }
+
+              try {
+                const params = new URLSearchParams(
+                  typeof window !== 'undefined' ? window.location.search : '',
+                );
+                params.delete('recipient');
                 const qs = params.toString();
-                router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${qs ? `?${qs}` : ""}`);
+                router.replace(
+                  `${typeof window !== 'undefined' ? window.location.pathname : '/'}${
+                    qs ? `?${qs}` : ''
+                  }`,
+                );
               } catch (err) {
-                // Log router failures for debugging
-                console.warn("SupportFormBuilder: failed to update recipient param", err);
+                console.warn('SupportFormBuilder: failed to clear recipient param', err);
               }
             }}
           />
         </div>
-        <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+        <AppSnackbar
+          open={Boolean(snackbar.message)}
+          message={snackbar.message}
+          onClose={snackbar.dismiss}
+        />
 
         {showQR ? (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80 }} onClick={() => setShowQR(false)}>
-            <div style={{ background: "white", padding: 16, borderRadius: 8, maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 80,
+            }}
+            onClick={() => setShowQR(false)}
+          >
+            <div
+              style={{ background: 'white', padding: 16, borderRadius: 8, maxWidth: 420 }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <h3 style={{ marginTop: 0 }}>Share link</h3>
               {qrDataUrl ? (
                 // Using a plain <img> because the QR is a generated data-URL
@@ -465,15 +543,42 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
               ) : (
                 <p>Generating QR...</p>
               )}
-              <div style={{ display: "flex", gap: 12, marginTop: 12, justifyContent: "center" }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: 'center' }}>
                 {qrDataUrl ? (
-                  <a className={styles.button} href={qrDataUrl} download="tdm-link-qr.png">Download</a>
+                  <a className={styles.button} href={qrDataUrl} download="tdm-link-qr.png">
+                    Download
+                  </a>
                 ) : null}
-                <button className={styles.button} type="button" onClick={() => { setShowQR(false); }}>Close</button>
+                <Button
+                  className={styles.button}
+                  type="button"
+                  onClick={() => {
+                    setShowQR(false);
+                  }}
+                  variant="outlined"
+                >
+                  Close
+                </Button>
               </div>
             </div>
           </div>
         ) : null}
+        {/* Accountability modal for victory-membership flow */}
+        <AccountabilityModal
+          open={showAgreementModal}
+          onAgree={() => {
+            setMembership('victory');
+            setShowAgreementModal(false);
+          }}
+          onClose={() => {
+            setShowAgreementModal(false);
+            try {
+              router.replace('/');
+            } catch {
+              // ignore
+            }
+          }}
+        />
       </>
     );
   }
@@ -489,7 +594,11 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         onEditAccountability={handleGoToAccountability}
         onDownloadPdf={downloadReviewPdf}
       />
-      <Snackbar message={snackbar.message} onDismiss={snackbar.dismiss} />
+      <AppSnackbar
+        open={Boolean(snackbar.message)}
+        message={snackbar.message}
+        onClose={snackbar.dismiss}
+      />
     </>
   );
 }

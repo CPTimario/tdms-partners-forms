@@ -11,20 +11,11 @@
  * - PHP currency values are intentionally rendered as `PHP <amount>` (no peso symbol) to remain compatible with pdf-lib's WinAnsi fonts.
  */
 
-import {
-  PDFDocument,
-  PDFFont,
-  PDFPage,
-  StandardFonts,
-  rgb,
-} from "pdf-lib";
-import { formatCurrencyAmount, type SupportFormData } from "@/lib/support-form";
-import { getTemplateCoordinates } from "@/lib/pdf-coordinates";
-import type {
-  CheckboxConfig,
-  SignatureConfig,
-  TextFieldConfig,
-} from "@/types/pdf-form";
+import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'pdf-lib';
+
+import { getTemplateCoordinates } from '@/lib/pdf-coordinates';
+import { formatCurrencyAmount, type SupportFormData } from '@/lib/support-form';
+import type { CheckboxConfig, SignatureConfig, TextFieldConfig } from '@/types/pdf-form';
 
 const MM_TO_POINTS = 2.834645669;
 const TEXT_BASELINE_NUDGE_MM = 1.2;
@@ -34,9 +25,9 @@ function splitTravelDateParts(value: string) {
   const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) {
     return {
-      month: "",
-      day: "",
-      year: "",
+      month: '',
+      day: '',
+      year: '',
     };
   }
 
@@ -52,17 +43,15 @@ function splitTravelDateParts(value: string) {
  * Generates a full review PDF containing partner info (page 1)
  * and accountability (page 2) using the same template.
  */
-export async function generateReviewPDF(
-  data: SupportFormData
-): Promise<Uint8Array> {
+export async function generateReviewPDF(data: SupportFormData): Promise<Uint8Array> {
   if (!data.membershipType) {
-    throw new Error("Membership type is required");
+    throw new Error('Membership type is required');
   }
 
   const templatePath =
-    data.membershipType === "victory"
-      ? "/tdms-forms/pic-saf-victory.pdf"
-      : "/tdms-forms/pic-saf-non-victory.pdf";
+    data.membershipType === 'victory'
+      ? '/tdms-forms/pic-saf-victory.pdf'
+      : '/tdms-forms/pic-saf-non-victory.pdf';
 
   const templateResponse = await fetch(templatePath);
   if (!templateResponse.ok) {
@@ -88,7 +77,7 @@ function drawPartnerInfo(
   page: PDFPage,
   font: PDFFont,
   data: SupportFormData,
-  coordinates: ReturnType<typeof getTemplateCoordinates>
+  coordinates: ReturnType<typeof getTemplateCoordinates>,
 ) {
   const travelDateParts = splitTravelDateParts(data.travelDate);
 
@@ -114,49 +103,31 @@ async function drawAccountability(
   font: PDFFont,
   pdfDoc: PDFDocument,
   data: SupportFormData,
-  coordinates: ReturnType<typeof getTemplateCoordinates>
+  coordinates: ReturnType<typeof getTemplateCoordinates>,
 ) {
-
-  if (data.unableToGoChoice === "teamFund" && coordinates.unableToGoTeamFund) {
+  if (data.unableToGoChoice === 'teamFund' && coordinates.unableToGoTeamFund) {
     drawCheckbox(page, font, coordinates.unableToGoTeamFund);
   }
-  if (
-    data.unableToGoChoice === "generalFund" &&
-    coordinates.unableToGoGeneralFund
-  ) {
+  if (data.unableToGoChoice === 'generalFund' && coordinates.unableToGoGeneralFund) {
     drawCheckbox(page, font, coordinates.unableToGoGeneralFund);
   }
 
-  if (data.reroutedChoice === "retain" && coordinates.reroutedRetain) {
+  if (data.reroutedChoice === 'retain' && coordinates.reroutedRetain) {
     drawCheckbox(page, font, coordinates.reroutedRetain);
   }
-  if (data.reroutedChoice === "generalFund" && coordinates.reroutedGeneralFund) {
+  if (data.reroutedChoice === 'generalFund' && coordinates.reroutedGeneralFund) {
     drawCheckbox(page, font, coordinates.reroutedGeneralFund);
   }
 
-  if (
-    data.canceledChoice === "generalFund" &&
-    coordinates.canceledGeneralFund
-  ) {
+  if (data.canceledChoice === 'generalFund' && coordinates.canceledGeneralFund) {
     drawCheckbox(page, font, coordinates.canceledGeneralFund);
   }
 
   if (data.partnerSignature && coordinates.partnerSignature) {
-    await drawSignature(
-      pdfDoc,
-      page,
-      coordinates.partnerSignature,
-      data.partnerSignature
-    );
+    await drawSignature(pdfDoc, page, coordinates.partnerSignature, data.partnerSignature);
   }
 
-  drawTextField(
-    page,
-    font,
-    coordinates.partnerSignaturePrintedName,
-    data.partnerPrintedName
-  );
-
+  drawTextField(page, font, coordinates.partnerSignaturePrintedName, data.partnerPrintedName);
 }
 
 /**
@@ -169,7 +140,7 @@ function drawTextField(
   page: PDFPage,
   font: PDFFont,
   fieldConfig: TextFieldConfig,
-  text: string
+  text: string,
 ): void {
   if (!text || !text.trim()) {
     return;
@@ -184,7 +155,7 @@ function drawTextField(
   let xPoints = boxXPoints;
   let yPoints = (y + TEXT_BASELINE_NUDGE_MM) * MM_TO_POINTS;
 
-  if (typeof width === "number" && typeof height === "number") {
+  if (typeof width === 'number' && typeof height === 'number') {
     const boxWidthPoints = width * MM_TO_POINTS;
     const boxHeightPoints = height * MM_TO_POINTS;
     const textWidthPoints = font.widthOfTextAtSize(text, fontSize);
@@ -210,12 +181,7 @@ function drawTextField(
  * Draws a checkbox (simple "X" character) at a specific position
  */
 function drawCheckbox(page: PDFPage, font: PDFFont, checkboxConfig: CheckboxConfig): void {
-  const {
-    x,
-    y,
-    checkSymbol = "X",
-    fontSize = 12,
-  } = checkboxConfig;
+  const { x, y, checkSymbol = 'X', fontSize = 12 } = checkboxConfig;
 
   // Convert mm to points
   const xPoints = x * MM_TO_POINTS;
@@ -237,33 +203,32 @@ async function drawSignature(
   pdfDoc: PDFDocument,
   page: PDFPage,
   signatureConfig: SignatureConfig,
-  base64ImageData: string
+  base64ImageData: string,
 ): Promise<void> {
   const mimeMatch = base64ImageData.match(/^data:(image\/[a-z]+);base64,/);
   if (!mimeMatch) {
-    throw new Error("Invalid signature image data");
+    throw new Error('Invalid signature image data');
   }
 
   const mimeType = mimeMatch[1];
-  if (mimeType !== "image/png" && mimeType !== "image/jpeg") {
+  if (mimeType !== 'image/png' && mimeType !== 'image/jpeg') {
     throw new Error(`Unsupported signature image format: ${mimeType}`);
   }
 
   // Remove data URI prefix
-  const base64Data = base64ImageData.split(",")[1];
+  const base64Data = base64ImageData.split(',')[1];
   if (!base64Data) {
-    throw new Error("Signature data URI is missing image payload");
+    throw new Error('Signature data URI is missing image payload');
   }
 
   // Convert base64 to bytes
-  const imageBytes = Uint8Array.from(atob(base64Data), (c) =>
-    c.charCodeAt(0)
-  );
+  const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 
   // Embed the image using the format declared in the data URI
-  const image = mimeType === "image/jpeg"
-    ? await pdfDoc.embedJpg(imageBytes)
-    : await pdfDoc.embedPng(imageBytes);
+  const image =
+    mimeType === 'image/jpeg'
+      ? await pdfDoc.embedJpg(imageBytes)
+      : await pdfDoc.embedPng(imageBytes);
 
   const { x, y, width, height } = signatureConfig;
 
@@ -290,13 +255,10 @@ async function drawSignature(
 /**
  * Downloads a PDF file to the user's device
  */
-export async function downloadPDF(
-  pdfBytes: Uint8Array,
-  filename: string
-): Promise<void> {
-  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+export async function downloadPDF(pdfBytes: Uint8Array, filename: string): Promise<void> {
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = filename;
   document.body.appendChild(link);

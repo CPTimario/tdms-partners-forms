@@ -1,26 +1,30 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { isThemeMode, THEME_STORAGE_KEY } from "@/lib/theme";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { cookies } from 'next/headers';
+
+import './globals.css';
+import PrivacyWidget from '@/components/GlobalPrivacy/PrivacyWidget';
+import EmotionRegistry from '@/components/mui/EmotionRegistry';
+import MuiProviders from '@/components/mui/MuiProviders';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { isThemeMode, THEME_STORAGE_KEY } from '@/lib/theme';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "TDMS Partners Forms",
-  description: "Ten Days Missions Support Partners Forms",
+  title: 'TDMS Partners Forms',
+  description: 'Ten Days Missions Support Partners Forms',
   icons: {
-    icon: "/icon.svg",
-    apple: "/apple-icon.svg",
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
   },
 };
 
@@ -35,11 +39,19 @@ export default async function RootLayout({
 
   return (
     <html lang="en" data-theme={initialTheme}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeToggle initialTheme={initialTheme} />
-        {children}
+      <head>
+        <meta name="emotion-insertion-point" content="emotion-insertion-point" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <EmotionRegistry>
+          {/* predictable portal root for MUI/portaled components (Snackbar, dialogs, popovers) */}
+          <div id="mui-portal-root" />
+          <MuiProviders initialTheme={initialTheme as 'light' | 'dark' | undefined}>
+            {children}
+            <ThemeToggle />
+            <PrivacyWidget />
+          </MuiProviders>
+        </EmotionRegistry>
       </body>
     </html>
   );

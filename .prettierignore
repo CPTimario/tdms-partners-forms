@@ -1,0 +1,8 @@
+node_modules
+.next
+dist
+build
+public/pdf.worker.mjs
+playwright-report
+test-results
+coverage

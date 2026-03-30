@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
+import * as pdfjsLib from 'pdfjs-dist';
+import { useEffect, useRef, useState } from 'react';
 
 // Set worker at component load time
-if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.mjs`;
 }
 
@@ -68,9 +68,9 @@ export function PDFRenderer({
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
-        const context = canvas.getContext("2d");
+        const context = canvas.getContext('2d');
         if (!context) {
-          throw new Error("Failed to get canvas context");
+          throw new Error('Failed to get canvas context');
         }
 
         const currentRenderTask = page.render({
@@ -92,7 +92,7 @@ export function PDFRenderer({
           return;
         }
 
-        const message = err instanceof Error ? err.message : "Unknown error rendering PDF";
+        const message = err instanceof Error ? err.message : 'Unknown error rendering PDF';
         setError(message);
         onLoadingChange?.(false);
       }
@@ -113,21 +113,21 @@ export function PDFRenderer({
         style={{
           width: `${width}px`,
           height: `${height}px`,
-          background: "#f5f5f5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#d32f2f",
-          fontSize: "0.875rem",
-          padding: "1rem",
-          textAlign: "center",
-          border: "1px solid #d32f2f",
-          borderRadius: "4px",
+          background: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#d32f2f',
+          fontSize: '0.875rem',
+          padding: '1rem',
+          textAlign: 'center',
+          border: '1px solid #d32f2f',
+          borderRadius: '4px',
         }}
       >
         <div>
           <strong>PDF Render Error</strong>
-          <p style={{ marginTop: "0.5rem", fontSize: "0.8rem" }}>{error}</p>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}>{error}</p>
         </div>
       </div>
     );
@@ -138,13 +138,13 @@ export function PDFRenderer({
       ref={canvasRef}
       aria-hidden="true"
       style={{
-        position: "absolute",
+        position: 'absolute',
         inset: 0,
-        width: "100%",
-        height: "100%",
-        objectFit: "fill",
-        pointerEvents: "none",
-        userSelect: "none",
+        width: '100%',
+        height: '100%',
+        objectFit: 'fill',
+        pointerEvents: 'none',
+        userSelect: 'none',
       }}
       data-testid="mapper-pdf-canvas"
     />
