@@ -1,90 +1,102 @@
 # TDMS Partners Forms
 
-Ten Days Missions support form builder — a Next.js application that prepares partner support forms and exports a review-ready PDF.
+Ten Days Missions — partner support form builder (Next.js). The app prepares partner support forms, lets users review data, and exports a PDF. It supports creating encrypted deeplink tokens for safe sharing.
 
-Overview
---------
-- Server-side deeplinking: the app creates and validates encrypted `recipient` tokens via server endpoints. Tokens contain a minimal set of fields used for pre-filling the form.
-- Native date input: `Travel Date` uses the browser's `input[type="date"]` and stores values as ISO `YYYY-MM-DD`. Validation requires the date to be today or later. QR labels render the travel date as a human-friendly string (e.g., "June 20, 2026").
-- QR sharing: generating a share link requests a server-created token, appends `recipient=<token>` to the canonical URL, and produces a QR PNG that points to that URL.
+Why this repo
+--------------
+- Browser-first PDF generation and preview.
+- Shareable encrypted deeplink tokens (minimal fields) for pre-filling forms.
+- Accessible UI built with MUI and responsive layouts.
 
 Quick start
 -----------
-Prerequisites: Node 20+ and npm.
+Prerequisites: Node >= 24.14.0 and npm (see `package.json` `engines`).
 
-Install and run locally:
+Install and run locally (recommended order):
 
 ```bash
+# install project dependencies
 npm ci
-npx playwright install --with-deps chromium   # only if running E2E
+
+# install Playwright browsers if running E2E tests
+npx playwright install --with-deps
+
+# start dev server (this script will exit if DEEPLINK_KEY is not set)
 npm run dev
 ```
 
-API endpoints
--------------
-- `POST /api/deeplink` — accepts JSON with the allowed fields (missionaryName, nation, travelDate, sendingChurch) and returns `{ token }` (encrypted).
-- `GET /api/deeplink?token=...` — returns `{ fields }` by decrypting the provided token.
+Environment
+-----------
+The server-side deeplink endpoints require `DEEPLINK_KEY` to be set (used to encrypt/decrypt recipient tokens). The `dev` and `start` scripts run a pre-start check (`scripts/check-deeplink-key.js`) and will exit with a non-zero status if `DEEPLINK_KEY` is not set. This prevents starting the server in a misconfigured state.
 
-Security / encryption
----------------------
-- Tokens are now encrypted server-side using AES-256-GCM and the `DEEPLINK_KEY` environment variable. This provides confidentiality and authentication for token payloads (fields used to pre-fill the form).
-- Keep `DEEPLINK_KEY` secret and rotate it if compromised. Tokens are short-lived only by design; consider adding `iat`/`exp` claims if you need TTL enforcement.
-
-Configuration
--------------
-Set the following environment variable for server-side deeplink operations:
+Set it locally via `.env` or your shell:
 
 ```env
-DEEPLINK_KEY=your-secret-key
+DEEPLINK_KEY=your-secure-random-key
 ```
 
-In CI (GitHub Actions) add `DEEPLINK_KEY` as a repository secret (Settings → Secrets) and ensure your workflow injects it into the job environment. Example (already present in this repo):
+In CI make `DEEPLINK_KEY` a repository secret and inject it into the workflow environment. See `.github/workflows/ci.yml` for an example where `DEEPLINK_KEY` is provided to the job environment.
 
-```yaml
-jobs:
-	build-and-test:
-		env:
-			DEEPLINK_KEY: ${{ secrets.DEEPLINK_KEY }}
-```
-
-Locally you can use a `.env` file or your shell environment. The development and start scripts run a startup check that will fail fast if `DEEPLINK_KEY` is not present.
-
-Quick local setup
------------------
-1. Copy the example env file:
+Running tests
+-------------
+- Unit tests (Vitest):
 
 ```bash
-cp .env.example .env
+npm run test:unit
 ```
 
-2. Edit `.env` and set a secure random value for `DEEPLINK_KEY`.
+- E2E tests (Playwright): ensure a dev server is running, then:
 
-3. Start dev server:
+```bash
+# install browsers once
+npx playwright install --with-deps
+# run playwright tests
+npm run test:e2e
+```
+
+See `tests/` for test structure and examples. CI runs lint, typecheck, unit tests, installs Playwright browsers, and runs E2E tests (see `.github/workflows/ci.yml`).
+
+APIs
+----
+- `POST /api/deeplink` — create an encrypted `token` from allowed fields.
+- `GET /api/deeplink?token=...` — decrypt token and return `fields` for pre-filling.
+
+Docs
+----
+Further privacy and testing details are in `docs/privacy.md` and `docs/testing.md`.
+
+Development notes
+-----------------
+- Keep `DEEPLINK_KEY` out of source control. Use CI secrets for workflows.
+- Unit tests mock or stub browser-specific components where appropriate; see `tests/unit` for examples.
+- MUI portal root: the app provides a predictable portal container at `#mui-portal-root` (see `app/layout.tsx`). Portal-mounted UI (for example MUI `Snackbar`, dialogs, and popovers) renders into that element; tests and debug tooling may need to query that container.
+
+Contributing checklist
+----------------------
+- Before opening a PR, run lint and typecheck:
+
+```bash
+npm run lint
+npm run typecheck
+```
+
+- Run unit tests and ensure they pass:
+
+```bash
+npm run test:unit
+```
+
+- If your change affects UI flows covered by E2E tests, run Playwright locally (install browsers first):
 
 ```bash
 npm ci
-npm run dev
+npx playwright install --with-deps
+npm run test:e2e
 ```
 
-Note: the dev/start scripts run a startup check and will exit if `DEEPLINK_KEY` is missing.
-
-Testing
--------
-- Unit tests: `npm run test:unit` (Vitest).
-- E2E tests: `npm run test:e2e` (Playwright). Tests that need deterministic suggestions stub the suggestions source.
-
-CI
--- Ensure `DEEPLINK_KEY` is provided in CI environment variables.
--- CI should run lint, typecheck, unit tests, install Playwright browsers, and run E2E in a separate job against a started dev server. See `.github/workflows/ci.yml` for an example.
-
-Relevant files
---------------
-- Form UI: `components/support-form-builder/SupportFormBuilder.tsx`, `components/support-form-builder/FillStep.tsx`
-- Deeplink crypto: `lib/deeplink-crypto.ts`
-- Deeplink API: `app/api/deeplink/route.ts`
-- Teams suggestions: suggestions source (local or stubbed in tests)
-- QR generation: `lib/qr.ts`
+- Ensure `DEEPLINK_KEY` is not committed and is present in CI (use repo secrets).
 
 Contributing
 ------------
-Keep changes focused and include tests for behavior changes. Avoid committing secrets; set `DEEPLINK_KEY` through CI/project settings.
+- Add focused changes with tests where applicable. Update docs when behavior changes.
+

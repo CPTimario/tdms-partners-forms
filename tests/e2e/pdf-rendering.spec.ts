@@ -17,10 +17,14 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
 
   test("displays victory template on initial load", async ({ page }) => {
     await page.goto("/mapper");
+    // Wait for the PDF canvas (and hydrated UI) to be visible before querying selects
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
 
-    // Victory template is selected by default
-    const templateSelect = page.getByRole("combobox", { name: "Template" });
-    await expect(templateSelect).toHaveValue("victory");
+    // Victory template is selected by default (MUI Select shows visible label)
+    const templateTrigger = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    await expect(templateTrigger).toHaveText(/Victory/);
 
     // Canvas is visible
     const pdfCanvas = page.getByTestId("mapper-pdf-canvas");
@@ -29,9 +33,14 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
 
   test("renders non-victory template when selected", async ({ page }) => {
     await page.goto("/mapper");
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
 
-    const templateSelect = page.getByRole("combobox", { name: "Template" });
-    await templateSelect.selectOption("nonVictory");
+    const templateTrigger = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    await templateTrigger.click();
+    const tmplListbox = page.locator('[role="listbox"]:visible').first();
+    await tmplListbox.getByRole("option", { name: "Non-Victory", exact: true }).click();
 
     // Canvas should still be visible after template switch
     const pdfCanvas = page.getByTestId("mapper-pdf-canvas");
@@ -41,24 +50,30 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
   test("page switching updates PDF canvas correctly", async ({ page }) => {
     await page.goto("/mapper");
 
-    const pageSelect = page.getByRole("combobox", { name: "Page" });
+      const pageSelect = page.locator("label", { hasText: "Page" }).locator(
+        'button, [role="button"], [role="combobox"], .MuiSelect-select',
+      ).first();
 
-    // Start on page 1
-    await expect(pageSelect).toHaveValue("1");
+    // Start on page 1 (visible label shows "Page 1")
+      await expect(pageSelect).toHaveText(/Page\s*1/);
     const canvas1 = page.getByTestId("mapper-pdf-canvas");
     await expect(canvas1).toBeVisible();
 
-    // Switch to page 2
-    await pageSelect.selectOption("2");
-    await expect(pageSelect).toHaveValue("2");
+    // Switch to page 2 using combobox/listbox interaction
+      await pageSelect.click();
+      const pageListbox = page.locator('[role="listbox"]:visible').first();
+      await pageListbox.getByRole("option", { name: "Page 2", exact: true }).click();
+    await expect(pageSelect).toHaveText(/Page\s*2/);
 
     // Canvas should still be visible
     const canvas2 = page.getByTestId("mapper-pdf-canvas");
     await expect(canvas2).toBeVisible();
 
     // Switch back to page 1
-    await pageSelect.selectOption("1");
-    await expect(pageSelect).toHaveValue("1");
+    await pageSelect.click();
+    const pageListbox2 = page.locator('[role="listbox"]:visible').first();
+    await pageListbox2.getByRole("option", { name: "Page 1", exact: true }).click();
+    await expect(pageSelect).toHaveText(/Page\s*1/);
     const canvas1Again = page.getByTestId("mapper-pdf-canvas");
     await expect(canvas1Again).toBeVisible();
   });
@@ -93,6 +108,7 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
 
   test("field boxes render on top of PDF canvas", async ({ page }) => {
     await page.goto("/mapper");
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
 
     const pdfCanvas = page.getByTestId("mapper-pdf-canvas");
     const firstFieldBox = page.getByTestId("mapper-box-partnerName");
@@ -159,12 +175,22 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
     await page.keyboard.press("ArrowUp");
     await expect(pdfCanvas).toBeVisible();
 
-    // Switch page
-    await page.getByRole("combobox", { name: "Page" }).selectOption("2");
+    // Switch page (MUI Select => combobox/listbox)
+    const pageCombobox = page.locator("label", { hasText: "Page" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    await pageCombobox.click();
+    const pageListbox = page.locator('[role="listbox"]:visible').first();
+    await pageListbox.getByRole("option", { name: "Page 2", exact: true }).click();
     await expect(pdfCanvas).toBeVisible();
 
     // Switch template
-    await page.getByRole("combobox", { name: "Template" }).selectOption("nonVictory");
+    const tmplCombobox = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    await tmplCombobox.click();
+    const tmplListbox = page.locator('[role="listbox"]:visible').first();
+    await tmplListbox.getByRole("option", { name: "Non-Victory", exact: true }).click();
     await expect(pdfCanvas).toBeVisible();
   });
 
@@ -204,15 +230,20 @@ test.describe("PDF.js Rendering - Mapper Integration", () => {
 
   test("multiple template switches render correctly", async ({ page }) => {
     await page.goto("/mapper");
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
 
-    const templateSelect = page.getByRole("combobox", { name: "Template" });
+    const templateSelect = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
     const pdfCanvas = page.getByTestId("mapper-pdf-canvas");
 
-    // Test multiple switches
-    const templates = ["victory", "nonVictory", "victory", "nonVictory"];
+    // Test multiple visible switches (use displayed labels)
+    const templates = ["Victory", "Non-Victory", "Victory", "Non-Victory"];
 
     for (const template of templates) {
-      await templateSelect.selectOption(template);
+      await templateSelect.click();
+      const listbox = page.getByRole("listbox").first();
+      await listbox.getByRole("option", { name: template, exact: true }).click();
       await expect(pdfCanvas).toBeVisible();
       await page.waitForTimeout(100);
     }
@@ -250,7 +281,14 @@ test.describe("PDF.js Rendering - Error Recovery", () => {
     });
 
     await page.goto("/mapper");
-    await page.getByRole("combobox", { name: "Template" }).selectOption("nonVictory");
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
+    // Select Non-Victory via combobox/listbox
+    const tmplCombobox = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    await tmplCombobox.click();
+    const visibleListbox = page.locator('[role="listbox"]:visible').first();
+    await visibleListbox.getByRole("option", { name: "Non-Victory", exact: true }).click();
 
     await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
     await expect.poll(() => nonVictoryPdfStatus).toBe(200);
@@ -259,13 +297,24 @@ test.describe("PDF.js Rendering - Error Recovery", () => {
 
   test("rapid template and page switching does not surface renderer errors", async ({ page }) => {
     await page.goto("/mapper");
+    await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();
 
-    const templateSelect = page.getByRole("combobox", { name: "Template" });
-    const pageSelect = page.getByRole("combobox", { name: "Page" });
+    const templateSelect = page.locator("label", { hasText: "Template" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
+    const pageSelect = page.locator("label", { hasText: "Page" }).locator(
+      'button, [role="button"], [role="combobox"], .MuiSelect-select',
+    ).first();
 
     for (let i = 0; i < 6; i += 1) {
-      await templateSelect.selectOption(i % 2 === 0 ? "nonVictory" : "victory");
-      await pageSelect.selectOption(i % 2 === 0 ? "2" : "1");
+      // template toggle
+      await templateSelect.click();
+      const tmplList = page.locator('[role="listbox"]:visible').first();
+      await tmplList.getByRole("option", { name: i % 2 === 0 ? "Non-Victory" : "Victory", exact: true }).click();
+      // page toggle
+      await pageSelect.click();
+      const pageList = page.getByRole("listbox").first();
+      await pageList.getByRole("option", { name: i % 2 === 0 ? "Page 2" : "Page 1" }).click();
     }
 
     await expect(page.getByTestId("mapper-pdf-canvas")).toBeVisible();

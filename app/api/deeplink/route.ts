@@ -4,7 +4,6 @@ import { z } from "zod";
 
 // Fail fast if server key is not configured
 if (!process.env.DEEPLINK_KEY) {
-  // eslint-disable-next-line no-console
   console.error("DEEPLINK_KEY is not configured. Deeplink API will return errors until configured.");
 }
 
@@ -40,7 +39,6 @@ export async function GET(req: Request) {
     const fields = deeplinkCrypto.decryptRecipient(token);
     if (!fields) {
       // invalid or tampered token
-      // eslint-disable-next-line no-console
       console.warn("DEEPLINK: attempted decrypt of invalid token");
       return NextResponse.json({ error: "invalid token" }, { status: 400 });
     }
@@ -61,7 +59,6 @@ export async function POST(req: Request) {
     const token = deeplinkCrypto.encryptRecipient(parsed as Record<string, string | null | undefined>);
     return NextResponse.json({ token });
   } catch {
-    // eslint-disable-next-line no-console
     console.warn("DEEPLINK: failed to create deeplink token");
     return NextResponse.json({ error: "unable to create token" }, { status: 400 });
   }

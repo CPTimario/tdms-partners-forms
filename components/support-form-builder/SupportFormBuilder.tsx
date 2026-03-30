@@ -27,6 +27,7 @@ import {
 } from "@/lib/support-form";
 import { FillStep } from "@/components/support-form-builder/FillStep";
 import AppSnackbar from "@/components/ui/Snackbar";
+import LandingMembershipCTAs from "./LandingMembershipCTAs";
 import Button from "@mui/material/Button";
 import { useSnackbar } from "@/hooks/use-snackbar";
 import styles from "./FormBuilder.module.css";
@@ -34,69 +35,6 @@ import { ReviewStep } from "./ReviewStep";
 
 const VALIDATION_ERROR_MESSAGE =
   "Some fields need your attention. Please fix the highlighted errors.";
-
-function MembershipGate() {
-  const router = useRouter();
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) {
-      return;
-    }
-
-    const focusableElements = dialog.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    firstElement?.focus();
-
-    const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusableElements.length === 0) {
-        return;
-      }
-
-      const activeElement = document.activeElement as HTMLElement | null;
-      if (event.shiftKey && activeElement === firstElement) {
-        event.preventDefault();
-        lastElement?.focus();
-        return;
-      }
-
-      if (!event.shiftKey && activeElement === lastElement) {
-        event.preventDefault();
-        firstElement?.focus();
-      }
-    };
-
-    dialog.addEventListener("keydown", handleTabTrap);
-    return () => {
-      dialog.removeEventListener("keydown", handleTabTrap);
-    };
-  }, []);
-
-  return (
-    <main className={styles.gateShell}>
-      <div
-        ref={dialogRef}
-        className={styles.gateCard}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="membership-gate-title"
-      >
-        <h1 className={styles.gateTitle} id="membership-gate-title">
-          Are you a Victory church member?
-        </h1>
-        <p className={styles.gateText}>Choose Yes or No to continue.</p>
-        <div className={styles.gateActions}>
-          <Button variant="contained" onClick={() => router.push("/victory")}>Yes</Button>
-          <Button variant="contained" onClick={() => router.push("/non-victory")}>No</Button>
-        </div>
-      </div>
-    </main>
-  );
-}
 
 type VictoryAgreementGateProps = {
   onAgree: () => void;
@@ -345,7 +283,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         params.set("recipient", token);
         const qs = params.toString();
         router.replace(`${typeof window !== "undefined" ? window.location.pathname : "/"}${qs ? `?${qs}` : ""}`);
-      } catch (err) {
+      } catch {
         // ignore router errors
       }
     };
@@ -370,7 +308,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
         const token = await createRecipientToken(payload, ac.signal);
         tokenCacheRef.current.set(payloadKey, token);
         updateUrlWithToken(token);
-      } catch (err) {
+      } catch {
         // ignore network/errors (including abort)
       } finally {
         inflightAbortRef.current = null;
@@ -492,7 +430,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
     if (membershipType === "victory") {
       return <VictoryAgreementGate onAgree={() => setMembership("victory")} />;
     }
-    return <MembershipGate />;
+    return <LandingMembershipCTAs />;
   }
 
   const handleGoToAccountability = () => {
@@ -512,12 +450,12 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
       <>
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", right: 12, top: 12, zIndex: 60, display: "flex", gap: 8, alignItems: "center" }}>
-                <div className={styles.shareControls}>
+              <div className={styles.shareControls} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <Button className={styles.button} type="button" onClick={handleShowQR} title="Share link" startIcon={<Share2 size={16} aria-hidden="true" />}>
                   <span className={styles.shareButtonLabel}>Share</span>
                 </Button>
               </div>
-          </div>
+            </div>
           <FillStep
             data={data}
             step={step}
@@ -584,7 +522,7 @@ export function SupportFormBuilder({ membershipType }: SupportFormBuilderProps =
             }}
           />
         </div>
-        <AppSnackbar open={Boolean(snackbar.message)} message={snackbar.message} onClose={snackbar.dismiss} />
+          <AppSnackbar open={Boolean(snackbar.message)} message={snackbar.message} onClose={snackbar.dismiss} />
 
         {showQR ? (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80 }} onClick={() => setShowQR(false)}>

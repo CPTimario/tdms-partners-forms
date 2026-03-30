@@ -104,10 +104,10 @@ describe("SupportFormBuilder URL sync", () => {
   });
 
   // helper to wait for `replace` or other async mocks to be called
-  async function waitForMockCall(mockFn: { mock: { calls: unknown[] } }, timeout = 2000) {
+  async function waitForMockCall(mockFn: { mock?: { calls: unknown[] } }, timeout = 2000) {
     const start = Date.now();
     while (Date.now() - start < timeout) {
-      if ((mockFn as any).mock && (mockFn as any).mock.calls.length) return;
+      if (mockFn.mock && mockFn.mock.calls.length) return;
       await new Promise((r) => setTimeout(r, 10));
     }
     // final microtask flush
@@ -126,7 +126,7 @@ describe("SupportFormBuilder URL sync", () => {
 
   test("adds recipient param when child selects a suggestion", async () => {
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
-    let root = null as any;
+    let root: ReturnType<typeof createRoot> | null = null;
     await act(async () => {
       root = createRoot(container!);
       root.render(<SupportFormBuilder />);
@@ -135,6 +135,7 @@ describe("SupportFormBuilder URL sync", () => {
 
     const select = (await waitForSelector("#select", container)) as HTMLButtonElement | null;
     expect(select).toBeTruthy();
+    if (!select) throw new Error("select not found");
 
     await act(async () => {
       select.click();
@@ -161,7 +162,7 @@ describe("SupportFormBuilder URL sync", () => {
 
     // unmount the root to avoid overlapping createRoot warnings in subsequent tests
     try {
-      root.unmount();
+      (root as unknown as { unmount?: () => void })?.unmount?.();
     } catch {
       /* ignore */
     }
@@ -169,7 +170,7 @@ describe("SupportFormBuilder URL sync", () => {
 
   test("removes recipient param when child clears selection", async () => {
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
-    let root = null as any;
+    let root: ReturnType<typeof createRoot> | null = null;
     await act(async () => {
       root = createRoot(container!);
       root.render(<SupportFormBuilder />);
@@ -191,7 +192,7 @@ describe("SupportFormBuilder URL sync", () => {
     expect(last).not.toContain("recipient=");
 
     try {
-      root.unmount();
+      (root as unknown as { unmount?: () => void })?.unmount?.();
     } catch {
       /* ignore */
     }
@@ -205,7 +206,7 @@ describe("SupportFormBuilder URL sync", () => {
 
     const { SupportFormBuilder } = await import("@/components/support-form-builder/SupportFormBuilder");
 
-    let root = null as any;
+    let root: ReturnType<typeof createRoot> | null = null;
     await act(async () => {
       root = createRoot(container!);
       root.render(<SupportFormBuilder />);
@@ -221,7 +222,7 @@ describe("SupportFormBuilder URL sync", () => {
     expect(mockSetField).toHaveBeenCalledWith("nation", "Thailand");
 
     try {
-      root.unmount();
+      (root as unknown as { unmount?: () => void })?.unmount?.();
     } catch {
       /* ignore */
     }
@@ -347,8 +348,6 @@ describe("SupportFormBuilder URL sync", () => {
 
     // Mock a fetch that listens to AbortSignal and rejects when aborted
     global.fetch = vi.fn((input: RequestInfo, init?: RequestInit) => {
-      const urlStr = typeof input === "string" ? input : (input as Request).url;
-      const u = new URL(urlStr, "http://localhost");
       if (init && init.method && init.method.toUpperCase() === "POST") {
         return new Promise((resolve, reject) => {
           const signal = init.signal as AbortSignal | undefined;

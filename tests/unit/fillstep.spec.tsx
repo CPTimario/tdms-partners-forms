@@ -1,22 +1,40 @@
+import React from "react";
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+
+// Mock MUI date-pickers so unit tests don't attempt to load ESM/date-picker internals
+vi.mock("@mui/x-date-pickers/LocalizationProvider", () => ({
+  LocalizationProvider: ({ children }: { children?: React.ReactNode }) => children,
+}));
+vi.mock("@mui/x-date-pickers/DatePicker", () => ({
+  DatePicker: (props: Record<string, unknown>) => {
+    const p = props as Record<string, unknown>;
+    const placeholder = (() => {
+      const slotProps = p.slotProps as Record<string, unknown> | undefined;
+      const textField = slotProps?.textField as Record<string, unknown> | undefined;
+      return typeof textField?.placeholder === "string" ? (textField?.placeholder as string) : "YYYY-MM-DD";
+    })();
+
+    const val = (() => {
+      const v = p.value as unknown;
+      if (v && typeof (v as { format?: unknown }).format === "function") {
+        return (v as { format: (s: string) => string }).format("YYYY-MM-DD");
+      }
+      return typeof v === "string" ? (v as string) : "";
+    })();
+
+    // return a simple input element representing the text field slot
+    return React.createElement("input", { placeholder, value: val, readOnly: true });
+  },
+}));
+vi.mock("@mui/x-date-pickers/AdapterDayjs", () => ({ AdapterDayjs: function AdapterDayjs() { return null; } }));
+
 import { FillStep } from "@/components/support-form-builder/FillStep";
 
 import { createRoot } from "react-dom/client";
 import { act } from "react";
 import { initialSupportFormData, type SupportFormData } from "@/lib/support-form";
-import React from "react";
 
-vi.mock("@/hooks/useTeams", () => ({
-  useTeamsWithSuggestions: () => ({
-    suggestions: [
-      { id: "team::1", label: "Southeast Team", type: "team", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
-      { id: "m::1::0", label: "Alice Example", type: "missioner", team: "Southeast Team", nation: "Thailand", travelDate: "2026-06-20", sendingChurch: "Every Nation Makati" },
-    ],
-    groups: [],
-    loading: false,
-    error: null,
-  }),
-}));
+// Note: teams suggestions mocked elsewhere; remove dependency on teams API for unit tests.
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),

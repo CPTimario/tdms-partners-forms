@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MuiProviders from "@/components/mui/MuiProviders";
 import EmotionRegistry from "@/components/mui/EmotionRegistry";
+import PrivacyWidget from "@/components/GlobalPrivacy/PrivacyWidget";
 import { isThemeMode, THEME_STORAGE_KEY } from "@/lib/theme";
 
 const geistSans = Geist({
@@ -41,12 +42,13 @@ export default async function RootLayout({
         <meta name="emotion-insertion-point" content="emotion-insertion-point" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* predictable portal root for MUI/portaled components (Snackbar, dialogs, popovers) */}
-        <div id="mui-portal-root" />
         <EmotionRegistry>
+          {/* predictable portal root for MUI/portaled components (Snackbar, dialogs, popovers) */}
+          <div id="mui-portal-root" />
           <MuiProviders initialTheme={initialTheme as "light" | "dark" | undefined}>
             {children}
             <ThemeToggle />
+            <PrivacyWidget />
           </MuiProviders>
         </EmotionRegistry>
       </body>

@@ -6,20 +6,21 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 async function chooseMembership(page: Page, type: "Victory Member" | "Non-Victory Member") {
-  const gate = page.getByRole("dialog", { name: "Are you a Victory church member?" });
-  await expect(gate).toBeVisible();
+  const heading = page.getByRole("heading", { name: "Choose a form" });
+  await expect(heading).toBeVisible();
 
   if (type === "Victory Member") {
-    await gate.getByRole("button", { name: "Yes", exact: true }).click();
+    await page.getByRole("button", { name: "Open partners' forms for Victory members", exact: true }).first().click();
 
     const agreementGate = page.getByRole("dialog", { name: "Accountability Agreement" });
     await expect(agreementGate).toBeVisible();
     await agreementGate.getByRole("button", { name: "I Agree", exact: true }).click();
+    await page.waitForURL(/\/victory$/);
   } else {
-    await gate.getByRole("button", { name: "No", exact: true }).click();
+    await page.getByRole("button", { name: "Open partners' forms for Non-Victory members", exact: true }).first().click();
+    await page.waitForURL(/\/non-victory$/);
   }
 
-  await expect(gate).toBeHidden();
   await expect(page.getByRole("heading", { name: "Ten Days Missions Support Forms" })).toBeVisible();
 }
 
@@ -29,28 +30,39 @@ async function fillCompleteForm(page: Page, currency: "PHP" | "USD" = "USD") {
   await page.getByRole('textbox', { name: 'Email Address', exact: true }).fill("chris@example.com");
   await page.getByRole('textbox', { name: 'Mobile Number', exact: true }).fill("09171234567");
   await page.getByRole('textbox', { name: 'Local Church', exact: true }).fill("Every Nation Makati");
-  await page.getByRole('combobox', { name: 'Missioner Name/Team', exact: true }).fill("Southeast Team");
+  // Fill missioner/team input and populate dependent fields directly (no autocomplete)
+  const missionerInput = page.locator("label", { hasText: "Missioner Name/Team" }).locator('input').first();
+  await missionerInput.fill("Southeast Team");
+  await page.getByRole('textbox', { name: 'Nation', exact: true }).fill("Thailand");
+  const travelDateInput = page.locator("label", { hasText: "Travel Date" }).locator('input').first();
+  await travelDateInput.fill("06/20/2026");
+  await travelDateInput.evaluate((el: HTMLInputElement) => el.blur());
+  await page.getByRole('textbox', { name: 'Sending Church', exact: true }).fill("Every Nation Greenhills");
+
   const amountField = page.locator("label").filter({ hasText: /^Amount/ });
-  await amountField.locator("select").selectOption(currency);
+  // Interact with MUI select trigger for currency
+  const currencyTrigger = amountField.locator('button, [role="button"], [role="combobox"], .MuiSelect-select').first();
+  await currencyTrigger.click();
+  const currencyList = page.locator('[role="listbox"]:visible').first();
+  await currencyList.getByRole('option', { name: currency, exact: true }).click();
   await amountField.locator('input[placeholder="0.00"]').fill("5000");
   await expect(amountField.locator('input[placeholder="0.00"]')).toHaveValue("5,000");
   await page.getByRole('textbox', { name: 'Nation', exact: true }).fill("Thailand");
-  await page.getByRole('textbox', { name: 'Travel Date', exact: true }).fill("2026-06-20");
+  await travelDateInput.fill("06/20/2026");
+  await travelDateInput.evaluate((el: HTMLInputElement) => el.blur());
   await page.getByRole('textbox', { name: 'Sending Church', exact: true }).fill("Every Nation Greenhills");
 
-  await page
-    .locator("label")
-    .filter({ hasText: "By providing my information" })
-    .getByRole("checkbox")
-    .check();
+  await page.getByRole("checkbox", { name: /By providing my information/i }).check();
 
   // Go to accountability
   await page.getByRole("button", { name: "Continue to Accountability" }).click();
   await expect(page.getByRole("heading", { name: "Accountability", exact: true, level: 2 })).toBeVisible();
 
   // Fill accountability
-  await page.getByRole("radio", { name: "Redirect my support to the team fund" }).check();
-  await page.getByRole("radio", { name: "Retain my support" }).check();
+  await page.getByText("Redirect my support to the team fund").click();
+  await expect(page.getByRole("radio", { name: "Redirect my support to the team fund" })).toBeChecked();
+  await page.getByText("Retain my support").click();
+  await expect(page.getByRole("radio", { name: "Retain my support" })).toBeChecked();
   await page
     .locator('input[name="canceled"][value="generalFund"]')
     .check();

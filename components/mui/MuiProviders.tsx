@@ -18,9 +18,7 @@ export const ColorModeContext = React.createContext({
 export default function MuiProviders({ children, initialTheme }: Props) {
   const [mode, setMode] = useState<PaletteMode>(initialTheme ?? "light");
 
-  useEffect(() => {
-    if (initialTheme) setMode(initialTheme);
-  }, [initialTheme]);
+  
 
   useEffect(() => {
     // keep legacy dataset theme in sync for existing code that reads it

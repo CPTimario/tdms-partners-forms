@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, type ChangeEventHandler, type ChangeEvent } from "react";
 import TextField from "@mui/material/TextField";
+import dayjs, { type Dayjs } from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import MenuItem from "@mui/material/MenuItem";
 type RecipientSuggestion = {
   id: string;
@@ -14,6 +18,10 @@ type RecipientSuggestion = {
 };
 import SignatureCanvas from "react-signature-canvas";
 import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Lock, RotateCcw, Signature } from "lucide-react";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import styles from "./FormBuilder.module.css";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -62,48 +70,59 @@ type SignaturePadProps = {
   ariaDescribedBy?: string;
 };
 
-type TabButtonProps = {
-  step: "partner" | "accountability" | "review";
-  label: string;
-  status: string;
-  active: boolean;
-  onClick: () => void;
-};
 
-// NOTE: using native date input; value stored as ISO yyyy-mm-dd
+
+// NOTE: value stored as ISO yyyy-mm-dd
 
 type DatePickerInlineProps = {
   value: string;
+  id?: string;
   setField?: (field: RequiredStringField, value: string) => void;
   onTextChange: (field: keyof Pick<SupportFormData, "partnerName" | "emailAddress" | "mobileNumber" | "localChurch" | "missionaryName" | "amount" | "nation" | "travelDate" | "sendingChurch" | "partnerPrintedName">) => ChangeEventHandler<HTMLInputElement>;
   hasFieldError: boolean;
   errorId: string;
 };
 
-const DatePickerInline = ({ value, setField, onTextChange, hasFieldError, errorId }: DatePickerInlineProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value ?? ""; // native date input returns yyyy-mm-dd
+const DatePickerInline = ({ value, id, setField, onTextChange, hasFieldError, errorId }: DatePickerInlineProps) => {
+  const parsed: Dayjs | null = value ? dayjs(value, "YYYY-MM-DD") : null;
+
+  const handleDateChange = (next: Dayjs | null) => {
+    const val = next ? next.format("YYYY-MM-DD") : "";
     if (setField) {
       setField("travelDate", val);
     } else {
       const handler = onTextChange("travelDate");
-      handler(e);
+      const synthetic = { target: { value: val } } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handler(synthetic);
     }
   };
 
-  const min = new Date().toISOString().slice(0, 10);
-
   return (
     <div className={styles.dateInputWrap}>
-      <input
-        type="date"
-        className={`${styles.textInput} ${styles.dateInput} ${hasFieldError ? styles.textInputError : ""}`}
-        value={value}
-        onChange={handleChange}
-        min={min}
-        aria-invalid={hasFieldError}
-        aria-describedby={hasFieldError ? errorId : undefined}
-      />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DatePicker
+          enableAccessibleFieldDOMStructure={false}
+          value={parsed}
+          onChange={handleDateChange}
+          disablePast
+          minDate={dayjs().startOf("day")}
+          slots={{ textField: TextField }}
+          slotProps={{
+            textField: {
+              id,
+              size: "small",
+              variant: "outlined",
+              className: `${styles.textInput} ${styles.dateInput} ${hasFieldError ? styles.textInputError : ""}`,
+              placeholder: "MM/DD/YYYY",
+              inputProps: {
+                inputMode: "numeric",
+                "aria-invalid": hasFieldError,
+                "aria-describedby": hasFieldError ? errorId : undefined,
+              },
+            },
+          }}
+        />
+      </LocalizationProvider>
     </div>
   );
 };
@@ -171,38 +190,30 @@ function SignaturePad({ value, onChange, ariaInvalid, ariaDescribedBy }: Signatu
       />
       <div className={styles.signaturePadActions}>
         <p className={styles.helperText}>Sign using mouse, touch, or stylus.</p>
-        <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={handleClear}>
+        <Button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={handleClear} variant="outlined">
           <span className={styles.buttonContent}>
             <RotateCcw size={16} aria-hidden="true" />
             Clear Signature
           </span>
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-function TabButton({ step, label, status, active, onClick }: TabButtonProps) {
+// Use MUI Tabs for step navigation
+function renderTabLabel(number: string, label: string, status: string) {
   return (
-    <button
-      className={`${styles.tabButton} ${active ? styles.tabButtonActive : ""}`}
-      type="button"
-      aria-current={active ? "step" : undefined}
-      onClick={onClick}
-    >
-      <span className={styles.tabNumber}>
-        {step === "partner" ? "01" : step === "accountability" ? "02" : "03"}
+    <span className={styles.tabMeta}>
+      <span className={styles.tabNumber}>{number}</span>
+      <span className={styles.tabLabel}>{label}</span>
+      <span className={styles.tabStatus}>
+        {status === "Complete" ? <CheckCircle2 size={14} aria-hidden="true" /> : null}
+        {status === "Needs details" ? <AlertTriangle size={14} aria-hidden="true" /> : null}
+        {status === "Locked" ? <Lock size={14} aria-hidden="true" /> : null}
+        {status}
       </span>
-      <span className={styles.tabMeta}>
-        <span className={styles.tabLabel}>{label}</span>
-        <span className={styles.tabStatus}>
-          {status === "Complete" ? <CheckCircle2 size={14} aria-hidden="true" /> : null}
-          {status === "Needs details" ? <AlertTriangle size={14} aria-hidden="true" /> : null}
-          {status === "Locked" ? <Lock size={14} aria-hidden="true" /> : null}
-          {status}
-        </span>
-      </span>
-    </button>
+    </span>
   );
 }
 
@@ -245,9 +256,25 @@ export function FillStep({
     );
   };
 
-  // suggestions removed; no local suggestions needed
+  // simple responsive switch: use scrollable tabs on xs, fullWidth on sm+
+  const theme = useTheme();
+  const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
+  const tabsSx = {
+    width: "100%",
+    '& .MuiTabs-scroller': { scrollSnapType: isSmUp ? 'none' : 'x mandatory' },
+    '& .MuiTabs-flexContainer': { width: '100%', display: 'flex' },
+  };
 
-  // Using top-level `DatePickerInline` component above
+  const tabSx = {
+    wrapped: true,
+    sx: {
+      flex: { xs: '0 0 100%', sm: '1 1 0' },
+      width: { xs: '100%', sm: 'auto' },
+      minWidth: { xs: 0, sm: 0 },
+      scrollSnapAlign: { xs: 'start', sm: 'none' },
+    },
+  } as const;
+
 
   return (
     <main className={`${styles.shell} ${styles.fillShell}`}>
@@ -257,27 +284,23 @@ export function FillStep({
         </header>
 
         <nav className={styles.tabList} aria-label="Support form steps">
-          <TabButton
-            step="partner"
-            label={stepLabels.partner}
-            status={isPartnerStepComplete ? "Complete" : "Needs details"}
-            active={step === "partner"}
-            onClick={onPartnerTab}
-          />
-          <TabButton
-            step="accountability"
-            label={stepLabels.accountability}
-            status={isAccountabilityStepComplete ? "Complete" : "Needs details"}
-            active={step === "accountability"}
-            onClick={onAccountabilityTab}
-          />
-          <TabButton
-            step="review"
-            label="Review"
-            status={isFormValid ? "Ready" : "Locked"}
-            active={false}
-            onClick={onReview}
-          />
+          <Tabs
+            value={step}
+            variant={isSmUp ? "fullWidth" : "scrollable"}
+            scrollButtons={isSmUp ? undefined : "auto"}
+            allowScrollButtonsMobile={!isSmUp}
+            sx={tabsSx}
+            onChange={(_: React.SyntheticEvent, newValue: string) => {
+              if (newValue === "partner") onPartnerTab();
+              else if (newValue === "accountability") onAccountabilityTab();
+              else if (newValue === "review") onReview();
+            }}
+            aria-label="Support form steps"
+          >
+            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("01", stepLabels.partner, isPartnerStepComplete ? "Complete" : "Needs details")}</div>} value="partner" />
+            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("02", stepLabels.accountability, isAccountabilityStepComplete ? "Complete" : "Needs details")}</div>} value="accountability" />
+            <Tab {...tabSx} label={<div className={styles.tabButton}>{renderTabLabel("03", "Review", isFormValid ? "Ready" : "Locked")}</div>} value="review" />
+          </Tabs>
         </nav>
 
         {formErrors.length > 0 ? (
@@ -303,6 +326,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Partner Name
                   <TextField
+                    id="support-partnerName"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -319,6 +343,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Email Address
                   <TextField
+                    id="support-emailAddress"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -335,6 +360,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Mobile Number
                   <TextField
+                    id="support-mobileNumber"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -351,6 +377,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Local Church
                   <TextField
+                    id="support-localChurch"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -371,6 +398,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Missioner Name/Team
                   <TextField
+                    id="support-missionaryName"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -392,6 +420,7 @@ export function FillStep({
                   Amount
                   <div className={styles.currencyAmountRow}>
                     <TextField
+                      id="support-currency"
                       select
                       size="small"
                       variant="outlined"
@@ -408,6 +437,7 @@ export function FillStep({
                       <MenuItem value="USD">USD</MenuItem>
                     </TextField>
                     <TextField
+                      id="support-amount"
                       size="small"
                       variant="outlined"
                       className={styles.textInput}
@@ -425,6 +455,7 @@ export function FillStep({
                   <label className={styles.fieldLabel}>
                     Nation
                     <TextField
+                      id="support-nation"
                       size="small"
                       variant="outlined"
                       className={styles.textInput}
@@ -444,6 +475,7 @@ export function FillStep({
                       value={data.travelDate}
                       setField={setField}
                       onTextChange={onTextChange}
+                      id="support-travelDate"
                       hasFieldError={hasFieldError("travelDate")}
                       errorId={errorId("travelDate")}
                     />
@@ -453,6 +485,7 @@ export function FillStep({
                 <label className={styles.fieldLabel}>
                   Sending Church
                   <TextField
+                    id="support-sendingChurch"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
@@ -595,6 +628,7 @@ export function FillStep({
               <label className={styles.fieldLabel}>
                 Partner Full Name (Printed)
                 <TextField
+                  id="support-partnerPrintedName"
                   size="small"
                   variant="outlined"
                   className={styles.textInput}
