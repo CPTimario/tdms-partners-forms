@@ -67,7 +67,8 @@ function buildValidFormData(overrides?: Partial<SupportFormData>): SupportFormDa
     ...initialSupportFormData,
     membershipType: 'victory',
     consentGiven: true,
-    partnerName: 'Chris Timario',
+    partnerFirstName: 'Chris',
+    partnerLastName: 'Timario',
     emailAddress: 'chris@example.com',
     mobileNumber: '09171234567',
     localChurch: 'Every Nation Makati',
@@ -151,7 +152,8 @@ describe('PDF Generator - Data Validation', () => {
     const data = buildValidFormData();
 
     expect(data).toHaveProperty('membershipType');
-    expect(data).toHaveProperty('partnerName');
+    expect(data).toHaveProperty('partnerFirstName');
+    expect(data).toHaveProperty('partnerLastName');
     expect(data).toHaveProperty('emailAddress');
     expect(data).toHaveProperty('consentGiven');
     expect(data).toHaveProperty('unableToGoChoice');
@@ -163,7 +165,8 @@ describe('PDF Generator - Data Validation', () => {
   test('validates all required fields are present', () => {
     const data = buildValidFormData();
 
-    expect(data.partnerName).toBeTruthy();
+    expect(data.partnerFirstName).toBeTruthy();
+    expect(data.partnerLastName).toBeTruthy();
     expect(data.emailAddress).toBeTruthy();
     expect(data.mobileNumber).toBeTruthy();
     expect(data.localChurch).toBeTruthy();
@@ -222,7 +225,8 @@ describe('PDF Generator - Data Validation', () => {
 
     // Partner info fields
     const partnerFields = [
-      'partnerName',
+      'partnerFirstName',
+      'partnerLastName',
       'emailAddress',
       'mobileNumber',
       'localChurch',
@@ -370,7 +374,8 @@ describe('PDF Generator - Runtime Behavior', () => {
     try {
       const data = buildValidFormData({
         membershipType: 'victory',
-        partnerName: 'ABCD',
+        partnerFirstName: 'ABCD',
+        partnerLastName: '',
       });
 
       const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));

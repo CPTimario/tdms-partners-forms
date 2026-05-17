@@ -42,7 +42,8 @@ async function chooseMembership(page: Page, type: 'Victory Member' | 'Non-Victor
 }
 
 async function fillPartnerStep(page: Page, currency: 'PHP' | 'USD' = 'USD') {
-  await page.getByRole('textbox', { name: /^Partner Name/ }).fill('Chris Timario');
+  await page.getByRole('textbox', { name: /^First Name/ }).fill('Chris');
+  await page.getByRole('textbox', { name: /^Last Name/ }).fill('Timario');
   await page.getByRole('textbox', { name: /^Email Address/ }).fill('chris@example.com');
   await page.getByRole('textbox', { name: /^Mobile Number/ }).fill('09171234567');
   await page.getByRole('textbox', { name: /^Local Church/ }).fill('Every Nation Makati');
@@ -115,25 +116,33 @@ async function fillAccountabilityStepWithoutSignature(
 async function drawSignature(page: Page) {
   const signatureCanvas = page.locator('canvas[aria-label="Partner Signature"]');
   await expect(signatureCanvas).toBeVisible();
-  // Ensure the canvas is scrolled into the visible viewport before firing
-  // pointer events — coordinates from boundingBox() are viewport-relative and
-  // signature_pad will miss strokes if the element is below the fold.
   await signatureCanvas.scrollIntoViewIfNeeded();
 
-  const box = await signatureCanvas.boundingBox();
-  if (!box) {
-    throw new Error('Signature canvas bounding box was not found.');
-  }
-
-  const startX = box.x + 24;
-  const startY = box.y + box.height / 2;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  // Use steps so signature_pad receives intermediate pointermove events and
-  // populates its internal stroke data (isEmpty() relies on this).
-  await page.mouse.move(startX + 120, startY - 16, { steps: 10 });
-  await page.mouse.move(startX + 220, startY + 8, { steps: 10 });
-  await page.mouse.up();
+  // Dispatch events directly on the canvas. page.mouse is global and races with
+  // other interactions when tests run in parallel; targeted dispatch is
+  // deterministic regardless of mouse position state.
+  await signatureCanvas.evaluate((el) => {
+    const canvas = el as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const fire = (type: string, x: number, y: number, target: EventTarget) => {
+      target.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + x,
+          clientY: rect.top + y,
+          button: 0,
+          buttons: type === 'mouseup' ? 0 : 1,
+        }),
+      );
+    };
+    const midY = rect.height / 2;
+    fire('mousedown', 24, midY, canvas);
+    fire('mousemove', 80, midY - 12, canvas);
+    fire('mousemove', 140, midY + 6, canvas);
+    fire('mousemove', 200, midY - 4, canvas);
+    fire('mouseup', 200, midY - 4, document);
+  });
   // Brief settle so React flushes the onEnd state update before the caller
   // checks derived state (e.g. isAccountabilityStepComplete).
   await page.waitForTimeout(150);
@@ -312,9 +321,9 @@ test.describe('Support forms end-to-end', () => {
     await expect(agreementGate).toBeVisible();
     await agreementGate.getByRole('button', { name: 'I Agree', exact: true }).click();
 
-    const partnerName = page.getByRole('textbox', { name: /^Partner Name/ });
-    await partnerName.fill('Chris Timario');
-    await expect(partnerName).toHaveValue('Chris Timario');
+    const partnerFirstName = page.getByRole('textbox', { name: /^First Name/ });
+    await partnerFirstName.fill('Chris');
+    await expect(partnerFirstName).toHaveValue('Chris');
 
     await page.reload();
 
@@ -328,7 +337,7 @@ test.describe('Support forms end-to-end', () => {
       .getByRole('dialog', { name: 'Accountability Agreement' })
       .getByRole('button', { name: 'I Agree', exact: true })
       .click();
-    await expect(page.getByRole('textbox', { name: /^Partner Name/ })).toHaveValue('');
+    await expect(page.getByRole('textbox', { name: /^First Name/ })).toHaveValue('');
   });
 
   test('reload on non-victory route resets form data and stays on non-victory', async ({
@@ -338,18 +347,18 @@ test.describe('Support forms end-to-end', () => {
   }) => {
     await page.goto('/non-victory');
 
-    const partnerName = page.getByRole('textbox', { name: /^Partner Name/ });
-    await partnerName.waitFor({ state: 'visible' });
-    await partnerName.click();
-    await partnerName.fill('Chris Timario');
-    await partnerName.press('Tab');
-    await expect(partnerName).toHaveValue('Chris Timario');
+    const partnerFirstName = page.getByRole('textbox', { name: /^First Name/ });
+    await partnerFirstName.waitFor({ state: 'visible' });
+    await partnerFirstName.click();
+    await partnerFirstName.fill('Chris');
+    await partnerFirstName.press('Tab');
+    await expect(partnerFirstName).toHaveValue('Chris');
 
     await page.reload();
 
     await expect(page).toHaveURL(/\/non-victory$/);
     await expect(page.getByRole('heading', { name: 'Choose a form' })).toHaveCount(0);
-    await expect(page.getByRole('textbox', { name: /^Partner Name/ })).toHaveValue('');
+    await expect(page.getByRole('textbox', { name: /^First Name/ })).toHaveValue('');
   });
 
   test('returns to root membership gate when navigating back from /victory', async ({
@@ -446,7 +455,8 @@ test.describe('Support forms end-to-end', () => {
     await page.getByRole('button', { name: 'Review and Generate PDF' }).click();
 
     await expect(page.getByText('Consent is required.')).toBeVisible();
-    await expect(page.getByText('Partner Name is required.')).toBeVisible();
+    await expect(page.getByText('Partner First Name is required.')).toBeVisible();
+    await expect(page.getByText('Partner Last Name is required.')).toBeVisible();
 
     await fillPartnerStep(page);
     await fillAccountabilityStepWithoutSignature(page);
