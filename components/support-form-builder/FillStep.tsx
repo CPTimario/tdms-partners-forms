@@ -61,7 +61,8 @@ type FillStepProps = {
   onTextChange: (
     field: keyof Pick<
       SupportFormData,
-      | 'partnerName'
+      | 'partnerFirstName'
+      | 'partnerLastName'
       | 'emailAddress'
       | 'mobileNumber'
       | 'localChurch'
@@ -104,7 +105,8 @@ type DatePickerInlineProps = {
   onTextChange: (
     field: keyof Pick<
       SupportFormData,
-      | 'partnerName'
+      | 'partnerFirstName'
+      | 'partnerLastName'
       | 'emailAddress'
       | 'mobileNumber'
       | 'localChurch'
@@ -407,23 +409,42 @@ export function FillStep({
               <fieldset className={styles.fieldBlock}>
                 <legend>Partner</legend>
                 <label className={styles.fieldLabel}>
-                  Partner Name
+                  First Name
                   <TextField
-                    id="support-partnerName"
+                    id="support-partnerFirstName"
                     size="small"
                     variant="outlined"
                     className={styles.textInput}
-                    value={data.partnerName}
-                    onChange={onTextChange('partnerName')}
-                    error={hasFieldError('partnerName')}
+                    value={data.partnerFirstName}
+                    onChange={onTextChange('partnerFirstName')}
+                    error={hasFieldError('partnerFirstName')}
                     inputProps={{
-                      'aria-invalid': hasFieldError('partnerName'),
-                      'aria-describedby': hasFieldError('partnerName')
-                        ? errorId('partnerName')
+                      'aria-invalid': hasFieldError('partnerFirstName'),
+                      'aria-describedby': hasFieldError('partnerFirstName')
+                        ? errorId('partnerFirstName')
                         : undefined,
                     }}
                   />
-                  {renderFieldError('partnerName')}
+                  {renderFieldError('partnerFirstName')}
+                </label>
+                <label className={styles.fieldLabel}>
+                  Last Name
+                  <TextField
+                    id="support-partnerLastName"
+                    size="small"
+                    variant="outlined"
+                    className={styles.textInput}
+                    value={data.partnerLastName}
+                    onChange={onTextChange('partnerLastName')}
+                    error={hasFieldError('partnerLastName')}
+                    inputProps={{
+                      'aria-invalid': hasFieldError('partnerLastName'),
+                      'aria-describedby': hasFieldError('partnerLastName')
+                        ? errorId('partnerLastName')
+                        : undefined,
+                    }}
+                  />
+                  {renderFieldError('partnerLastName')}
                 </label>
                 <label className={styles.fieldLabel}>
                   Email Address

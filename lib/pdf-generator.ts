@@ -81,7 +81,11 @@ function drawPartnerInfo(
 ) {
   const travelDateParts = splitTravelDateParts(data.travelDate);
 
-  drawTextField(page, font, coordinates.partnerName, data.partnerName);
+  const partnerFullName = [data.partnerFirstName, data.partnerLastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(' ');
+  drawTextField(page, font, coordinates.partnerName, partnerFullName);
   drawTextField(page, font, coordinates.emailAddress, data.emailAddress);
   drawTextField(page, font, coordinates.mobileNumber, data.mobileNumber);
   drawTextField(page, font, coordinates.localChurch, data.localChurch);

@@ -23,7 +23,8 @@ function buildValidData(): SupportFormData {
     ...initialSupportFormData,
     membershipType: 'victory',
     consentGiven: true,
-    partnerName: 'Chris Timario',
+    partnerFirstName: 'Chris',
+    partnerLastName: 'Timario',
     emailAddress: 'chris@example.com',
     mobileNumber: '09171234567',
     localChurch: 'Every Nation Makati',
@@ -51,7 +52,8 @@ describe('support-form domain validation', () => {
     const errors = validatePartnerStep(data);
 
     expect(errors).toContain('Consent is required.');
-    expect(errors).toContain('Partner Name is required.');
+    expect(errors).toContain('Partner First Name is required.');
+    expect(errors).toContain('Partner Last Name is required.');
     expect(errors).toContain('Email Address is required.');
     expect(errors).toContain('Mobile Number is required.');
     expect(errors).toContain('Local Church is required.');
@@ -103,7 +105,7 @@ describe('support-form domain validation', () => {
     expect(isSupportFormValid(validData)).toBeTruthy();
     expect(getFirstInvalidStep(validData)).toBeNull();
 
-    const invalidPartner = { ...validData, partnerName: '' };
+    const invalidPartner = { ...validData, partnerFirstName: '', partnerLastName: '' };
     expect(getFirstInvalidStep(invalidPartner)).toBe('partner');
 
     const invalidAccountability = {

@@ -34,7 +34,8 @@ async function chooseMembership(page: Page, type: 'Victory Member' | 'Non-Victor
 
 async function fillCompleteForm(page: Page, currency: 'PHP' | 'USD' = 'USD') {
   // Fill partner info
-  await page.getByRole('textbox', { name: 'Partner Name', exact: true }).fill('Chris Timario');
+  await page.getByRole('textbox', { name: 'First Name', exact: true }).fill('Chris');
+  await page.getByRole('textbox', { name: 'Last Name', exact: true }).fill('Timario');
   await page.getByRole('textbox', { name: 'Email Address', exact: true }).fill('chris@example.com');
   await page.getByRole('textbox', { name: 'Mobile Number', exact: true }).fill('09171234567');
   await page
@@ -92,23 +93,35 @@ async function fillCompleteForm(page: Page, currency: 'PHP' | 'USD' = 'USD') {
   await page.locator('input[name="canceled"][value="generalFund"]').check();
   await page.getByRole('textbox', { name: 'Partner Full Name (Printed)' }).fill('Chris Timario');
 
-  // Draw signature
+  // Draw signature — dispatch events directly on the canvas. page.mouse is
+  // global and races with other interactions when tests run in parallel;
+  // targeted dispatch is deterministic regardless of mouse position state.
   const signatureCanvas = page.locator('canvas[aria-label="Partner Signature"]');
   await expect(signatureCanvas).toBeVisible();
   await signatureCanvas.scrollIntoViewIfNeeded();
 
-  const box = await signatureCanvas.boundingBox();
-  if (!box) {
-    throw new Error('Signature canvas bounding box was not found.');
-  }
-
-  const startX = box.x + 24;
-  const startY = box.y + box.height / 2;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  await page.mouse.move(startX + 120, startY - 16, { steps: 10 });
-  await page.mouse.move(startX + 220, startY + 8, { steps: 10 });
-  await page.mouse.up();
+  await signatureCanvas.evaluate((el) => {
+    const canvas = el as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const fire = (type: string, x: number, y: number, target: EventTarget) => {
+      target.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left + x,
+          clientY: rect.top + y,
+          button: 0,
+          buttons: type === 'mouseup' ? 0 : 1,
+        }),
+      );
+    };
+    const midY = rect.height / 2;
+    fire('mousedown', 24, midY, canvas);
+    fire('mousemove', 80, midY - 12, canvas);
+    fire('mousemove', 140, midY + 6, canvas);
+    fire('mousemove', 200, midY - 4, canvas);
+    fire('mouseup', 200, midY - 4, document);
+  });
   await page.waitForTimeout(150);
 }
 

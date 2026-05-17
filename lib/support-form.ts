@@ -11,7 +11,8 @@ export type FormStep = EditableFormStep | 'review';
 export type SupportFormData = {
   membershipType: MembershipType | null;
   consentGiven: boolean;
-  partnerName: string;
+  partnerFirstName: string;
+  partnerLastName: string;
   emailAddress: string;
   mobileNumber: string;
   localChurch: string;
@@ -31,7 +32,8 @@ export type SupportFormData = {
 export const initialSupportFormData: SupportFormData = {
   membershipType: null,
   consentGiven: false,
-  partnerName: '',
+  partnerFirstName: '',
+  partnerLastName: '',
   emailAddress: '',
   mobileNumber: '',
   localChurch: '',
@@ -70,7 +72,8 @@ export const nonVictoryAccountabilityInstructionCopy =
   "I confirm the options I've selected below as my instructions to the Gift Processing Office on how to handle my support in each specified scenario.";
 
 export const partnerRequiredFields = [
-  'partnerName',
+  'partnerFirstName',
+  'partnerLastName',
   'emailAddress',
   'mobileNumber',
   'localChurch',
@@ -104,7 +107,8 @@ export type StepValidationResult = {
 };
 
 export const fieldLabels: Record<RequiredStringField, string> = {
-  partnerName: 'Partner Name',
+  partnerFirstName: 'Partner First Name',
+  partnerLastName: 'Partner Last Name',
   emailAddress: 'Email Address',
   mobileNumber: 'Mobile Number',
   localChurch: 'Local Church',
@@ -158,7 +162,8 @@ const partnerStepSchema = z.object({
   consentGiven: z.boolean().refine((value) => value, {
     message: 'Consent is required.',
   }),
-  partnerName: requiredString('Partner Name'),
+  partnerFirstName: requiredString('Partner First Name'),
+  partnerLastName: requiredString('Partner Last Name'),
   emailAddress: requiredString('Email Address').email('Email Address must be a valid email.'),
   mobileNumber: requiredString('Mobile Number').regex(
     /^[0-9+\-()\s]{7,20}$/,
@@ -375,7 +380,8 @@ export function validateAccountabilityStep(data: SupportFormData) {
 export function validatePartnerStepDetailed(data: SupportFormData): StepValidationResult {
   const result = partnerStepSchema.safeParse({
     consentGiven: data.consentGiven,
-    partnerName: data.partnerName,
+    partnerFirstName: data.partnerFirstName,
+    partnerLastName: data.partnerLastName,
     emailAddress: data.emailAddress,
     mobileNumber: data.mobileNumber,
     localChurch: data.localChurch,
@@ -407,7 +413,8 @@ export function validateSupportFormDetailed(data: SupportFormData): StepValidati
   const result = fullFormSchema.safeParse({
     membershipType: data.membershipType,
     consentGiven: data.consentGiven,
-    partnerName: data.partnerName,
+    partnerFirstName: data.partnerFirstName,
+    partnerLastName: data.partnerLastName,
     emailAddress: data.emailAddress,
     mobileNumber: data.mobileNumber,
     localChurch: data.localChurch,
