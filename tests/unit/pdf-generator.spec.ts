@@ -79,7 +79,6 @@ function buildValidFormData(overrides?: Partial<SupportFormData>): SupportFormDa
     travelDate: '2026-06-20',
     sendingChurch: 'Every Nation Greenhills',
     partnerSignature: VALID_SIGNATURE_DATA_URL,
-    partnerPrintedName: 'Chris Timario',
     unableToGoChoice: 'teamFund',
     reroutedChoice: 'retain',
     canceledChoice: 'generalFund',
@@ -176,7 +175,6 @@ describe('PDF Generator - Data Validation', () => {
     expect(data.travelDate).toBeTruthy();
     expect(data.sendingChurch).toBeTruthy();
     expect(data.partnerSignature).toBeTruthy();
-    expect(data.partnerPrintedName).toBeTruthy();
   });
 
   test('validates accountability choice values', () => {
@@ -201,14 +199,12 @@ describe('PDF Generator - Data Validation', () => {
       reroutedChoice: null,
       canceledChoice: null,
       partnerSignature: '',
-      partnerPrintedName: '',
     });
 
     expect(data.unableToGoChoice).toBeNull();
     expect(data.reroutedChoice).toBeNull();
     expect(data.canceledChoice).toBeNull();
     expect(data.partnerSignature).toBe('');
-    expect(data.partnerPrintedName).toBe('');
   });
 
   test('handles all membership type variants', () => {
@@ -246,7 +242,6 @@ describe('PDF Generator - Data Validation', () => {
     expect(data).toHaveProperty('unableToGoChoice');
     expect(data).toHaveProperty('reroutedChoice');
     expect(data).toHaveProperty('partnerSignature');
-    expect(data).toHaveProperty('partnerPrintedName');
   });
 });
 
@@ -279,7 +274,7 @@ describe('PDF Generator - Runtime Behavior', () => {
     }
   });
 
-  test('draws split travel date fields and includes printed name text', async () => {
+  test('draws split travel date fields and uses partner first/last name as printed name', async () => {
     const fetchMock = mockTemplateFetch({
       '/tdms-forms/pic-saf-victory.pdf': readTemplate('pic-saf-victory.pdf'),
       '/tdms-forms/pic-saf-non-victory.pdf': readTemplate('pic-saf-non-victory.pdf'),
@@ -289,16 +284,22 @@ describe('PDF Generator - Runtime Behavior', () => {
       const data = buildValidFormData({
         membershipType: 'victory',
         travelDate: '2026-06-20',
-        partnerPrintedName: 'Chris Timario',
+        partnerFirstName: 'Chris',
+        partnerLastName: 'Timario',
       });
 
-      const { drawnText } = await captureDrawnText(() => generateReviewPDF(data));
+      const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
+      const drawnText = drawCalls.map((call) => call.text);
 
       expect(drawnText).toContain('06');
       expect(drawnText).toContain('20');
       expect(drawnText).toContain('26');
-      expect(drawnText).toContain('Chris Timario');
       expect(drawnText).not.toContain('2026-06-20');
+
+      // The combined name should be drawn at both the partner-name and
+      // partner-printed-name coordinates, sourced from first + last name.
+      const nameDraws = drawCalls.filter((call) => call.text === 'Chris Timario');
+      expect(nameDraws.length).toBeGreaterThanOrEqual(2);
     } finally {
       fetchMock.restore();
     }
@@ -612,7 +613,8 @@ describe('PDF Coordinates - Placement Regression Guard', () => {
         membershipType: 'victory',
         emailAddress: 'victory@example.com',
         nation: 'Myanmar',
-        partnerPrintedName: 'Victory Partner',
+        partnerFirstName: 'Victory',
+        partnerLastName: 'Partner',
       });
 
       const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
@@ -621,19 +623,21 @@ describe('PDF Coordinates - Placement Regression Guard', () => {
       const fieldAssertions: Array<{
         text: string;
         coordKey: keyof typeof victoryCourseCoordinates;
+        occurrence?: number;
       }> = [
-        { text: 'Chris Timario', coordKey: 'partnerName' },
+        { text: 'Victory Partner', coordKey: 'partnerName', occurrence: 0 },
         { text: 'victory@example.com', coordKey: 'emailAddress' },
         { text: 'Southeast Team', coordKey: 'missionaryName' },
         { text: 'Myanmar', coordKey: 'nation' },
         { text: '06', coordKey: 'travelDateMonth' },
         { text: '20', coordKey: 'travelDateDay' },
         { text: '26', coordKey: 'travelDateYear' },
-        { text: 'Victory Partner', coordKey: 'partnerSignaturePrintedName' },
+        { text: 'Victory Partner', coordKey: 'partnerSignaturePrintedName', occurrence: 1 },
       ];
 
-      for (const { text, coordKey } of fieldAssertions) {
-        const call = drawCalls.find((c) => c.text === text);
+      for (const { text, coordKey, occurrence } of fieldAssertions) {
+        const matches = drawCalls.filter((c) => c.text === text);
+        const call = matches[occurrence ?? 0];
         expect(call, `Expected draw call for "${text}"`).toBeTruthy();
 
         const coord = victoryCourseCoordinates[coordKey] as {
@@ -674,26 +678,31 @@ describe('PDF Coordinates - Placement Regression Guard', () => {
         membershipType: 'nonVictory',
         emailAddress: 'nonvictory@example.com',
         nation: 'Philippines',
-        partnerPrintedName: 'NonVictory Partner',
+        partnerFirstName: 'NonVictory',
+        partnerLastName: 'Partner',
       });
 
       const { drawCalls } = await captureDrawnText(() => generateReviewPDF(data));
       const mmToPt = 2.834645669;
 
-      const fieldAssertions: Array<{ text: string; coordKey: keyof typeof nonVictoryCoordinates }> =
-        [
-          { text: 'Chris Timario', coordKey: 'partnerName' },
-          { text: 'nonvictory@example.com', coordKey: 'emailAddress' },
-          { text: 'Southeast Team', coordKey: 'missionaryName' },
-          { text: 'Philippines', coordKey: 'nation' },
-          { text: '06', coordKey: 'travelDateMonth' },
-          { text: '20', coordKey: 'travelDateDay' },
-          { text: '26', coordKey: 'travelDateYear' },
-          { text: 'NonVictory Partner', coordKey: 'partnerSignaturePrintedName' },
-        ];
+      const fieldAssertions: Array<{
+        text: string;
+        coordKey: keyof typeof nonVictoryCoordinates;
+        occurrence?: number;
+      }> = [
+        { text: 'NonVictory Partner', coordKey: 'partnerName', occurrence: 0 },
+        { text: 'nonvictory@example.com', coordKey: 'emailAddress' },
+        { text: 'Southeast Team', coordKey: 'missionaryName' },
+        { text: 'Philippines', coordKey: 'nation' },
+        { text: '06', coordKey: 'travelDateMonth' },
+        { text: '20', coordKey: 'travelDateDay' },
+        { text: '26', coordKey: 'travelDateYear' },
+        { text: 'NonVictory Partner', coordKey: 'partnerSignaturePrintedName', occurrence: 1 },
+      ];
 
-      for (const { text, coordKey } of fieldAssertions) {
-        const call = drawCalls.find((c) => c.text === text);
+      for (const { text, coordKey, occurrence } of fieldAssertions) {
+        const matches = drawCalls.filter((c) => c.text === text);
+        const call = matches[occurrence ?? 0];
         expect(call, `Expected draw call for "${text}"`).toBeTruthy();
 
         const coord = nonVictoryCoordinates[coordKey] as { x: number; y: number; height?: number };

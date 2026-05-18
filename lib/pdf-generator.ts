@@ -73,6 +73,13 @@ export async function generateReviewPDF(data: SupportFormData): Promise<Uint8Arr
   return pdfBytes;
 }
 
+function buildPartnerFullName(data: SupportFormData) {
+  return [data.partnerFirstName, data.partnerLastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
 function drawPartnerInfo(
   page: PDFPage,
   font: PDFFont,
@@ -81,10 +88,7 @@ function drawPartnerInfo(
 ) {
   const travelDateParts = splitTravelDateParts(data.travelDate);
 
-  const partnerFullName = [data.partnerFirstName, data.partnerLastName]
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(' ');
+  const partnerFullName = buildPartnerFullName(data);
   drawTextField(page, font, coordinates.partnerName, partnerFullName);
   drawTextField(page, font, coordinates.emailAddress, data.emailAddress);
   drawTextField(page, font, coordinates.mobileNumber, data.mobileNumber);
@@ -131,7 +135,7 @@ async function drawAccountability(
     await drawSignature(pdfDoc, page, coordinates.partnerSignature, data.partnerSignature);
   }
 
-  drawTextField(page, font, coordinates.partnerSignaturePrintedName, data.partnerPrintedName);
+  drawTextField(page, font, coordinates.partnerSignaturePrintedName, buildPartnerFullName(data));
 }
 
 /**

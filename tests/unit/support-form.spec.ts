@@ -34,7 +34,6 @@ function buildValidData(): SupportFormData {
     travelDate: '2026-06-20',
     sendingChurch: 'Every Nation Greenhills',
     partnerSignature: VALID_SIGNATURE_DATA_URL,
-    partnerPrintedName: 'Christopher Timario',
     unableToGoChoice: 'teamFund',
     reroutedChoice: 'retain',
     canceledChoice: 'generalFund',
@@ -79,17 +78,15 @@ describe('support-form domain validation', () => {
     expect(errors).toContain('Travel Date is invalid.');
   });
 
-  test('accountability step requires choices and printed signature', () => {
+  test('accountability step requires choices and signature', () => {
     const data = buildValidData();
     data.partnerSignature = '';
-    data.partnerPrintedName = '';
     data.unableToGoChoice = null;
     data.reroutedChoice = null;
     data.canceledChoice = null;
 
     const errors = validateAccountabilityStep(data);
     expect(errors).toContain('Signature is required.');
-    expect(errors).toContain('Partner Full Name is required.');
     expect(errors).toContain(
       'Please choose an accountability option for when the missioner is unable to go.',
     );
@@ -110,7 +107,7 @@ describe('support-form domain validation', () => {
 
     const invalidAccountability = {
       ...validData,
-      partnerPrintedName: '',
+      partnerSignature: '',
     };
     expect(getFirstInvalidStep(invalidAccountability)).toBe('accountability');
   });
