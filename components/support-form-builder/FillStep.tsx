@@ -71,7 +71,6 @@ type FillStepProps = {
       | 'nation'
       | 'travelDate'
       | 'sendingChurch'
-      | 'partnerPrintedName'
     >,
   ) => ChangeEventHandler<HTMLInputElement>;
   onCurrencyChange: ChangeEventHandler<HTMLSelectElement>;
@@ -115,7 +114,6 @@ type DatePickerInlineProps = {
       | 'nation'
       | 'travelDate'
       | 'sendingChurch'
-      | 'partnerPrintedName'
     >,
   ) => ChangeEventHandler<HTMLInputElement>;
   hasFieldError: boolean;
@@ -780,26 +778,6 @@ export function FillStep({
                 }
               />
               {renderFieldError('partnerSignature')}
-
-              <label className={styles.fieldLabel}>
-                Partner Full Name (Printed)
-                <TextField
-                  id="support-partnerPrintedName"
-                  size="small"
-                  variant="outlined"
-                  className={styles.textInput}
-                  value={data.partnerPrintedName}
-                  onChange={onTextChange('partnerPrintedName')}
-                  error={hasFieldError('partnerPrintedName')}
-                  inputProps={{
-                    'aria-invalid': hasFieldError('partnerPrintedName'),
-                    'aria-describedby': hasFieldError('partnerPrintedName')
-                      ? errorId('partnerPrintedName')
-                      : undefined,
-                  }}
-                />
-                {renderFieldError('partnerPrintedName')}
-              </label>
             </fieldset>
           </section>
         )}

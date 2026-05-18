@@ -91,7 +91,6 @@ async function fillCompleteForm(page: Page, currency: 'PHP' | 'USD' = 'USD') {
   await page.getByText('Retain my support').click();
   await expect(page.getByRole('radio', { name: 'Retain my support' })).toBeChecked();
   await page.locator('input[name="canceled"][value="generalFund"]').check();
-  await page.getByRole('textbox', { name: 'Partner Full Name (Printed)' }).fill('Chris Timario');
 
   // Draw signature — dispatch events directly on the canvas. page.mouse is
   // global and races with other interactions when tests run in parallel;
